@@ -109,6 +109,10 @@ const ForwardingActions = ({
   mode = 'default',
   optionsData = null,
   disableInternalFetch = false,
+  /** Undefined by default — CustomSelect then falls back to its own default
+   * (document.body). Only passed by callers that want their dropdown menus
+   * kept inside their own page's scoped styling. */
+  menuPortalTarget,
 }: any) => {
   const { user } = useUser();
   const { user_info } = user || {};
@@ -288,6 +292,7 @@ const ForwardingActions = ({
                 refetch();
               }}
               isRefetchable={false}
+              menuPortalTarget={menuPortalTarget}
             />
           </div>
         );
@@ -298,6 +303,7 @@ const ForwardingActions = ({
             className={`${extenstionClass}`}
             placeholder="Select"
             menuPlacement={menuPlacement}
+            menuPortalTarget={menuPortalTarget}
             options={FORWARD_VALUE_OPTIONS[currentType] || []}
             handleChange={(val) => setValue(forwardValue, val, { shouldValidate: true })}
             value={resolvedForwardValue}
@@ -312,6 +318,7 @@ const ForwardingActions = ({
               className={`${extenstionClass}`}
               placeholder="Select"
               menuPlacement={menuPlacement}
+              menuPortalTarget={menuPortalTarget}
               options={FORWARD_VALUE_OPTIONS[currentType] || []}
               handleChange={(val) => setValue(forwardValue, val, { shouldValidate: true })}
               value={resolvedForwardValue}
@@ -326,6 +333,7 @@ const ForwardingActions = ({
             // label={valueLabel}
             placeholder="Select"
             menuPlacement={menuPlacement}
+            menuPortalTarget={menuPortalTarget}
             options={FORWARD_VALUE_OPTIONS[currentType] || []}
             handleChange={(val) => setValue(forwardValue, val, { shouldValidate: true })}
             value={resolvedForwardValue}
@@ -354,6 +362,7 @@ const ForwardingActions = ({
             label={typeLabel}
             placeholder="Select Type"
             menuPlacement={menuPlacement}
+            menuPortalTarget={menuPortalTarget}
             handleChange={(val) => {
               setValue(forwardType, val || {}, { shouldValidate: true });
               if (val?.value === 'VOICEMAIL') {
@@ -423,7 +432,7 @@ const ForwardingActions = ({
                     <RadioGroupItem
                       value="true"
                       id={`${forwardState}-true`}
-                      className="cursor-pointer w-4 h-4 accent-red-500"
+                      className="cursor-pointer w-4 h-4 accent-blue-500"
                     />
                     <Label htmlFor={`${forwardState}-true`} className="cursor-pointer">
                       My Voicemail

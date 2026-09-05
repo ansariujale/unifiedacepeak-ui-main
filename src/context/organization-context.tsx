@@ -83,10 +83,10 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchMainSiteInfo = useCallback(async () => {
-    const configuredDomain = (getEnv() as { VITE_APP_DOMAIN?: string }).VITE_APP_DOMAIN;
     const domain = getDomain().includes('localhost')
-      ? `https://${configuredDomain || 'ucaas.acepeak.com'}`
+      ? 'https://ucaas.acepeak.com'
       : getDomain();
+    // const domain = "https://mcm.mycountrymobile.com";
     try {
       setIsLoading(true);
       setError(null);
@@ -113,11 +113,31 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     document.title = '';
     fetchMainSiteInfo();
   }, [fetchMainSiteInfo]);
-  // Per-org white-label color override — disabled. This build is locked to the
-  // Acepeak red/neutral brand (index.css fallbacks), so a backend org record's
-  // own primary/secondary/sidebar/login-bg colors (e.g. MCM's blue on the qa
-  // domain) must not overwrite it at runtime. Re-enable by restoring the
-  // setProperty calls here if per-tenant color white-labeling is needed again.
+  // Apply mainSiteInfo colors to CSS variables: --primary, --color-ucass-primary-200, --color-ucass-active
+  useEffect(() => {
+    if (!mainSiteInfo || typeof document === 'undefined') return;
+    const root = document.documentElement;
+    const primary = mainSiteInfo.primary_color;
+    const secondary = mainSiteInfo.secondary_color;
+    const activeSidebar = mainSiteInfo.active_sidebar_color;
+    const activeSidebarbg = mainSiteInfo.active_sidebar_bg_color;
+    const loginBgColor = mainSiteInfo.login_page_bg_color;
+    if (typeof primary === 'string' && primary) {
+      root.style.setProperty('--primary', primary);
+    }
+    if (typeof secondary === 'string' && secondary) {
+      root.style.setProperty('--color-ucass-primary-200', secondary);
+    }
+    if (typeof activeSidebar === 'string' && activeSidebar) {
+      root.style.setProperty('--color-ucass-active', activeSidebar);
+    }
+    if (typeof activeSidebarbg === 'string' && activeSidebarbg) {
+      root.style.setProperty('--color-ucass-active-bg', activeSidebarbg);
+    }
+    if (typeof loginBgColor === 'string' && loginBgColor) {
+      root.style.setProperty('--color-ucass-login-bg', loginBgColor);
+    }
+  }, [mainSiteInfo]);
 
   // Apply organization branding to the document and social-sharing metadata.
   useEffect(() => {
@@ -206,6 +226,13 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
     return <ServerMaintenance onRefresh={fetchMainSiteInfo} />;
   }
 
+  /* Only reachable once the fetch has actually succeeded (isLoading and
+     error are both cleared above) but the response carried no Stripe key —
+     e.g. a template still loading its billing config. Checking this before
+     isLoading/error meant a *failed* fetch left mainSiteInfo (and so this
+     key) permanently empty, so the app fell through to this branch forever
+     instead of ever reaching the error branch below it — the loading
+     spinner never cleared no matter how the request finished. */
   if (!stripePublishableKey) {
     return <FullPageLoader />;
   }

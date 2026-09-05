@@ -27,21 +27,21 @@
 .mcm-page {
   /* Hover edge for the portrait stat cards (Performance). */
   --stat-hover-line: #e9adc3;
-  --ground: #f5f5f5;
+  --ground: #eef1f8;
   --surface: #ffffff;
-  --surface-2: #fafafa;
-  --surface-3: #eeeeee;
+  --surface-2: #f6f8fc;
+  --surface-3: #eaeef7;
   --ink: #0d1526;
   --ink-2: #3d4a63;
   --ink-3: #6b7891;
   --ink-4: #93a0b8;
-  --line: #e5e5e5;
-  --line-2: #efefef;
+  --line: #dfe5f0;
+  --line-2: #eaeef6;
 
-  --accent: #dc2626;
-  --accent-ink: #b91c1c;
-  --accent-wash: #fef2f2;
-  --accent-edge: #fecaca;
+  --accent: #2563eb;
+  --accent-ink: #1d4ed8;
+  --accent-wash: #e8efff;
+  --accent-edge: #c3d6ff;
 
   /* AI gets its own hue on purpose: machine output must never be
      mistaken for system truth. Violet = "generated, verify me". */
@@ -74,20 +74,20 @@
 }
 .dark .mcm-page {
   --stat-hover-line: #6b3a4a;
-  --ground: #0a0a0a;
-  --surface: #171717;
-  --surface-2: #1f1f1f;
-  --surface-3: #262626;
+  --ground: #0a0f1a;
+  --surface: #111827;
+  --surface-2: #161f31;
+  --surface-3: #1e293e;
   --ink: #eef2f9;
   --ink-2: #c3cddf;
   --ink-3: #93a1ba;
   --ink-4: #6b7a96;
-  --line: #333333;
-  --line-2: #292929;
-  --accent: #f87171;
-  --accent-ink: #fca5a5;
-  --accent-wash: #3a1414;
-  --accent-edge: #7f1d1d;
+  --line: #26314a;
+  --line-2: #1c2537;
+  --accent: #5b8dff;
+  --accent-ink: #87aaff;
+  --accent-wash: #16223d;
+  --accent-edge: #2c3f68;
   --ai: #a97fff;
   --ai-ink: #c0a3ff;
   --ai-wash: #231a3d;
@@ -129,7 +129,16 @@
   min-height: 0;
   overflow: hidden;
 }
-.mcm-page button {
+/* Excludes Radix's Switch root, which also renders as a <button>: its own
+   authored classes give it a real border and background (a track pill whose
+   colour is the whole point of a toggle), sized so the thumb's checked-state
+   translate lands exactly at the inner edge of that border. This reset's
+   border:0/background:none stripped both, which left the border-dependent
+   thumb math translating 1px further than the now-borderless track actually
+   had room for — reading as the knob sitting outside the track once switched
+   on. Every other button (icon buttons, chevrons, dropdown triggers, ...)
+   still gets the reset. */
+.mcm-page button:not([data-slot='switch']) {
   font: inherit;
   color: inherit;
   border: 0;
@@ -504,20 +513,6 @@
 .mcm-page .btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-/* The same soft pink/red tint + black text used on the dashboard hero's
-   buttons, opted into per button with `.soft-accent` rather than changing
-   `.btn.primary`/`.btn.ghost` globally — those two are reused across every
-   other page's header actions. */
-.mcm-page .btn.soft-accent {
-  background: var(--accent-wash);
-  color: var(--ink);
-  border-color: var(--accent-edge);
-  box-shadow: none;
-}
-.mcm-page .btn.soft-accent:hover {
-  background: var(--accent-edge);
-  color: var(--ink);
 }
 
 .mcm-page .mini {
@@ -2548,14 +2543,36 @@
   background: var(--accent);
   border-color: transparent;
 }
+/* The Radix/Tailwind base component positions this thumb with its own
+   `data-[state=...]:translate-x-*` utilities. In Tailwind v4 those compile
+   to the standalone CSS `translate` property, not `transform` — and
+   `translate` and `transform` are separate properties that both apply to
+   the final position (the individual translate/rotate/scale properties
+   render first, `transform` on top of that), so they ADD rather than one
+   overriding the other. The previous version of this rule set `transform:
+   translateX(...)`, which stacked on top of Tailwind's own `translate:
+   calc(100% - 2px)` for the checked state instead of replacing it — e.g.
+   for an 18px-wide thumb that's Tailwind's own 16px plus this rule's 18px,
+   34px of travel inside a track with only 36px of interior width, well
+   past the right edge. Setting `translate` here instead overrides the
+   same property Tailwind sets, via ordinary cascade (this selector is
+   already more specific), so only one offset ever applies.
+   Track interior (38px track, 1px border each side) is 36×20. An 18px
+   thumb centered in the 20px interior height already sits with a 1px
+   margin top and bottom via the track's own `items-center`, untouched
+   here. Horizontally it's given a 2px margin from the track's straight
+   edge in both states, so a round thumb clears the rounded track's curve
+   in both states — unchecked at 2px from the left, checked at 2px from
+   the right (that inner width is 36px, so 36 - 2 - 18 = 16px of travel). */
 .mcm-page [data-slot='switch'] [data-slot='switch-thumb'] {
   width: 18px;
   height: 18px;
   background: #fff;
   box-shadow: 0 1px 2px rgb(13 21 38 / 0.25);
+  translate: 2px 0;
 }
 .mcm-page [data-slot='switch'][data-state='checked'] [data-slot='switch-thumb'] {
-  transform: translateX(17px);
+  translate: 16px 0;
 }
 
 /* 3. Radio dots were a hairline ring that all but vanished against the
@@ -2736,49 +2753,7 @@
    The whole area laid out at once, grouped, rather than hidden behind an
    accordion you have to open to discover what is inside. */
 .mcm-adminhome {
-  /* This whole page — background, sidebar, heading — was built with literal
-     light colors on direct request, not the app's `.dark` toggle, so it's a
-     fixed light/pink page regardless of the app-wide theme. Everything below
-     reads the same token names `.mcm-page` defines (and which DOES flip
-     dark under `.dark`), so without pinning them here to their light values,
-     any card that used a token instead of a literal color — the KPI/donut/
-     areas cards, "All Screens" — went dark while their neighbours, built
-     with literal colors, stayed light. Pinning at the top of the page,
-     rather than on each section separately, means nothing added here later
-     can fall through the gap again. */
-  --surface: #ffffff;
-  --surface-2: #fafafa;
-  --surface-3: #eeeeee;
-  --ground: #f5f5f5;
-  --line: #e5e5e5;
-  --line-2: #efefef;
-  --ink: #0d1526;
-  --ink-2: #3d4a63;
-  --ink-3: #6b7891;
-  --ink-4: #93a0b8;
-  --accent: #dc2626;
-  --accent-ink: #b91c1c;
-  --accent-wash: #fef2f2;
-  --accent-edge: #fecaca;
-  --ai: #7c3aed;
-  --ai-ink: #6428d4;
-  --ai-wash: #f2ecff;
-  --ai-edge: #ddccff;
-  --live: #0d9488;
-  --live-wash: #dcf5f1;
-  --warn: #c2670a;
-  --warn-wash: #fdf0dc;
-  --hold: #0e7490;
-  --hold-wash: #dcf1f7;
-  --crit: #d32f2f;
-  --crit-wash: #fde9e9;
-  --r: 12px;
-  --r-sm: 8px;
-  --r-lg: 18px;
-  --shadow-sm: 0 1px 2px rgba(13, 21, 38, 0.06), 0 1px 1px rgba(13, 21, 38, 0.04);
-  --shadow: 0 4px 14px rgba(13, 21, 38, 0.07), 0 1px 3px rgba(13, 21, 38, 0.05);
-
-  background: #e3e3e3;
+  background: var(--ground);
 }
 
 .mcm-adminhome-head {
@@ -2793,47 +2768,24 @@
   border-bottom: 1px solid var(--line);
 }
 .mcm-adminhome-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 18px;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgb(220, 38, 38);
-}
-.mcm-adminhome-titlerow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
+  color: var(--ink-3);
 }
 .mcm-adminhome-head h1 {
-  margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 27px;
-  font-weight: 400;
-  font-style: italic;
-  line-height: 41px;
+  margin: 3px 0 0;
+  font-size: 22px;
+  font-weight: 800;
   letter-spacing: -0.02em;
-  color: rgb(23, 23, 23);
+  color: var(--ink);
 }
-/* The description used to sit as a line of text under the title; it is now
-   the tooltip's content instead, so the head reads as one clean heading. */
-.mcm-adminhome-infobtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: help;
-  color: var(--ink-4);
-}
-.mcm-adminhome-infobtn svg {
-  width: 15px;
-  height: 15px;
-}
-.mcm-adminhome-infobtn:hover {
-  color: var(--accent-ink);
+.mcm-adminhome-head p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
 }
 
 .mcm-adminhome-search {
@@ -2841,37 +2793,21 @@
   align-items: center;
   gap: 8px;
   min-width: 240px;
-  padding: 8px 14px;
+  padding: 7px 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface-2);
-  color: var(--ink-4);
-  transition:
-    border-color 0.15s,
-    background-color 0.15s,
-    box-shadow 0.15s;
-}
-.mcm-adminhome-search:focus-within {
-  border-color: var(--accent-edge);
-  background: var(--surface);
-  box-shadow: 0 0 0 3px var(--accent-wash);
+  color: var(--ink-3);
 }
 .mcm-adminhome-search input {
   flex: 1;
   min-width: 0;
   border: 0;
+  outline: 0;
   background: transparent;
   color: var(--ink);
   font-size: 13px;
   font-weight: 600;
-}
-.mcm-adminhome-search input:focus-visible {
-  /* `.mcm-admin input:focus-visible` (further down this file) sets a 2px red
-     outline as the admin section's default input focus ring. Same
-     specificity, declared later, so it wins the cascade over this rule
-     unless forced — this search box is meant to show its own soft pill glow
-     instead of that ring. */
-  outline: none !important;
 }
 .mcm-adminhome-search input::placeholder {
   color: var(--ink-4);
@@ -2879,59 +2815,10 @@
 }
 
 .mcm-adminhome-tabs {
-  position: relative;
   flex: none;
-  gap: 14px;
   margin: 0;
-  padding: 10px 22px;
+  padding: 0 22px;
   background: var(--surface);
-  border-bottom: none;
-}
-/* Same sliding pill + colour convention as the header's area tabs: hover
-   turns black on a pink chip, the active tab turns red, and a single
-   indicator (not each button's own background) carries the pink pill
-   between them. Scoped to this page's "All / Recently used" switch, not the
-   ~10 other pages that reuse `.ptabstrip` for a real multi-page tab strip.
-   Matched specificity (`.mcm-page` + one class + the element) against
-   `.mcm-page .ptabstrip button`, declared after it, so it wins the cascade
-   without `!important`. */
-.mcm-page .mcm-adminhome-tabs button {
-  position: relative;
-  z-index: 1;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border-bottom: none;
-  margin-bottom: 0;
-  font-size: 12.5px;
-  transition:
-    color 0.15s,
-    background-color 0.15s;
-}
-.mcm-page .mcm-adminhome-tabs button:hover {
-  color: var(--foreground, var(--ink));
-  background: #fef2f2;
-}
-.mcm-page .mcm-adminhome-tabs button.on {
-  color: var(--accent-ink);
-  border-bottom-color: transparent;
-  background: transparent;
-}
-.mcm-page .mcm-adminhome-tabs button.on:hover {
-  color: var(--accent-ink);
-  background: transparent;
-}
-.mcm-adminhome-tabindicator {
-  position: absolute;
-  left: 0;
-  top: 0;
-  border-radius: 999px;
-  background: #fef2f2;
-  transition:
-    transform 0.25s cubic-bezier(0.65, 0, 0.35, 1),
-    width 0.25s cubic-bezier(0.65, 0, 0.35, 1),
-    height 0.25s cubic-bezier(0.65, 0, 0.35, 1);
-  pointer-events: none;
-  z-index: 0;
 }
 
 .mcm-adminhome-body {
@@ -2970,499 +2857,53 @@
 }
 
 .mcm-admincard {
-  padding-bottom: 2px;
-}
-.mcm-admincard-h {
-  padding: 0 2px 8px;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-/* ---- admin hub: overview dashboard ----
-   Real numbers only — total/area counts come straight from `groups`, "Recently
-   Used" and "Most Accessed" come from the actual shortcut history. Nothing
-   here is a placeholder metric. Colour tokens come from the pin on
-   `.mcm-adminhome` above, not redeclared per-section. */
-.mcm-adminoverview {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 22px;
-}
-.mcm-adminoverview-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: -4px;
-}
-.mcm-adminoverview-eyebrow span {
-  flex: none;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent-ink);
-}
-.mcm-adminoverview-eyebrow::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--line-2);
-}
-/* One shared card holding all four stats, divided by hairlines, instead of
-   four separate boxed cards with a gap between them — matches the reference
-   layout: no per-stat icon chip, just label/value/sub stacked in a column,
-   each column separated from its neighbour by a single vertical rule. */
-.mcm-adminkpirow {
-  display: flex;
-  align-items: stretch;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  overflow: hidden;
-}
-.mcm-adminkpicard {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 16px 20px;
-  border-right: 1px solid var(--line);
-}
-.mcm-adminkpicard:last-child {
-  border-right: 0;
-}
-.mcm-adminkpicard-body {
-  min-width: 0;
-}
-.mcm-adminkpicard-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: #171717;
-}
-.mcm-adminkpicard-value {
-  margin-top: 8px;
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  color: var(--ink);
-}
-.mcm-adminkpicard-value-text {
-  font-size: 17px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.mcm-adminkpicard-sub {
-  margin-top: 4px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--ink-4);
-}
-
-.mcm-adminoverview-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
-  gap: 12px;
-}
-@media (max-width: 900px) {
-  .mcm-adminoverview-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-.mcm-admindonut-card,
-.mcm-adminareas-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-/* The donut card sits beside the (usually taller) areas card in a stretched
-   grid row, so it inherits extra height it doesn't have content for —
-   centering its body in that height reads as intentional instead of
-   leaving a dead gap under the legend. */
-.mcm-admindonut-card {
-  display: flex;
-  flex-direction: column;
-}
-.mcm-admindonut-card .mcm-admincard-h {
-  flex: none;
-}
-.mcm-admindonut-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-.mcm-admindonut {
-  flex: none;
-  position: relative;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-}
-.mcm-admindonut-hole {
-  position: absolute;
-  inset: 20px;
-  border-radius: 50%;
-  background: var(--surface);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-}
-.mcm-admindonut-hole strong {
-  font-size: 25px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-  line-height: 1.1;
-}
-.mcm-admindonut-hole span {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-4);
-}
-.mcm-admindonut-legend {
-  flex: 1;
-  min-width: 160px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.mcm-admindonut-legend li {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 12.5px;
-}
-.mcm-admindonut-dot {
-  flex: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-.mcm-admindonut-name {
-  flex: 1;
-  min-width: 0;
-  font-weight: 600;
-  color: var(--ink-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.mcm-admindonut-count {
-  flex: none;
-  font-weight: 700;
-  color: var(--ink-4);
-}
-
-/* Same visual language as the top KPI row: a horizontal icon-chip-plus-stat
-   card with a tinted left rail, rather than the icon-on-top tile this was
-   before. */
-.mcm-adminareas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 10px;
-}
-.mcm-adminareas-tile {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border: 1px solid transparent;
-  border-radius: 16px;
-  overflow: hidden;
-  color: inherit;
-  text-decoration: none;
-  transition:
-    background-color 0.12s,
-    border-color 0.12s,
-    box-shadow 0.12s;
-}
-.mcm-adminareas-tile::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--accent);
-}
-.mcm-adminareas-tile:hover {
-  background: var(--surface-2);
-  border-color: var(--accent-edge);
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
-}
-/* Plain icon, no tinted chip behind it — the coloured rail on the tile
-   itself already carries the colour. These are solid-fill glyphs, not
-   stroke-based, so there's no CSS "weight" to turn down — Numbers, My
-   Account and Phone System happen to be drawn as thin outline shapes, the
-   rest as bulkier solid ones. Dropping everything except those three to a
-   lighter ink tone is the closest CSS gets to matching that thin look
-   without redrawing the other icons' paths. */
-.mcm-adminareas-tile-iconwrap {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  color: #171717;
-}
-.mcm-adminareas-tile-iconwrap svg {
-  width: 22px;
-  height: 22px;
-}
-.mcm-adminareas-tile-body {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-.mcm-adminareas-tile-title {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.mcm-adminareas-tile-sub {
-  margin-top: 2px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ink-4);
-}
-
-/* ---- admin hub: "All Screens" ----
-   Each section is its own card — same bordered/shadowed language as the KPI,
-   donut and areas cards — packed into JS-computed columns (see
-   `useScreensColumnCount`/`screensColumns` in admin-home/index.tsx), not CSS
-   `column-count`. Grid row-tracks stretch every card in a row to the tallest
-   cell regardless of `align-items`, and `column-count`'s balancing pre-splits
-   total height evenly, bumping a card that doesn't fit that split to the next
-   column — both left gaps under shorter cards. Packing each group into
-   whichever column is currently shortest, in JS, avoids both. */
-.mcm-adminscreens-head {
-  padding: 0 2px 10px;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.mcm-adminscreens-grid {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-.mcm-adminscreens-col {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.mcm-adminscreens-group {
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: var(--surface);
-  padding: 20px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  transition: box-shadow 0.15s;
-}
-.mcm-adminscreens-group:hover {
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
-}
-.mcm-adminscreens-kicker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 12px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--line-2);
-}
-.mcm-adminscreens-kickericon {
-  flex: none;
-  width: 22px;
-  height: 22px;
-  color: #dc2626;
-}
-.mcm-adminscreens-kickertitle {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.mcm-adminscreens-kickercount {
-  flex: none;
-  font-size: 10.5px;
-  font-weight: 800;
-  color: var(--ink-4);
-  background: var(--surface-2);
-  border-radius: 999px;
-  padding: 2px 9px;
-}
-.mcm-adminscreens-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.mcm-adminscreens-list a {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 8px 9px;
-  border-radius: 12px;
-  color: var(--ink-2);
-  font-size: 13.5px;
-  font-weight: 600;
-  line-height: 1.3;
-  text-decoration: none;
-  transition:
-    background-color 0.12s,
-    color 0.12s,
-    box-shadow 0.12s;
-}
-.mcm-adminscreens-list a:hover {
-  background: #e3e3e3;
-  color: var(--accent-ink);
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
-}
-.mcm-adminscreens-iconwrap {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  background: var(--surface-2);
-  color: var(--ink-4);
-  transition:
-    background-color 0.12s,
-    color 0.12s;
-}
-.mcm-adminscreens-iconwrap svg {
-  width: 15px;
-  height: 15px;
-}
-.mcm-adminscreens-list a:hover .mcm-adminscreens-iconwrap {
-  background: var(--surface);
-  color: var(--accent-ink);
-}
-
-/* ---- admin hub: "Recently used" tile grid ----
-   Icon, kicker and title all sit inline in one row per card — two cards
-   side by side per row rather than one column of tall tiles. */
-.mcm-admin-kpigrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 10px;
-}
-.mcm-admin-kpitile {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  padding: 12px 16px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r);
-  color: inherit;
-  text-decoration: none;
-  transition:
-    background-color 0.12s,
-    border-color 0.12s;
+  padding: 16px 6px 10px;
 }
-.mcm-admin-kpitile:hover {
-  /* Not #e3e3e3 — that's the same colour as the page's own background, so
-     the "hover" fill barely registered against it. A light pink wash reads
-     clearly against both the white card and the grey page behind it, and
-     matches the red border this already gets on hover. */
-  background: var(--color-ucass-primary-100, #fef2f2);
-  border-color: var(--accent-edge);
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.08);
+.mcm-admincard-h {
+  padding: 0 12px 10px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
-.mcm-admin-kpitile-iconwrap {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--ink-4);
-  transition:
-    background-color 0.12s,
-    color 0.12s;
-}
-.mcm-admin-kpitile-iconwrap svg {
-  width: 15px;
-  height: 15px;
-}
-.mcm-admin-kpitile:hover .mcm-admin-kpitile-iconwrap {
-  background: var(--surface);
-  color: var(--accent-ink);
-}
-.mcm-admin-kpitile-body {
+.mcm-admincard ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+}
+.mcm-admincard li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--r-sm);
+}
+.mcm-admincard li:hover {
+  background: var(--surface-2);
+}
+.mcm-admincard li a {
+  flex: 1;
   min-width: 0;
-}
-.mcm-admin-kpitile-k {
-  line-height: 1.3;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--ink-4);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.mcm-admin-kpitile:hover .mcm-admin-kpitile-k {
-  color: var(--ink);
-}
-.mcm-admin-kpitile-v {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
+  display: flex;
+  flex-direction: column;
+  padding: 7px 12px;
   color: var(--ink-2);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
 }
-.mcm-admin-kpitile:hover .mcm-admin-kpitile-v {
+.mcm-admincard li:hover a {
   color: var(--accent-ink);
+}
+.mcm-admincard-group {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-4);
 }
 
 .mcm-adminhome-empty {
@@ -3520,8 +2961,8 @@
   flex: none;
   align-items: center;
   gap: 8px;
-  margin: 10px 4px 8px;
-  padding: 6px 10px;
+  margin: 12px 12px 8px;
+  padding: 7px 11px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface-2);
@@ -3806,107 +3247,44 @@
    emphasis is the page you are on.
    ================================================================== */
 .mcm-admin .mcm-adminnav {
-  padding: 4px 6px 14px;
-  transition: padding 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  padding: 4px 8px 14px;
 }
-/* No separator line between rows at all, in either state — rows read as a
-   quiet list on their own spacing/hover states alone. */
+
+/* No dividers between sections — the type carries the grouping. */
 .mcm-admin .mcm-adminnav.divide-y > * + * {
   border-top: 0;
 }
 
-/* Every row: section triggers and leaf tiles alike. A long label ("Social
-   Media Channels", "SMS/Calling Rates") wraps onto a second line instead of
-   truncating with an ellipsis — `min-height` (not a fixed `height`) lets the
-   row grow to fit it without clipping. */
+/* Every row: section triggers and leaf tiles alike. */
 .mcm-admin .mcm-adminnav .h-14,
 .mcm-admin .mcm-adminnav .min-h-14 {
+  height: 38px;
   min-height: 38px;
-  padding-top: 6px;
-  padding-bottom: 6px;
-  padding-left: 4px;
-  padding-right: 4px;
-  border: 1px solid transparent;
+  padding-left: 10px;
+  padding-right: 10px;
   border-radius: var(--r-sm);
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-2);
-  gap: 8px;
-  white-space: normal;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease,
-    border-color 0.15s ease,
-    padding 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    gap 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    margin 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  gap: 10px;
 }
-/* A leaf tile's own label sits in its own `<p class="truncate">`, which
-   carries its own `white-space: nowrap` — the wrap-to-two-lines rule above
-   doesn't reach a descendant that sets its own value for the same
-   property, so this still needs its own override. */
-.mcm-admin .mcm-adminnav .min-h-14 .truncate {
-  overflow: visible;
-  text-overflow: clip;
-  white-space: normal;
-}
-/* Leaf tiles (`.min-h-14`) are one plain element, so painting the fill
-   directly on it is safe — there's nothing else to leave uncovered. */
+.mcm-admin .mcm-adminnav .h-14:hover,
 .mcm-admin .mcm-adminnav .min-h-14:hover {
-  background: #e3e3e3;
-  color: var(--accent-ink);
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
-}
-/* A section trigger's icon+label sit in an inner div (`.h-14` without
-   `.min-h-14` — only leaf tiles carry both classes) with the dropdown
-   chevron as its sibling, both inside one outer button. Painting the fill
-   on *both* the inner div and the outer button (as this used to) draws two
-   overlapping rectangles — same colour, but not quite the same box, since
-   the inner div carries its own padding/height and the outer button
-   doesn't. That mismatch is what read as a visible seam between the text's
-   fill and the chevron's fill. The outer button is now the only thing that
-   paints; the inner div only changes text colour. */
-.mcm-admin .mcm-adminnav .h-14:not(.min-h-14):hover {
-  background: transparent;
-  color: var(--accent-ink);
-  box-shadow: none;
-}
-.mcm-admin .mcm-adminnav [data-slot='accordion-trigger'] {
-  border-radius: var(--r-sm);
-  transition:
-    background-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-.mcm-admin .mcm-adminnav [data-slot='accordion-trigger']:not([data-state='open']):hover {
-  background: #e3e3e3;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
-}
-.mcm-admin .mcm-adminnav [data-slot='accordion-trigger']:not([data-state='open']):hover svg {
-  color: var(--accent-ink);
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 /* Icons sized to the text, not to the row. */
 .mcm-admin .mcm-adminnav svg {
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border-radius: 10px;
+  width: 17px;
+  height: 17px;
   flex: none;
-  color: var(--ink-2);
-  transition:
-    width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    padding 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease;
 }
 .mcm-admin .mcm-adminnav .w-6 {
-  width: 20px;
+  width: 17px;
 }
 .mcm-admin .mcm-adminnav .h-6 {
-  height: 20px;
+  height: 17px;
 }
 
 /* No tinted blocks behind groups, and no stray borders. */
@@ -3918,43 +3296,21 @@
   border: 0;
 }
 
-/* Children sit under their section, indented once — enough to read as
-   nested without eating so much width that the label crowds up against the
-   icon. 34px (against the row's own 10px base) was more than the icon+gap
-   ahead of it accounted for, leaving a slab of bare space before the text
-   started. */
+/* Children sit under their section, indented once. */
 .mcm-admin .mcm-adminnav .pl-10 {
-  padding-left: 18px;
+  padding-left: 34px;
 }
 
 /* The current page: accent text on a soft wash, with a left rail. The old
    treatment put a 2px rail on the RIGHT, which read as a scrollbar. */
 .mcm-admin .mcm-adminnav .text-primary {
-  color: var(--ink);
+  color: var(--accent-ink);
   font-weight: 700;
 }
-/* Hovering the current page must not flip it red — black means "you are
-   here" and that stays true whether or not the cursor happens to be over it.
-   Needs its own rule: the generic `:hover` above matches this row too, and a
-   pseudo-class counts toward specificity, so without this the plain hover
-   rule would win and turn it red anyway. */
-.mcm-admin .mcm-adminnav .text-primary:hover {
-  color: var(--ink);
-}
-/* Same thin-border-plus-wash treatment as "All admin screens" above it, so
-   the current section reads consistently with the link back to the
-   overview — not the left inset rail this used to draw instead. */
 .mcm-admin .mcm-adminnav .border-r-primary {
-  border: 1px solid var(--accent-edge) !important;
-  background: #e3e3e3;
-  box-shadow: none;
-}
-/* Same reasoning as the text-colour pin above: the generic hover rule would
-   otherwise swap the active row's own pink for the brighter hover pink. */
-.mcm-admin .mcm-adminnav .border-r-primary:hover {
-  border: 1px solid var(--accent-edge) !important;
-  background: #e3e3e3;
-  box-shadow: none;
+  border-right: 0 !important;
+  background: var(--accent-wash);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 /* Section labels stay quiet until you are inside them. */
@@ -4014,7 +3370,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  margin: 0 4px 8px;
+  margin: 0 8px 8px;
   padding: 8px 10px;
   border-radius: var(--r-sm);
   border: 1px solid var(--line);
@@ -4022,342 +3378,21 @@
   color: var(--ink-2);
   font-size: 12.5px;
   font-weight: 700;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
-    padding 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    margin 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    gap 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .mcm-admin .mcm-adminnav-all:hover {
-  border-color: var(--line);
-  background: #f8fafc;
+  border-color: var(--accent-edge);
+  background: var(--accent-wash);
   color: var(--accent-ink);
 }
 .mcm-admin .mcm-adminnav-all.on {
   border-color: var(--accent-edge);
-  background: #e3e3e3;
-  color: var(--ink);
-}
-.mcm-admin .mcm-adminnav-all.on:hover {
-  border-color: var(--accent-edge);
-  background: #e3e3e3;
-  color: var(--ink);
+  background: var(--accent-wash);
+  color: var(--accent-ink);
 }
 .mcm-admin .mcm-adminnav-all svg {
   width: 15px;
   height: 15px;
   flex: none;
-}
-
-/* Declared as plain CSS rather than a Tailwind arbitrary-value class on the
-   element (`ease-[cubic-bezier(...)]`) — that class was added twice already
-   without the motion actually getting smoother, which points at the
-   arbitrary value not taking effect rather than the curve being wrong. This
-   is easy to confirm is live and is the one place the curve is defined,
-   instead of being duplicated across every rule below that also needs it.
-   `data-admin-rail` is set whenever this is the Admin Hub sidebar, collapsed
-   or not — unlike `data-rail-collapsed`, which is only present while
-   actually collapsed, so it can't be used to catch the *expanding*
-   direction too. */
-.mcm-admin section[data-admin-rail='true'] {
-  transition-property: width, min-width, max-width, border-color;
-  transition-duration: 0.6s;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-/* Scrollbar hidden for the whole Admin Hub sidebar, expanded or collapsed
-   — not removed, just not drawn: wheel/trackpad/keyboard scrolling still
-   works exactly as before. `data-admin-rail` (not `data-rail-collapsed`,
-   which is absent unless actually collapsed) so this applies in both
-   states rather than only while collapsed. */
-.mcm-admin section[data-admin-rail='true'] .overflow-y-auto {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.mcm-admin section[data-admin-rail='true'] .overflow-y-auto::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
-/* The header wrapper deliberately does NOT carry the shared `min-h-[65px]`
-   Tailwind class — the generic Admin content-page compat rule further down
-   this file targets that class directly and assumes it IS the flex/content
-   row (border-bottom, background, side padding meant for a page title bar).
-   Here it only wraps two absolutely-stacked children, so that rule would
-   apply its styling to a non-participating element instead of the header
-   row that actually needs it. A dedicated class keeps this rail header
-   isolated from that layer. */
-.mcm-admin section[data-admin-rail='true'] .mcm-adminnav-headerwrap {
-  height: 65px;
-  min-height: 65px;
-  max-height: 65px;
-  flex: none;
-}
-
-/* The two header states (stacked "Admin Hub" label vs. icon+title row) are
-   both always mounted, absolutely stacked on the same spot, and crossfade
-   via opacity — see the comment in page-sidebar-layout.tsx on why this
-   replaced a React conditional here specifically. */
-.mcm-admin section[data-admin-rail='true'] .mcm-adminnav-header-collapsed,
-.mcm-admin section[data-admin-rail='true'] .mcm-adminnav-header-expanded {
-  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.mcm-admin section[data-admin-rail='true'] .mcm-adminnav-header-collapsed {
-  opacity: 0;
-  pointer-events: none;
-}
-.mcm-admin section[data-admin-rail='true'] .mcm-adminnav-header-expanded {
-  opacity: 1;
-}
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-header-collapsed {
-  opacity: 1;
-  pointer-events: auto;
-}
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-header-expanded {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* ---- Admin Hub sidebar, collapsed to an icon-only rail ----
-   `PageSidebarLayout` marks the wrapping <section> with
-   `data-rail-collapsed` instead of unmounting the sidebar when collapsed —
-   so a narrow strip of icons stays reachable rather than the whole nav
-   (and its only way back open) vanishing. */
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-search {
-  display: none;
-}
-/* Labels and chevrons fade + shrink instead of snapping to `display: none`
-   — that made every row's content jump the instant the rail's own width
-   transition started, instead of the two animating together. `max-width`
-   (not `width`) so it can transition down to 0 and take the label's layout
-   space with it — width alone can't animate against an `auto` value, which
-   is what these would otherwise resolve to. `white-space` is deliberately
-   left alone: the accordion titles rely on inheriting `normal` from their
-   row for the two-line wrap on long labels, and setting `nowrap` here would
-   break that. */
-.mcm-adminnav-label,
-.mcm-adminnav-chevron {
-  max-width: 200px;
-  overflow: hidden;
-  opacity: 1;
-  transition:
-    max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-    margin 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.mcm-adminnav-label {
-  display: inline-block;
-}
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-label,
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-chevron {
-  max-width: 0;
-  opacity: 0;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-/* The real accordion chevron (rendered by the shared AccordionTrigger, not
-   this file's own markup) gets the same fade-and-shrink treatment, plus its
-   own margin transition since `mr-3` is a plain Tailwind class here rather
-   than something already covered by the label/chevron rule above. */
-[data-slot='accordion-trigger'] > svg {
-  max-width: 24px;
-  overflow: hidden;
-  opacity: 1;
-  transition:
-    max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-    margin-right 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-/* Admin Hub only: nudge every row's chevron (both the shared accordion
-   trigger's and the leaf tile's decorative one) a little closer to the
-   row's edge than the component's own default `mr-3`. Scoped to `.mcm-admin`
-   so Reports/Campaign/etc. sidebars, which reuse the same shared
-   AccordionTrigger, keep their own spacing. */
-.mcm-admin [data-slot='accordion-trigger'] > svg,
-.mcm-admin .mcm-adminnav-chevron {
-  margin-right: 7px !important;
-}
-.mcm-admin section[data-rail-collapsed='true'] [data-slot='accordion-trigger'] > svg {
-  max-width: 0;
-  opacity: 0;
-  margin-right: 0 !important;
-}
-/* The trigger button lays its content row and the chevron out as two flex
-   siblings with the component's own `gap-4` between them. Shrinking the
-   chevron to nothing above didn't remove that gap — flex `gap` still holds
-   space between siblings regardless of their own width — so the content row
-   was losing 16px off its right edge to a gap next to an icon nobody could
-   see, centring its own icon 8px left of where "All admin screens" (which
-   has no such sibling) centres. */
-.mcm-admin section[data-rail-collapsed='true'] [data-slot='accordion-trigger'] {
-  gap: 0;
-}
-/* Icons showed up but visibly clipped/off-centre the first time this ran —
-   something in the chain (likely the reserved scrollbar gutter, or a child
-   that doesn't shrink) was making the *actual* rendered width wider than
-   64px, so centring math based on that width put icons partway outside the
-   64px window `overflow-x-hidden` was clipping to. Forcing every
-   *descendant* in the chain to match its own parent's width, instead of
-   trusting each one to shrink correctly on its own, removes that mismatch
-   instead of chasing it with more precise-but-fragile pixel math. This must
-   never include the `<section>` itself — that's the element carrying the
-   actual `w-[64px]` rail width from PageSidebarLayout, and forcing it to
-   `width: 100%` here would override its own sizing with 100% of *its*
-   parent (the full page row), which is exactly the "sidebar became the
-   whole page width" bug this caused once already. */
-.mcm-admin section[data-rail-collapsed='true'] > div,
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav,
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-all,
-.mcm-admin section[data-rail-collapsed='true'] [data-slot='accordion'],
-.mcm-admin section[data-rail-collapsed='true'] [data-slot='accordion-item'],
-.mcm-admin section[data-rail-collapsed='true'] [data-slot='accordion-item'] > *,
-.mcm-admin section[data-rail-collapsed='true'] [data-slot='accordion-trigger'] {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box;
-  /* `overflow: hidden` (both axes) was clipping `.mcm-adminnav`'s vertical
-     overflow right here instead of letting it reach the scrollable
-     ancestor (`.overflow-y-auto`, several levels up) — nothing was actually
-     un-scrollable, the list content past the first screenful was just being
-     cropped away before it could ever trigger a scrollbar. Horizontal-only
-     keeps the "nothing wider than its parent" guarantee this rule exists
-     for, without capping height too. */
-  overflow-x: hidden;
-}
-/* Each accordion section is its own `AccordionItem`, which carries its own
-   `border-b` (from the shared component, not this file's `.divide-y` rule
-   removed above) — a leftover section separator that still drew a line
-   between every icon once the rail was down to icons alone. */
-.mcm-admin section[data-rail-collapsed='true'] [data-slot='accordion-item'] {
-  border-bottom: 0;
-}
-/* The scroll container's own scrollbar rendered inside this same narrow
-   column, right next to the icons, covering the space they need to
-   breathe in — this is what made the icons unreadable the first time this
-   was tried. Hidden here, not removed: scrolling (wheel, trackpad,
-   keyboard) still works exactly as before. Applied to every element in the
-   rail, not just the one known scroll container, so any other scrollbar
-   that shows up in here (the section itself included) is covered too. */
-.mcm-admin section[data-rail-collapsed='true'],
-.mcm-admin section[data-rail-collapsed='true'] * {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.mcm-admin section[data-rail-collapsed='true']::-webkit-scrollbar,
-.mcm-admin section[data-rail-collapsed='true'] *::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav {
-  padding: 10px 0;
-}
-/* Full-width rows with the icon centred inside, rather than a fixed-size
-   pill — sizing the row itself off a guessed pixel value is exactly the
-   fragile math the container-width rule above replaces. Margin between
-   rows stands in for the gap the full-width nav gets from its own padding,
-   giving the same generous spacing the reference shows. Split evenly
-   top/bottom (not all on the bottom) — an all-bottom margin left more empty
-   space under the icon than above it, since the icon is centred within its
-   own row but the row itself sat flush against the divider line above and
-   10px clear of the one below, reading as "pushed up" between the two
-   dividers even though it's centred in its own box. */
-.mcm-admin section[data-rail-collapsed='true'] .h-14,
-.mcm-admin section[data-rail-collapsed='true'] .min-h-14 {
-  justify-content: center;
-  gap: 0;
-  margin: 5px 0;
-  padding-left: 0;
-  padding-right: 0;
-}
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-all {
-  justify-content: center;
-  gap: 0;
-  margin: 5px 0;
-  padding-left: 0;
-  padding-right: 0;
-}
-.mcm-admin section[data-rail-collapsed='true'] .pl-10 {
-  padding-left: 0;
-}
-/* The row itself stays a plain, invisible layout box (full width, for
-   correct centring — see above); the "button" people actually see is a
-   fixed-size chip painted on the icon directly instead. Styling the row
-   made the pill stretch to the row's own (full rail) width, reading as a
-   wide bar rather than an icon button — sizing off the icon fixes that
-   regardless of how wide its row happens to be. `[data-slot='accordion-
-   trigger']` (the outer button) needs the same treatment as the inner
-   `.h-14` div it wraps — without it, the shared AccordionTrigger component
-   still paints its own active-state background
-   (`bg-ucass-primary-200/50`) across the full row width, showing up as a
-   second, larger box behind the properly-square icon chip. */
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-all,
-.mcm-admin section[data-rail-collapsed='true'] [data-slot='accordion-trigger'],
-.mcm-admin section[data-rail-collapsed='true'] .h-14,
-.mcm-admin section[data-rail-collapsed='true'] .min-h-14 {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-/* The chip is a dedicated wrapper element around the icon (`.mcm-adminnav-
-   iconwrap`), not padding painted on the `<svg>` itself — width+padding
-   math should already have produced a square, and forcing `aspect-ratio`
-   on top of two explicit dimensions didn't fix it either (that combination
-   is a no-op per spec: aspect-ratio only fills in a *missing* dimension).
-   A plain element with `width`/`height` set directly has no such ambiguity
-   to go wrong. Not scoped to `.h-14`/`.min-h-14` specifically since the
-   class itself only exists in this rail. */
-.mcm-adminnav-iconwrap {
-  display: contents;
-}
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-iconwrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  color: var(--ink);
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
-}
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-iconwrap svg {
-  width: 25px;
-  height: 25px;
-  /* The svg has its own unconditional `color: var(--ink-2)` from the
-     pre-existing base rule (further up this file, predates this rail
-     entirely) — set directly on the element, not inherited, so it wins
-     over whatever colour the wrapper computes regardless of the wrapper's
-     own hover/active state. Inheriting explicitly here is what actually
-     lets the icon follow the wrapper's colour on hover. */
-  color: inherit;
-}
-.mcm-admin section[data-rail-collapsed='true'] .h-14:hover .mcm-adminnav-iconwrap,
-.mcm-admin section[data-rail-collapsed='true'] .min-h-14:hover .mcm-adminnav-iconwrap,
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-all:hover .mcm-adminnav-iconwrap {
-  background: #e3e3e3;
-  color: var(--accent-ink);
-}
-/* Active section: just a soft grey chip, no accent bar — the left rail was
-   flagged as an unwanted "red add-on" and removed. `!important` because the
-   chip wasn't appearing on the active item despite this rule looking like
-   it should already win — rather than keep guessing at whatever it's
-   losing to, force the issue directly. */
-.mcm-admin section[data-rail-collapsed='true'] .border-r-primary .mcm-adminnav-iconwrap {
-  background: #e3e3e3 !important;
-  color: var(--accent-ink) !important;
-}
-/* Same chip treatment for "All admin screens" when it's the active page —
-   it uses its own `.on` class rather than `.border-r-primary`, so it needs
-   its own copy of the rule above. */
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-all.on .mcm-adminnav-iconwrap {
-  background: #e3e3e3 !important;
-  color: var(--ink) !important;
 }
 
 /* ==================================================================
@@ -4819,6 +3854,35 @@
   color: var(--ink);
 }
 
+/* Compact callers (My Phone) read the label and its outcome as one sentence
+   instead of a caption over a headline — "When someone calls you now — All
+   calls go to your voicemail." on one line where it fits, wrapping onto its
+   own line only once it doesn't. */
+.mcm-callsummary.inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  row-gap: 2px;
+}
+.mcm-callsummary.inline .mcm-callsummary-l {
+  flex: none;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 11.5px;
+}
+.mcm-callsummary-sep {
+  flex: none;
+  color: var(--ink-4);
+}
+.mcm-callsummary.inline p {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: normal;
+}
+
 .mcm-rule-rank {
   flex: none;
   margin-left: 10px;
@@ -4877,7 +3941,7 @@
 @keyframes mcm-flash-outline {
   0%,
   60% {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #dc2626) 45%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #2563eb) 45%, transparent);
   }
   100% {
     box-shadow: 0 0 0 3px transparent;
@@ -5482,292 +4546,4 @@
    band read as an alert panel rather than a set of readings. */
 .mcm-page .kpis-flat .kpi.alert {
   background: var(--surface);
-}
-
-/* ---------------------------------------------- Company screens: red + black
- *
- * Scoped to the two Company destinations in the sidebar — "Company & Locations"
- * and "Company Rules" — by a class on each page's root element. Nothing outside
- * those subtrees changes.
- *
- * The palette, as specified:
- *
- *   #111111  ink      — headings, body text, filled buttons
- *   #D92B2B  red      — accent: icons, links, active tab, card top-borders
- *   #FFFFFF  ground   — the page background and the icon tiles
- *   #FDECEC  red wash — the selected-row tint that goes under the red
- *
- * Only the brand tokens and the two darkest greys move. The lighter greys stay
- * grey, and the semantic colours are deliberately untouched: amber still means
- * warning, green still means ok, and the error red keeps meaning error. Painting
- * those in the brand red would leave an admin unable to tell a heading from an
- * alert.
- *
- * These sit on a descendant class rather than :root on purpose:
- * organization-context.tsx writes the tenant's brand colours as an INLINE style
- * on <html>, which outranks any :root rule. A class on the page beats it.
- */
-.mcm-company-theme {
-  --primary: #d92b2b;
-
-  /* Despite the name, ucass-primary-200 is a WASH, not a fill: every use of it
-     pairs it with `text-primary`, so it has to stay light enough for the accent
-     ink to sit on. It also appears at partial opacity (`/40`, `/30`), which is
-     a separate utility this file's rules cannot reach — setting it to a dark
-     value turned those panels into grey slabs. */
-  --color-ucass-primary-200: #fdecec;
-  --color-ucass-primary-100: #fdecec;
-  --color-ucass-active: #d92b2b;
-  --color-ucass-active-bg: #fdecec;
-
-  /* Belt and braces for anything reaching past the two tokens above. The MCM
-     token set and the shadcn focus ring both default to blue. */
-  --mcm-accent: #d92b2b;
-  --mcm-accent-ink: #b91c1c;
-  --mcm-accent-wash: #fdecec;
-  --mcm-accent-edge: #f5c2c2;
-  --accent: #d92b2b;
-  --accent-ink: #b91c1c;
-  --accent-wash: #fdecec;
-  --accent-edge: #f5c2c2;
-  /* The focus outline. index.css has a base rule painting every element's
-     outline-color with this, so a red value ringed each focused field in red —
-     which reads as a validation failure. Focus is monochrome. */
-  --ring: #111111;
-
-  /* Tailwind's darkest greys are blue-tinted (oklch 21% 0.034 264.665). The
-     spec's ink is neutral, so the two that carry actual copy are replaced;
-     gray-700 and lighter are left as they are, since they read as secondary
-     text and losing their coolness flattens the hierarchy. */
-  --color-gray-900: #111111;
-  --color-gray-800: #1f1f1f;
-
-  background-color: #ffffff;
-}
-
-/* Icon tiles and pill badges: tinted ground, red rule, black label. The class is
-   shared with the filled buttons below, which is why this one excludes them
-   rather than the other way round. */
-.mcm-company-theme .bg-ucass-primary-200:not([data-slot='button']) {
-  background-color: #fdecec;
-  border: 1px solid #d92b2b;
-  color: #111111;
-}
-
-/* Red marks the glyphs, never the words.
- *
- * `text-primary` is applied to icons and to copy alike — the location name, the
- * "Main Location" pill and the briefcase beside a heading all carry it — so the
- * token alone cannot tell them apart. Words take the ink; an <svg> under the
- * same class keeps the accent. Everything an admin READS is #111111. */
-.mcm-company-theme .text-primary {
-  color: #111111;
-}
-.mcm-company-theme svg.text-primary,
-.mcm-company-theme .text-primary svg,
-.mcm-company-theme .bg-ucass-primary-200:not([data-slot='button']) svg {
-  color: #d92b2b;
-}
-
-/* Buttons are black at rest, not only while pressed. Written against the
-   variant classes the shared Button already emits, so no component changes.
-   `.bg-white` is the outline variant, which used to stay white until hover. */
-.mcm-company-theme [data-slot='button'].bg-ucass-primary-200,
-.mcm-company-theme [data-slot='button'].bg-primary,
-.mcm-company-theme [data-slot='button'].bg-white {
-  background-color: #111111;
-  border-color: #111111;
-  color: #ffffff;
-}
-.mcm-company-theme [data-slot='button'].bg-ucass-primary-200:hover,
-.mcm-company-theme [data-slot='button'].bg-primary:hover,
-.mcm-company-theme [data-slot='button'].bg-white:hover {
-  background-color: #333333;
-  border-color: #333333;
-  color: #ffffff;
-}
-/* A button's own label and icons are white, including the <svg> the accent rule
-   above would otherwise paint red. */
-.mcm-company-theme [data-slot='button'] svg {
-  color: inherit;
-}
-
-/* Pressing a button blooms a soft pink halo. Bound to :active and
-   :focus-visible, so it answers both the click and the keyboard — and it is a
-   box-shadow rather than an outline so it cannot shift the layout. */
-.mcm-company-theme [data-slot='button']:active,
-.mcm-company-theme [data-slot='button']:focus-visible {
-  box-shadow:
-    0 0 0 4px rgba(217, 43, 43, 0.22),
-    0 2px 10px rgba(217, 43, 43, 0.28);
-  outline: none;
-}
-
-/* Destructive keeps its own red — a delete button must not look like every
-   other accent on the page. */
-.mcm-company-theme [data-slot='button'].bg-destructive,
-.mcm-company-theme [data-slot='button'].bg-destructive:hover {
-  background-color: var(--destructive);
-  border-color: var(--destructive);
-  color: #ffffff;
-}
-
-/* Selected and pressed: the pink band from the reference.
- *
- * This is the ONE place words are allowed to go red. At rest everything an
- * admin reads is #111111 (see the accent rule above); the accent arrives only
- * when something is chosen or is being clicked, which is what makes it read as
- * a state rather than as decoration.
- *
- * State is read from the accessibility attributes rather than from a class, so
- * it works for the section tabs (NavLink sets aria-current="page" when active),
- * for Radix's tabs and options, and for anything added later that marks itself
- * up correctly — without those components importing anything from here.
- *
- * Filled buttons are excluded throughout: they are black, and a pink wash under
- * a black fill would do nothing but fight it. */
-.mcm-company-theme [aria-current='page']:not([data-slot='button']),
-.mcm-company-theme [aria-selected='true']:not([data-slot='button']),
-.mcm-company-theme [data-state='active']:not([data-slot='button']) {
-  background-color: #fdecec;
-  color: #d92b2b;
-  border-radius: 10px;
-}
-
-/* The press itself — colour only, no wash, so a click on a long row does not
-   flash a full-width band on the way to wherever it leads. */
-.mcm-company-theme a:active:not([data-slot='button']),
-.mcm-company-theme button:active:not([data-slot='button']),
-.mcm-company-theme [role='button']:active:not([data-slot='button']) {
-  color: #d92b2b;
-}
-
-/* Glyphs inside a selected or pressed row are already red and must stay red —
-   the accent rule above would otherwise leave them at the inherited ink. */
-.mcm-company-theme [aria-current='page'] svg,
-.mcm-company-theme [aria-selected='true'] svg,
-.mcm-company-theme [data-state='active'] svg,
-.mcm-company-theme a:active svg,
-.mcm-company-theme button:active:not([data-slot='button']) svg {
-  color: #d92b2b;
-}
-
-/* Pill badges — "Main Location", "Locked" — carry the rule and nothing else.
-   The tint is meant for the icon tiles, where it sits behind a glyph; behind a
-   word it competes with the ink for the same small area. `rounded-sm` is what
-   separates a badge from a tile in this codebase. */
-.mcm-company-theme .rounded-sm.bg-ucass-primary-200:not([data-slot='button']) {
-  background-color: transparent;
-}
-
-/* Text fields carry a single red rule.
- *
- * At rest, on hover and on focus alike — one 1px #d92b2b line, the weight in
- * the reference. `.border-gray-300` is what the shared Input puts on a field in
- * its normal state, so keying off it leaves the invalid state alone: a failing
- * field keeps `border-red-500` and its own error icon, which is the one place
- * the rule needs to mean something more than decoration.
- *
- * This covers the Add-new-location drawer as well as the search box — SideDrawer
- * renders inline rather than through a portal, so its fields sit inside this
- * subtree and inherit the rule.
- *
- * Each Tailwind variant compiles to its own class, so the hover and focus
- * variants are named explicitly; a rule on `.border-primary` reaches neither. */
-.mcm-company-theme input.border-gray-300,
-.mcm-company-theme textarea.border-gray-300,
-.mcm-company-theme input.hover\:border-primary:hover,
-.mcm-company-theme textarea.hover\:border-primary:hover,
-.mcm-company-theme input.focus\:border-primary:focus,
-.mcm-company-theme textarea.focus\:border-primary:focus {
-  border-color: #d92b2b;
-}
-
-/* One line, never two.
- *
- * Matching the outline's COLOUR still left a second ring wherever a browser
- * draws its own focus outline, so it is removed outright here.
- *
- * That would leave a focused field with no indicator at all, since the border
- * is already red at rest — so focus deepens the single line to #a81d1d instead.
- * Still one rule, still obvious which field has the caret. */
-.mcm-company-theme input:focus,
-.mcm-company-theme input:focus-visible,
-.mcm-company-theme textarea:focus,
-.mcm-company-theme textarea:focus-visible {
-  outline: none;
-  border-color: #a81d1d;
-}
-
-/* The four company-rule rows, tinted.
- *
- * Background only — the grey rule and everything inside them is left as it is. */
-.mcm-company-theme .mcm-accent-row {
-  background-color: #fdecec;
-}
-
-/* Dropdown menus, which escape the theme.
- *
- * CustomSelect portals its menu onto <body> (see `resolvedMenuPortalTarget` in
- * components/custom/custom-select.tsx), so an open list is a sibling of the app
- * root rather than a descendant of the themed page — which is why it kept
- * painting itself in the tenant's blue while everything around it went red.
- *
- * `:has()` reaches it without touching the shared component: while a company
- * page is mounted anywhere in the document, the portaled menu takes the theme
- * too, and every other screen's selects are left alone. Both class prefixes in
- * use are covered.
- *
- * WRAPPED IN @layer base ON PURPOSE. The rules being overridden live in
- * index.css inside that layer and are `!important`, and the cascade REVERSES
- * layer order for important declarations — an unlayered `!important` loses to a
- * layered one however specific it is. Sitting in the same layer puts the two on
- * equal footing, where specificity decides and these win. */
-@layer base {
-  body:has(.mcm-company-theme) .custom-react-select__menu,
-  body:has(.mcm-company-theme) .select-group__menu {
-    border-color: #f3c9c9 !important;
-  }
-
-  /* Hover and keyboard focus: the faintest red tint, text still black. Kept
-     lighter than the selected band below and left with black ink, so arrowing
-     down the list never looks like you have already chosen the row you are
-     merely passing over — the red ink and the heavier weight are what mark the
-     actual selection. */
-  body:has(.mcm-company-theme) .custom-react-select__option:hover,
-  body:has(.mcm-company-theme) .custom-react-select__option--is-focused,
-  body:has(.mcm-company-theme) .select-group__option:hover,
-  body:has(.mcm-company-theme) .select-group__option--is-focused {
-    background-color: #fdf5f5 !important;
-    color: #111111 !important;
-  }
-
-  /* Selected: the pink band and red ink from the reference.
-   *
-   * Listed AFTER hover, and naming the hover and focus combinations explicitly,
-   * because react-select puts BOTH classes on the row when you mouse over the
-   * option that is already chosen. At equal specificity the later rule wins, so
-   * without this the selected row lost its red the moment the cursor touched
-   * it — which is the one place the colour actually carries meaning. */
-  body:has(.mcm-company-theme) .custom-react-select__option--is-selected,
-  body:has(.mcm-company-theme) .custom-react-select__option--is-selected:hover,
-  body:has(.mcm-company-theme) .custom-react-select__option--is-selected.custom-react-select__option--is-focused,
-  body:has(.mcm-company-theme) .select-group__option--is-selected,
-  body:has(.mcm-company-theme) .select-group__option--is-selected:hover,
-  body:has(.mcm-company-theme) .select-group__option--is-selected.select-group__option--is-focused {
-    background-color: #fdecec !important;
-    color: #d92b2b !important;
-    font-weight: 600 !important;
-  }
-
-  /* The closed control, which is inside the page but whose focus and hover
-     borders also resolve through --primary. */
-  body:has(.mcm-company-theme) .custom-react-select__control--is-focused,
-  body:has(.mcm-company-theme) .custom-react-select__control--menu-is-open,
-  body:has(.mcm-company-theme) .custom-react-select__control:hover,
-  body:has(.mcm-company-theme) .select-group__control--is-focused,
-  body:has(.mcm-company-theme) .select-group__control--menu-is-open,
-  body:has(.mcm-company-theme) .select-group__control:hover {
-    border-color: #d92b2b !important;
-  }
 }

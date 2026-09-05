@@ -1,7 +1,7 @@
 import CommonGreetingNotification from '@/components/common-greetings';
 import { GreetingItem, useGetGreetings } from '@/hooks/common';
 
-const GreetingNotification = ({ customClass }: any) => {
+const GreetingNotification = ({ customClass, selectMenuPortalTarget, acepeakTheme }: any) => {
   const { greetingList, voicemailList } = useGetGreetings();
 
   const optionsData: Record<string, GreetingItem[]> = {
@@ -61,6 +61,8 @@ const GreetingNotification = ({ customClass }: any) => {
       <CommonGreetingNotification
         {...{ mediaOptionsGreetingNotifications, optionsData }}
         customClass={customClass}
+        selectMenuPortalTarget={selectMenuPortalTarget}
+        acepeakTheme={acepeakTheme}
       />
     </section>
   );

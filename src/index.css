@@ -1,10 +1,12 @@
 /* MCM Unified Console typeface pair. Plus Jakarta Sans for UI, IBM Plex
    Mono for anything numeric — durations, counts, timestamps — so digits
-   stay tabular and stop jittering as they tick. Instrument Serif is the
-   display face, used for page headings only.
-   Must stay at the very top: CSS requires every @import to precede all other
-   statements, and the imports below pull in real rules. */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
+   stay tabular and stop jittering as they tick. Must stay the first
+   statement in this file: @import 'tailwindcss' and the local file imports
+   below expand into real CSS content at build time, and an @import placed
+   after content that has already resolved into rules is invalid per the
+   CSS spec — the build was silently dropping this one because of it. */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
 @import 'tailwindcss';
 @import 'tw-animate-css';
 /* Loaded once here rather than from each page. Every rule in it is scoped to
@@ -18,13 +20,13 @@
   --color-ucass-orange: oklch(0.7652 0.1752 62.57);
   --color-ucass-black: oklch(0.23 0 0);
   /* --color-ucass-primary-100: oklch(0.92 0.06 215.08); blue*/
-  --color-ucass-primary-100: #fef2f2;
+  --color-ucass-primary-100: #e8efff;
   /* --color-ucass-primary-200: set dynamically from mainSiteInfo.secondary_color (fallback below) */
-  --color-ucass-primary-200: #fee2e2;
+  --color-ucass-primary-200: #2563eb;
   /* --color-ucass-active: set dynamically from mainSiteInfo.active_sidebar_color (fallback below) */
-  --color-ucass-active: #b91c1c;
-  --color-ucass-active-bg: #fef2f2;
-  --color-ucass-login-bg: #f5f5f5;
+  --color-ucass-active: #1d4ed8;
+  --color-ucass-active-bg: #e8efff;
+  --color-ucass-login-bg: #eef1f8;
   --color-ucass-green: oklch(0.96 0.1 125.78);
   --color-ucass-red: oklch(0.6 0.22 25);
 
@@ -123,21 +125,21 @@
 
 :root {
   /* ---- MCM Unified Console tokens (light is the base) ---------------- */
-  --mcm-ground: #f5f5f5;
+  --mcm-ground: #eef1f8;
   --mcm-surface: #ffffff;
-  --mcm-surface-2: #fafafa;
-  --mcm-surface-3: #eeeeee;
+  --mcm-surface-2: #f6f8fc;
+  --mcm-surface-3: #eaeef7;
   --mcm-ink: #0d1526;
   --mcm-ink-2: #3d4a63;
   --mcm-ink-3: #6b7891;
   --mcm-ink-4: #93a0b8;
-  --mcm-line: #e5e5e5;
-  --mcm-line-2: #efefef;
+  --mcm-line: #dfe5f0;
+  --mcm-line-2: #eaeef6;
 
-  --mcm-accent: #dc2626;
-  --mcm-accent-ink: #b91c1c;
-  --mcm-accent-wash: #fef2f2;
-  --mcm-accent-edge: #fecaca;
+  --mcm-accent: #2563eb;
+  --mcm-accent-ink: #1d4ed8;
+  --mcm-accent-wash: #e8efff;
+  --mcm-accent-edge: #c3d6ff;
 
   /* AI gets its own hue on purpose: machine output must never be mistaken
      for system truth. Violet reads as "generated, verify me". */
@@ -176,7 +178,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
   /* --primary: set dynamically from mainSiteInfo.primary_color (fallback below) */
-  --primary: #dc2626;
+  --primary: oklch(0.18 0 0);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -205,21 +207,21 @@
 
 .dark {
   /* ---- MCM Unified Console tokens (dark redefines values only) ------- */
-  --mcm-ground: #0a0a0a;
-  --mcm-surface: #171717;
-  --mcm-surface-2: #1f1f1f;
-  --mcm-surface-3: #262626;
+  --mcm-ground: #0a0f1a;
+  --mcm-surface: #111827;
+  --mcm-surface-2: #161f31;
+  --mcm-surface-3: #1e293e;
   --mcm-ink: #eef2f9;
   --mcm-ink-2: #c3cddf;
   --mcm-ink-3: #93a1ba;
   --mcm-ink-4: #6b7a96;
-  --mcm-line: #333333;
-  --mcm-line-2: #292929;
+  --mcm-line: #26314a;
+  --mcm-line-2: #1c2537;
 
-  --mcm-accent: #f87171;
-  --mcm-accent-ink: #fca5a5;
-  --mcm-accent-wash: #3a1414;
-  --mcm-accent-edge: #7f1d1d;
+  --mcm-accent: #5b8dff;
+  --mcm-accent-ink: #87aaff;
+  --mcm-accent-wash: #16223d;
+  --mcm-accent-edge: #2c3f68;
 
   --mcm-ai: #a97fff;
   --mcm-ai-ink: #c0a3ff;
@@ -245,7 +247,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #f87171;
+  --primary: oklch(0.6536 0.124 225.17);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -272,89 +274,6 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* ---- Toast notifications ----
-   react-toastify ships its own look (system font, flat green/red, square
-   corners) that never matched the console's card language. It exposes its
-   whole theme as CSS custom properties, so retinting it is a token swap
-   rather than a fight with its own BEM classes — same approach as the rest
-   of this file. Uses the unprefixed `--mcm-*` root tokens (not `.mcm-page`'s
-   scoped ones) because the toast container portals to `document.body`,
-   outside any page's `.mcm-page` wrapper.
-   `!important` on every one of these: react-toastify injects its own
-   `:root { --toastify-* }` block into `<head>` at runtime, when the toast
-   module first loads — after this stylesheet. Same selector, same
-   specificity, later in the document always wins the normal way, which
-   silently discarded every value below regardless of source order in this
-   file. `!important` is the one thing that still wins against a rule
-   injected after this one. */
-:root {
-  --toastify-toast-bd-radius: var(--mcm-r) !important;
-  --toastify-toast-shadow: var(--mcm-shadow-lg) !important;
-  --toastify-toast-padding: 14px 16px !important;
-  --toastify-font-family: var(--mcm-sans) !important;
-  --toastify-color-light: var(--mcm-surface) !important;
-  --toastify-text-color-light: var(--mcm-ink-2) !important;
-  --toastify-icon-color-success: var(--mcm-live) !important;
-  --toastify-icon-color-error: var(--mcm-crit) !important;
-  --toastify-icon-color-warning: var(--mcm-warn) !important;
-  --toastify-icon-color-info: var(--mcm-hold) !important;
-  --toastify-color-progress-success: var(--mcm-live) !important;
-  --toastify-color-progress-error: var(--mcm-crit) !important;
-  --toastify-color-progress-warning: var(--mcm-warn) !important;
-  --toastify-color-progress-info: var(--mcm-hold) !important;
-}
-/* `!important` throughout this block for the same reason as the `:root`
-   vars above: react-toastify's own base rules for these same selectors ship
-   in that same runtime-injected stylesheet, so on every property the two
-   sides share, its later position in the document would otherwise win. */
-.Toastify__toast {
-  border: 1px solid var(--mcm-line) !important;
-  align-items: flex-start !important;
-}
-.Toastify__toast-body {
-  font-size: 13.5px !important;
-  font-weight: 500 !important;
-  line-height: 1.45 !important;
-}
-/* The stock icon is a bare glyph floating in the text row; every status
-   indicator elsewhere in the console (KPI cards, nav chips) puts its icon in
-   a tinted circle instead, so the toast icon gets the same treatment. */
-.Toastify__toast-icon {
-  width: 30px !important;
-  height: 30px !important;
-  margin-inline-end: 12px !important;
-  border-radius: 999px !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-.Toastify__toast-icon svg {
-  width: 16px !important;
-  height: 16px !important;
-}
-.Toastify__toast--success .Toastify__toast-icon {
-  background: var(--mcm-live-wash) !important;
-}
-.Toastify__toast--error .Toastify__toast-icon {
-  background: var(--mcm-crit-wash) !important;
-}
-.Toastify__toast--warning .Toastify__toast-icon {
-  background: var(--mcm-warn-wash) !important;
-}
-.Toastify__toast--info .Toastify__toast-icon {
-  background: var(--mcm-hold-wash) !important;
-}
-.Toastify__close-button--light {
-  color: var(--mcm-ink-4) !important;
-  opacity: 1 !important;
-}
-.Toastify__close-button--light:hover,
-.Toastify__close-button--light:focus {
-  color: var(--mcm-ink-2) !important;
-}
-.Toastify__progress-bar--wrp {
-  height: 3px !important;
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -369,7 +288,7 @@
   #root,
   html {
     height: 100%;
-    background-color: #e3e3e3;
+    background-color: var(--color-gray-100);
   }
 
   input,
@@ -447,8 +366,13 @@
     overflow: hidden !important;
   }
 
+  /* var(--select-control-border) is unset everywhere by default, so this
+     resolves to the same --primary as before on every existing page. See
+     the --select-option-*-bg/-fg comment further down for why a page-local
+     fallback variable is used here instead of touching --primary itself,
+     which borders/rings far beyond this one control rely on. */
   .custom-react-select__control:hover {
-    border-color: var(--primary) !important;
+    border-color: var(--select-control-border, var(--primary)) !important;
   }
 
   .react-select-error .custom-react-select__control {
@@ -662,7 +586,7 @@
 
   .custom-react-select__control--is-focused,
   .custom-react-select__control--menu-is-open {
-    border-color: var(--primary) !important;
+    border-color: var(--select-control-border, var(--primary)) !important;
   }
 
   .custom-react-select__menu {
@@ -693,26 +617,28 @@
     border-radius: 0.5rem !important;
   }
 
+  /* These --select-option-*-bg/-fg variables are unset everywhere by
+     default, so every rule below resolves to the same colours as before on
+     every existing page. A page can locally set them (e.g. on its own root
+     class) to recolour just hover or just the current selection for its own
+     dropdowns, without touching the app-wide --color-gray-100 / --primary
+     tokens those colours otherwise fall back to — which are both used far
+     more broadly than this menu. Hover and selected are deliberately
+     separate variables: an option can be hovered without being the current
+     value, and the two are allowed to read as different weights of
+     emphasis. Declared in this order (hover, then selected) because when an
+     option is both — the current value, freshly opened or landed on by
+     keyboard focus — the selected colour is meant to win; being later here
+     is what makes that the case. */
   .custom-react-select__option:hover,
   .custom-react-select__option--is-focused {
-    background-color: var(--color-gray-100) !important;
-    color: var(--color-black) !important;
+    background-color: var(--select-option-hover-bg, var(--color-gray-100)) !important;
+    color: var(--select-option-hover-fg, var(--color-black)) !important;
   }
 
-  /* Selected: the brand's lightest pink band with red ink, the same pair the
-     Company screens use, rather than a solid --primary fill.
-
-     Listed AFTER hover and naming the hover/focused combinations explicitly,
-     because react-select puts BOTH classes on the row when you mouse over the
-     option that is already chosen. At equal specificity the later rule wins,
-     so without this the selected row lost its pink the moment the cursor
-     touched it — the one place the colour carries meaning. */
-  .custom-react-select__option--is-selected,
-  .custom-react-select__option--is-selected:hover,
-  .custom-react-select__option--is-selected.custom-react-select__option--is-focused {
-    background-color: #fdecec !important;
-    color: #d92b2b !important;
-    font-weight: 600 !important;
+  .custom-react-select__option--is-selected {
+    background-color: var(--select-option-active-bg, var(--primary)) !important;
+    color: var(--select-option-active-fg, var(--color-white)) !important;
   }
 
   .custom-react-select__indicator,
@@ -1103,30 +1029,28 @@
 
 .global-search-root {
   position: relative;
-  min-width: 0;
+  /* width: 430px; */
+  flex-shrink: 0;
 }
 
 .global-search-input-wrapper {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 0 10px;
+  border-radius: 8px;
+  padding: 0 12px;
   height: 38px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   transition:
     border-color 0.2s,
-    box-shadow 0.2s,
-    background 0.2s;
+    box-shadow 0.2s;
 }
 
 .global-search-input-wrapper:focus-within,
 .global-search-input-wrapper.is-open {
-  border-color: var(--primary);
+  border-color: #cbd5e1;
   background: #ffffff;
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 14%, transparent);
 }
 
 .global-search-input {
@@ -1151,7 +1075,7 @@
 .global-search-kbd {
   flex: none;
   font-family: inherit;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -1159,7 +1083,7 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 5px;
-  padding: 2px 5px;
+  padding: 3px 6px;
   white-space: nowrap;
 }
 
@@ -1197,7 +1121,7 @@
   min-width: 280px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow:
     0 10px 15px -3px rgb(0 0 0 / 0.1),
     0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -1287,63 +1211,6 @@
   margin: 0;
   font-size: 13px;
   color: #6b7280;
-}
-
-.dark .global-search-input-wrapper {
-  background: #1f1f1f;
-  border-color: #333333;
-}
-
-.dark .global-search-input-wrapper:focus-within,
-.dark .global-search-input-wrapper.is-open {
-  border-color: #444444;
-  background: #171717;
-}
-
-.dark .global-search-input {
-  color: #eef2f9;
-}
-
-.dark .global-search-input::placeholder {
-  color: #93a1ba;
-}
-
-.dark .global-search-kbd {
-  color: #93a1ba;
-  background: #262626;
-  border-color: #333333;
-}
-
-.dark .global-search-cmd-k {
-  color: #93a1ba;
-  border-color: #333333;
-}
-
-.dark .global-search-dropdown {
-  background: #171717;
-  border-color: #333333;
-}
-
-.dark .global-search-section-label {
-  color: #93a1ba;
-  border-top-color: #262626;
-}
-
-.dark .global-search-item {
-  color: #eef2f9;
-}
-
-.dark .global-search-item:hover,
-.dark .global-search-item.is-active {
-  background: #1f1f1f;
-}
-
-.dark .global-search-item-title {
-  color: #eef2f9;
-}
-
-.dark .global-search-empty {
-  color: #93a1ba;
 }
 
 /* .EmojiPickerReact {
@@ -1710,28 +1577,12 @@
   display: none;
 }
 
-/* Pill-shaped tabs sitting directly on the header — no surrounding track.
-   The active pill is a single element (`.mcm-areanav-indicator`) that slides
-   and resizes to whichever tab is active, instead of each tab's own
-   background just appearing/disappearing in place. */
 .mcm-areanav {
-  position: relative;
   display: none;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   height: 100%;
   min-width: 0;
-  /* When every tab doesn't fit, the strip scrolls instead of forcing the
-     header wider and pushing the search bar / icon cluster past the
-     viewport's right edge. */
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.mcm-areanav::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
 }
 
 @media (min-width: 1024px) {
@@ -1740,79 +1591,36 @@
   }
 }
 
-.mcm-areanav-indicator {
-  /* Position, width and height all come from the component, measured off
-     the active button's own box — so this is the exact same size as the
-     hover pill (which is just that button's own background), not a guessed
-     inset from the nav bar's overall height. */
-  position: absolute;
-  left: 0;
-  top: 0;
-  border-radius: 999px;
-  background: #f8fafc;
-  box-shadow: inset 0 0 0 1px #e2e8f0;
-  transition:
-    transform 0.25s cubic-bezier(0.65, 0, 0.35, 1),
-    width 0.25s cubic-bezier(0.65, 0, 0.35, 1),
-    height 0.25s cubic-bezier(0.65, 0, 0.35, 1);
-  pointer-events: none;
-  z-index: 0;
-}
-.dark .mcm-areanav-indicator {
-  background: #1f1f1f;
-  box-shadow: inset 0 0 0 1px #333333;
-}
-
 .mcm-areanav-btn {
-  position: relative;
-  z-index: 1;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 9px 20px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  line-height: 1;
   white-space: nowrap;
   color: #64748b;
-  background: transparent;
+  background: none;
   border: 0;
-  border-radius: 999px;
+  border-bottom: 3px solid transparent;
   cursor: pointer;
   transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color 0.15s,
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .mcm-areanav-btn:hover {
-  color: var(--foreground);
-  background: #e3e3e3;
-}
-
-.mcm-areanav-btn:active {
-  transform: scale(0.96);
-  transition-duration: 0.08s;
-}
-
-.dark .mcm-areanav-btn {
-  color: #93a1ba;
-}
-
-.dark .mcm-areanav-btn:hover {
-  color: var(--foreground);
-  background: #1f1f1f;
+  color: #0f172a;
+  background: #f8fafc;
 }
 
 .mcm-areanav-btn.is-active {
   color: var(--primary);
-  font-weight: 700;
-}
-
-.mcm-areanav-btn.is-active:hover {
-  color: var(--primary);
-  background: transparent;
+  border-bottom-color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  border-radius: 8px 8px 0 0;
 }
 
 /* Below the widest breakpoint the labels go and the icons carry it. */
@@ -1831,24 +1639,15 @@
    the top bar, with the area rail below it rather than beside it.
    ============================================================ */
 .mcm-brandbar {
-  /* Shrinks under pressure (the area-nav strip inside it scrolls first, see
-     .mcm-areanav) rather than staying rigid and forcing the rest of the
-     header — search bar, icon cluster, profile pill — past the viewport. */
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: none;
   height: 100%;
-  padding-right: 10px;
+  padding-right: 14px;
   border-right: 1px solid #e2e8f0;
   margin-right: 2px;
 }
 
-.dark .mcm-brandbar {
-  border-right-color: #333333;
-}
-
 .mcm-brand {
   display: inline-flex;
-  flex: none;
   align-items: center;
   gap: 9px;
   text-decoration: none;
@@ -1867,15 +1666,43 @@
   background: color-mix(in oklab, var(--primary) 12%, #ffffff);
 }
 
-.dark .mcm-brand-mark {
-  background: color-mix(in oklab, var(--primary) 22%, #171717);
-}
-
 .mcm-brand-mark img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   padding: 4px;
+}
+
+.mcm-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+  min-width: 0;
+}
+
+.mcm-brand-name {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.mcm-brand-sub {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+/* Below the widest breakpoint the wordmark goes and the mark carries it. */
+@media (max-width: 1279px) {
+  .mcm-brand-text {
+    display: none;
+  }
+  .mcm-brandbar {
+    padding-right: 10px;
+  }
 }
 
 /* Your own availability on the Admin People table. That page is not scoped to
@@ -1891,7 +1718,7 @@
   cursor: pointer;
 }
 .mcm-presence-admin:hover:not(:disabled) {
-  border-color: #fecaca;
+  border-color: #c3d6ff;
   color: #0d1526;
 }
 .mcm-presence-admin:disabled {
@@ -1926,14 +1753,14 @@
   padding: 5px 13px;
   border: 0;
   border-radius: 999px;
-  background: #dc2626;
+  background: #2563eb;
   color: #fff;
   font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
 }
 .mcm-newbuild button:hover {
-  background: #b91c1c;
+  background: #1d4ed8;
 }
 
 /* Customer initial, shown when they have not uploaded a logo. Never the
@@ -1945,13 +1772,13 @@
   width: 100%;
   height: 100%;
   border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
+  background: #e8efff;
+  color: #1d4ed8;
   font-size: 15px;
   font-weight: 800;
 }
 
-/* Rail labels wrap to two lines instead of truncating. The tile is 68px wide,
+/* Rail labels wrap to two lines instead of truncating. The tile is 64px wide,
    so "External Contacts" on one line would be cut mid-word. */
 .mcm-rail-label {
   display: -webkit-box;
@@ -1961,9 +1788,8 @@
   width: 100%;
   padding: 0 2px;
   text-align: center;
-  font-size: 10.5px;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  font-size: 10px;
+  line-height: 1.2;
   word-break: break-word;
 }
 
@@ -2103,13 +1929,13 @@
   border-radius: 8px;
   font-size: 12.5px;
   font-weight: 600;
-  color: #b91c1c;
+  color: #1d4ed8;
   text-decoration: none;
   white-space: nowrap;
 }
 .mcm-setupguide-action:hover {
-  background: #fef2f2;
-  border-color: #fecaca;
+  background: #eef3ff;
+  border-color: #c3d6ff;
 }
 @media (max-width: 640px) {
   .mcm-setupguide li {

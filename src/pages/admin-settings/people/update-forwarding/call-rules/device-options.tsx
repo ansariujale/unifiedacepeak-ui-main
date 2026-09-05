@@ -23,6 +23,8 @@ const SortableItem: FC<any> = ({
   setValue,
   user_extension,
   watch,
+  menuPortalTarget,
+  compactDescriptions,
   //   handleEditDevice,
   //   incomingCall,
 }) => {
@@ -33,71 +35,92 @@ const SortableItem: FC<any> = ({
     transition,
   };
 
+  const statusCell = (
+    <p className={compactDescriptions ? 'flex w-full justify-end' : 'w-full font-medium text-sm'}>
+      <Switch
+        className="cursor-pointer"
+        onCheckedChange={(checked: boolean) => {
+          setValue(`callRules.incomingCall.deviceOptions.${objKey}.status`, checked);
+          if (!checked) {
+            setValue(`callRules.incomingCall.deviceOptions.${objKey}.value`, {
+              label: '6 times / 30 secs',
+              value: '30',
+            });
+            if (objKey === 'phone') {
+              setValue(`callRules.incomingCall.deviceOptions.${objKey}.phone`, '');
+            }
+          }
+        }}
+        checked={watch(`callRules.incomingCall.deviceOptions.${objKey}.status`)}
+      />
+    </p>
+  );
+  const nameCell = (
+    <p className="w-full font-medium text-sm">
+      {device?.option?.value === user_extension ? (
+        <div className="flex items-center gap-3">
+          {device?.type === 'mobile' ? (
+            <MobileOutlined className="w-5 h-5" />
+          ) : device?.type === 'pstn' ? (
+            <LandlineOutlined className="w-5 h-5" />
+          ) : (
+            <Monitor className="w-5 h-5" />
+          )}
+          <span>
+            {DEVICE_TYPE_NAME_CONST[device?.type as keyof typeof DEVICE_TYPE_NAME_CONST]}
+          </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          {/* <FaRegUser className="text-xl" /> */}
+          <div className="flex flex-col">
+            <span className="capitalize font-bold">{objKey}</span>
+            <span className="flex items-center gap-2">({device?.option?.value || ''})</span>
+          </div>
+        </div>
+      )}
+    </p>
+  );
+  const ringForCell = (
+    <p className="w-full font-medium text-sm">
+      {device?.status && (
+        <CustomSelect
+          className="w-64"
+          options={ringingOptions}
+          menuPortalTarget={menuPortalTarget}
+          handleChange={(e: ISELECTVALUE | null) => {
+            setValue(`callRules.incomingCall.deviceOptions.${objKey}.value`, e);
+          }}
+          value={device?.value}
+        />
+      )}
+    </p>
+  );
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex min-w-[720px] items-center justify-between border-b border-gray-200 p-2 nth-3:border-b-0"
+      className={`flex min-w-[720px] items-center justify-between border-b border-gray-200 nth-3:border-b-0 ${compactDescriptions ? 'px-8 py-2' : 'p-2'}`}
     >
       <p className="w-1/5 font-medium text-sm flex justify-center cursor-pointer" {...listeners}>
         <DragLineIcon className="w-2 h-2" />
       </p>
-      <p className="w-full font-medium text-sm">
-        <Switch
-          className="cursor-pointer"
-          onCheckedChange={(checked: boolean) => {
-            setValue(`callRules.incomingCall.deviceOptions.${objKey}.status`, checked);
-            if (!checked) {
-              setValue(`callRules.incomingCall.deviceOptions.${objKey}.value`, {
-                label: '6 times / 30 secs',
-                value: '30',
-              });
-              if (objKey === 'phone') {
-                setValue(`callRules.incomingCall.deviceOptions.${objKey}.phone`, '');
-              }
-            }
-          }}
-          checked={watch(`callRules.incomingCall.deviceOptions.${objKey}.status`)}
-        />
-      </p>
-      <p className="w-full font-medium text-sm">
-        {device?.option?.value === user_extension ? (
-          <div className="flex items-center gap-3">
-            {device?.type === 'mobile' ? (
-              <MobileOutlined className="w-5 h-5" />
-            ) : device?.type === 'pstn' ? (
-              <LandlineOutlined className="w-5 h-5" />
-            ) : (
-              <Monitor className="w-5 h-5" />
-            )}
-            <span>
-              {DEVICE_TYPE_NAME_CONST[device?.type as keyof typeof DEVICE_TYPE_NAME_CONST]}
-            </span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            {/* <FaRegUser className="text-xl" /> */}
-            <div className="flex flex-col">
-              <span className="capitalize font-bold">{objKey}</span>
-              <span className="flex items-center gap-2">({device?.option?.value || ''})</span>
-            </div>
-          </div>
-        )}
-      </p>
-      <p className="w-full font-medium text-sm">
-        {device?.status && (
-          <CustomSelect
-            className="w-64"
-            options={ringingOptions}
-            handleChange={(e: ISELECTVALUE | null) => {
-              setValue(`callRules.incomingCall.deviceOptions.${objKey}.value`, e);
-            }}
-            value={device?.value}
-          />
-        )}
-      </p>
-      <p className="w-1/5 font-medium text-sm">&nbsp;</p>
+      {compactDescriptions ? (
+        <>
+          {nameCell}
+          {ringForCell}
+          {statusCell}
+        </>
+      ) : (
+        <>
+          {statusCell}
+          {nameCell}
+          {ringForCell}
+          <p className="w-1/5 font-medium text-sm">&nbsp;</p>
+        </>
+      )}
       {/* <p className="w-1/4">
         {objKey !== 'web' && (
           <div className="flex items-center gap-3">
@@ -131,6 +154,8 @@ const DeviceOptionsList: FC<any> = ({
   handleEditDevice,
   user_extension,
   watch,
+  menuPortalTarget,
+  compactDescriptions,
 }) => {
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -182,6 +207,8 @@ const DeviceOptionsList: FC<any> = ({
             handleEditDevice={handleEditDevice}
             user_extension={user_extension}
             watch={watch}
+            menuPortalTarget={menuPortalTarget}
+            compactDescriptions={compactDescriptions}
           />
         ))}
       </SortableContext>
