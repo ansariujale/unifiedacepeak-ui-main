@@ -1,0 +1,325 @@
+import CustomSelect from '@/components/custom/custom-select';
+import { Input } from '@/components/ui/input';
+import { useGetSite } from '@/hooks/common';
+import { ISELECTVALUE } from '@/interfaces/api-interfaces';
+import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
+
+import { useFormContext } from 'react-hook-form';
+import PhoneInput from 'react-phone-input-2';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { FC, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getTemplateList } from '@/services/api';
+
+/** A section heading with its description. `tooltip` swaps the description
+ * from an always-visible paragraph to an info icon that reveals it on hover —
+ * opt in per caller so existing consumers of this form keep their current
+ * look untouched. */
+const SectionHeading = ({
+  title,
+  description,
+  tooltip = false,
+}: {
+  title: string;
+  description: string;
+  tooltip?: boolean;
+}) => {
+  return (
+    <div className="mcm-fsec-h">
+      {tooltip ? (
+        <div className="flex items-center gap-1.5">
+          <div className="mcm-fsec-t">{title}</div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-4 w-4 items-center justify-center rounded-full text-gray-400"
+                aria-label={description}
+              >
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="acepeak-tooltip-content" side="right" align="center">
+              {description}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      ) : (
+        <>
+          <div className="mcm-fsec-t">{title}</div>
+          <div className="mcm-fsec-d">{description}</div>
+        </>
+      )}
+    </div>
+  );
+};
+
+const BasicInformation: FC<any> = ({
+  isChooseTemplate = true,
+  chooseTemplate,
+  setChooseTemplate,
+  isSiteDisabled = false,
+  customClass = 'xxl:max-h-[calc(100vh-450px)] xxl:h-[calc(100vh_-_21rem)]',
+  /** Off by default — only the Profile page opts in, so every other screen
+   * that renders this form keeps its current descriptions unchanged. */
+  compactDescriptions = false,
+  /** Rendered at the end of the Contact section — undefined for every
+   * existing consumer, so only the Profile page (which passes its Submit
+   * button here) changes. */
+  contactExtra = null,
+  /** Off by default — only the Profile page opts in, to gate First Name /
+   * Last Name / Job Title behind its own "Edit Profile" affordance. Every
+   * other consumer keeps these fields always editable. */
+  identityDisabled = false,
+}) => {
+  const { data: dataSiteList = [], isLoading } = useGetSite();
+
+  const { data: templatesList = [] } = useQuery({
+    queryKey: ['templateListQuery'],
+    queryFn: () => getTemplateList({ page: 1, limit: 1000, filters: [], search: '' }),
+    select: (data) => data?.data?.data?.result?.rows || [],
+    enabled: isChooseTemplate,
+  });
+  const {
+    register,
+    formState: { errors },
+    watch,
+    setValue,
+    clearErrors,
+  } = useFormContext();
+
+  /* Repair a site that arrived with a name but no uuid: match it against the
+     site list so the select holds a real value. Without this the field looks
+     correct but saves as empty, silently clearing the person's location. */
+  const site = watch('basic.site');
+  useEffect(() => {
+    if (!site?.label || site?.value || !dataSiteList?.length) return;
+    const match = dataSiteList.find(
+      (entry: { name: string; uuid: string }) => entry?.name === site.label,
+    );
+    if (match?.uuid) {
+      setValue('basic.site', { label: match.name, value: match.uuid });
+    }
+  }, [site?.label, site?.value, dataSiteList]);
+
+  /* A location sets the clock for the people at it.
+     
+     Established systems work this way — the office or site timezone is what
+     opening hours are read in — and our own Company & Locations screen tells
+     customers a location decides "the clock". It did not: a location's timezone
+     was stored, shown, and never used, while opening hours were read from each
+     person's own regional setting. A London queue could run on Mumbai time.
+     
+     So choosing a location now fills in that person's timezone from it. Only
+     when the person has none: a timezone somebody deliberately set is theirs,
+     and someone who genuinely sits in a different zone from their office must
+     keep it. Country is filled the same way when blank, since the timezone list
+     is derived from it. */
+  const siteValue = site?.value;
+  useEffect(() => {
+    if (!siteValue || !dataSiteList?.length) return;
+
+    const chosen = dataSiteList.find((entry: any) => entry?.uuid === siteValue);
+    const zone = `${chosen?.timezone || ''}`.trim();
+    if (!zone) return;
+
+    if (!watch('settings.operational_hours.regional.timezone')?.value) {
+      setValue('settings.operational_hours.regional.timezone', { label: zone, value: zone });
+    }
+
+    const country = `${chosen?.country || ''}`.trim();
+    if (country && !watch('settings.operational_hours.regional.country')?.value) {
+      setValue('settings.operational_hours.regional.country', { label: country, value: country });
+    }
+  }, [siteValue, dataSiteList]);
+
+  const handleTemplateChange = (e: ISELECTVALUE | null) => {
+    const tempIndex = templatesList.findIndex((item: { uuid: string }) => item.uuid === e?.value);
+    if (tempIndex != -1) {
+      setChooseTemplate((prev: typeof chooseTemplate) => ({
+        ...prev,
+        selectedTemplate: templatesList[tempIndex],
+      }));
+      clearErrors('basic.selectedTemplate');
+    }
+  };
+
+  return (
+    <div className={`flex flex-col overflow-y-auto pr-1 pt-1 ${customClass}`}>
+      {/* Identity is the only part of this step the platform lets you change;
+          everything below it is provisioned elsewhere. Splitting them makes
+          that obvious instead of leaving three greyed boxes unexplained. */}
+      <section className="mcm-fsec">
+        <SectionHeading
+          title="Identity"
+          description="The name shown across the console, directory and caller ID."
+          tooltip={compactDescriptions}
+        />
+        <div className="mcm-fgrid">
+          <div className="mcm-field">
+            <Input
+              label="First Name"
+              placeholder="Enter first name"
+              {...register('basic.first_name')}
+              error={(errors.basic as any)?.first_name?.message}
+              maxLength={50}
+              disabled={identityDisabled}
+            />
+          </div>
+          <div className="mcm-field">
+            <Input
+              label="Last Name"
+              placeholder="Enter last name"
+              {...register('basic.last_name')}
+              error={(errors.basic as any)?.last_name?.message}
+              maxLength={50}
+              disabled={identityDisabled}
+            />
+          </div>
+          {/* The save payload has always carried job_title and the server
+              returns it, but no screen ever offered a way to set it. */}
+          <div className="mcm-field wide">
+            <Input
+              label="Job Title"
+              placeholder="e.g. Support Team Lead"
+              {...register('basic.job_title')}
+              error={(errors.basic as any)?.job_title?.message}
+              maxLength={80}
+              disabled={identityDisabled}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="mcm-fsec">
+        <SectionHeading
+          title="Workplace"
+          description="Which site this user belongs to. The extension is assigned when the user is created and cannot be changed here."
+          tooltip={compactDescriptions}
+        />
+        <div className="mcm-fgrid">
+          <div className="mcm-field">
+            <div className="mcm-field-h">
+              <Label>Location</Label>
+            </div>
+            <CustomSelect
+              options={dataSiteList.map((site: { name: string; uuid: string }) => ({
+                label: site?.name,
+                value: site?.uuid,
+              }))}
+              handleChange={(e: ISELECTVALUE | null) => {
+                if (!isSiteDisabled) setValue(`basic.site`, e || { label: '', value: '' });
+              }}
+              value={watch('basic.site')}
+              isLoading={isLoading}
+              isDisabled={isSiteDisabled}
+            />
+          </div>
+          <div className="mcm-field">
+            <div className="mcm-field-h">
+              <Label>Extension</Label>
+              <span className="mcm-lock">Read only</span>
+            </div>
+            <Input placeholder="—" type="number" disabled value={watch('basic.extension')} />
+            <span className="mcm-field-note">Set when the user was created.</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="mcm-fsec">
+        <SectionHeading
+          title="Contact"
+          description="How this person is reached. Both are managed on the user's own account and are shown here for reference."
+          tooltip={compactDescriptions}
+        />
+        <div className="mcm-fgrid">
+          <div className="mcm-field">
+            <div className="mcm-field-h">
+              <Label>Phone</Label>
+              <span className="mcm-lock">Read only</span>
+            </div>
+            <PhoneInput country={'us'} value={watch(`basic.phone`)} disabled />
+          </div>
+          <div className="mcm-field">
+            <div className="mcm-field-h">
+              <Label>Email</Label>
+              <span className="mcm-lock">Read only</span>
+            </div>
+            <Input placeholder="—" disabled value={watch('basic.email')} />
+            <span className="mcm-field-note">Also the sign-in address.</span>
+          </div>
+        </div>
+        {contactExtra}
+      </section>
+
+      {isChooseTemplate && (
+        <section className="mcm-fsec">
+          <div className="mcm-fsec-h">
+            <div className="mcm-fsec-t">Provisioning</div>
+            <div className="mcm-fsec-d">
+              Apply a saved template to fill the remaining steps, or configure them yourself.
+            </div>
+          </div>
+          <div className="mcm-fgrid">
+            <div className="mcm-field">
+              <div className="mcm-field-h">
+                <span className="mcm-field-l">Use an existing template?</span>
+              </div>
+              <RadioGroup
+                className="flex flex-wrap items-center gap-5"
+                value={chooseTemplate?.isChooseTemplate}
+                onValueChange={(value) => {
+                  setChooseTemplate((prev: any) => ({
+                    ...prev,
+                    isChooseTemplate: value,
+                    selectedTemplate: null,
+                  }));
+                  clearErrors('basic.selectedTemplate');
+                }}
+                style={{ minHeight: 38 }}
+              >
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="Yes" id="yes" className="cursor-pointer" />
+                  <Label htmlFor="yes" className="cursor-pointer">
+                    Yes
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="No" id="no" className="cursor-pointer" />
+                  <Label htmlFor="no" className="cursor-pointer">
+                    No
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+            {chooseTemplate?.isChooseTemplate === 'Yes' && (
+              <div className="mcm-field">
+                <div className="mcm-field-h">
+                  <Label>Template</Label>
+                </div>
+                <CustomSelect
+                  options={templatesList.map((site: { name: string; uuid: string }) => ({
+                    label: site?.name,
+                    value: site?.uuid,
+                  }))}
+                  handleChange={(e: ISELECTVALUE | null) => {
+                    handleTemplateChange(e);
+                  }}
+                  value={{
+                    label: chooseTemplate?.selectedTemplate?.name || '',
+                    value: chooseTemplate?.selectedTemplate?.uuid || '',
+                  }}
+                  error={(errors.basic as any)?.selectedTemplate?.message}
+                />
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+};
+
+export default BasicInformation;

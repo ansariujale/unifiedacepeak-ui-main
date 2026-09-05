@@ -1,0 +1,4549 @@
+/* ============================================================
+   MCM Unified Console — shared platform page styles.
+
+   Ported from the "MCM Unified Console" design artifact. This is the
+   artifact's *platform* layer: the tokens plus the components its Home,
+   Performance, Admin and reporting pages are built from (page frame, KPI
+   strip, panel cards, tables, drawers, buttons, tags, wallboard).
+
+   The phone console (`pages/phone/console/console.css`) and the video
+   console (`pages/video/console/video.css`) each carry their own copy of
+   the same token block because each owns a bespoke three-zone layout. This
+   file is the opposite case: every ordinary page in the app wants the same
+   handful of components, so they share one sheet instead of copying it per
+   page as we work through the areas.
+
+   Scoped under `.mcm-page` for the same reason the consoles are scoped —
+   the artifact uses generic names (.card, .list, .btn, .tag, .state, table)
+   that would collide with index.css and Tailwind if they were global.
+
+   Two deliberate changes from the artifact, matching the consoles:
+     - the OS-level `prefers-color-scheme: dark` auto-switch is dropped; this
+       follows the app's own `.dark` class, so a page cannot go dark while
+       the surrounding shell stays light.
+     - @keyframes are prefixed `mcmp-`.
+   ============================================================ */
+
+.mcm-page {
+  /* Hover edge for the portrait stat cards (Performance). */
+  --stat-hover-line: #e9adc3;
+  --ground: #eef1f8;
+  --surface: #ffffff;
+  --surface-2: #f6f8fc;
+  --surface-3: #eaeef7;
+  --ink: #0d1526;
+  --ink-2: #3d4a63;
+  --ink-3: #6b7891;
+  --ink-4: #93a0b8;
+  --line: #dfe5f0;
+  --line-2: #eaeef6;
+
+  --accent: #2563eb;
+  --accent-ink: #1d4ed8;
+  --accent-wash: #e8efff;
+  --accent-edge: #c3d6ff;
+
+  /* AI gets its own hue on purpose: machine output must never be
+     mistaken for system truth. Violet = "generated, verify me". */
+  --ai: #7c3aed;
+  --ai-ink: #6428d4;
+  --ai-wash: #f2ecff;
+  --ai-edge: #ddccff;
+
+  --live: #0d9488;
+  --live-wash: #dcf5f1;
+  --warn: #c2670a;
+  --warn-wash: #fdf0dc;
+  --crit: #d32f2f;
+  --crit-wash: #fde9e9;
+  --hold: #0e7490;
+  --hold-wash: #dcf1f7;
+
+  --shadow-sm: 0 1px 2px rgba(13, 21, 38, 0.06), 0 1px 1px rgba(13, 21, 38, 0.04);
+  --shadow: 0 4px 14px rgba(13, 21, 38, 0.07), 0 1px 3px rgba(13, 21, 38, 0.05);
+  --shadow-lg: 0 18px 44px rgba(13, 21, 38, 0.14), 0 3px 10px rgba(13, 21, 38, 0.07);
+  --r: 12px;
+  --r-sm: 8px;
+  --r-lg: 18px;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* Keep 'Twemoji Country Flags' in the stack — without it flag emoji fall
+     back to their letter pair ('IN' instead of the flag). */
+  --sans:
+    'Plus Jakarta Sans', 'Twemoji Country Flags', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', sans-serif;
+}
+.dark .mcm-page {
+  --stat-hover-line: #6b3a4a;
+  --ground: #0a0f1a;
+  --surface: #111827;
+  --surface-2: #161f31;
+  --surface-3: #1e293e;
+  --ink: #eef2f9;
+  --ink-2: #c3cddf;
+  --ink-3: #93a1ba;
+  --ink-4: #6b7a96;
+  --line: #26314a;
+  --line-2: #1c2537;
+  --accent: #5b8dff;
+  --accent-ink: #87aaff;
+  --accent-wash: #16223d;
+  --accent-edge: #2c3f68;
+  --ai: #a97fff;
+  --ai-ink: #c0a3ff;
+  --ai-wash: #231a3d;
+  --ai-edge: #3c2d66;
+  --live: #2dd4bf;
+  --live-wash: #0f2f2c;
+  --warn: #f0a24b;
+  --warn-wash: #33240f;
+  --crit: #f87171;
+  --crit-wash: #361618;
+  --hold: #38bdf8;
+  --hold-wash: #0d2a3a;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* ---- base ---- */
+.mcm-page * {
+  box-sizing: border-box;
+}
+.mcm-page {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  /* The router outlet gives this its height; the page scrolls internally.
+     NOTE: `flex-direction: column` here is unlayered, so it BEATS Tailwind's
+     `lg:flex-row`. Never put `.mcm-page` on the same element as a row layout —
+     it silently collapses sidebar-beside-content into a single column and the
+     content pane disappears. Wrap the layout instead:
+       <div class="mcm-page"><div class="flex lg:flex-row">…</div></div> */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+/* Excludes Radix's Switch root, which also renders as a <button>: its own
+   authored classes give it a real border and background (a track pill whose
+   colour is the whole point of a toggle), sized so the thumb's checked-state
+   translate lands exactly at the inner edge of that border. This reset's
+   border:0/background:none stripped both, which left the border-dependent
+   thumb math translating 1px further than the now-borderless track actually
+   had room for — reading as the knob sitting outside the track once switched
+   on. Every other button (icon buttons, chevrons, dropdown triggers, ...)
+   still gets the reset. */
+.mcm-page button:not([data-slot='switch']) {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.mcm-page input,
+.mcm-page textarea,
+.mcm-page select {
+  font: inherit;
+  color: inherit;
+}
+.mcm-page :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.mcm-page ::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+.mcm-page ::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.mcm-page ::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-4);
+  background-clip: content-box;
+}
+.mcm-page ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mcm-page .num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.mcm-page .eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.mcm-page .ic {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.mcm-page .ic.fill {
+  fill: currentColor;
+  stroke: none;
+}
+.mcm-page .ic.flip {
+  transform: rotate(180deg);
+}
+
+/* ---- page frame ---- */
+.mcm-page .page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px 26px 40px;
+}
+.mcm-page .page-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.mcm-page .page-head > div:first-child {
+  flex: 1 1 320px;
+}
+.mcm-page .page-head h1 {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+.mcm-page .page-head p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--ink-3);
+  max-width: 64ch;
+}
+.mcm-page .page-head .btn {
+  margin-left: auto;
+}
+
+.mcm-page .grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1080px) {
+  .mcm-page .grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+.mcm-page .grid3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.mcm-page .grid4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+.mcm-page .stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* ---- sticky page layout (header / tab bar / KPI band / scrolling body) ----
+   The `.page` class above is for pages that scroll as one column. Pages with a
+   pinned header and an independently scrolling body — Performance, and the
+   report workspaces after it — compose these instead. */
+.mcm-page .page-top {
+  flex: none;
+  padding: 18px 22px 2px;
+}
+.mcm-page .page-top .page-head {
+  margin-bottom: 12px;
+}
+.mcm-page .page-bar {
+  flex: none;
+  padding: 0 22px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.mcm-page .page-bar .ptabstrip {
+  margin: 0;
+  border-bottom: 0;
+}
+.mcm-page .page-bar .tbar {
+  margin: 0;
+  padding: 9px 0;
+}
+.mcm-page .page-band {
+  flex: none;
+  padding: 12px 22px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+.mcm-page .page-band .kpis {
+  margin-bottom: 0;
+}
+.mcm-page .page-note {
+  margin: 0 0 9px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-4);
+  max-width: 100ch;
+}
+/* An honest caveat under a page's description — how far the screen really
+   reaches. Louder than .page-note above, which is a caption; this one is a
+   standing correction to what the title implies, so it needs to be read. */
+.mcm-page .page-caveat {
+  margin: -6px 0 20px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--ink-4);
+  border-radius: 0 4px 4px 0;
+  background: rgba(127, 127, 127, 0.07);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2, var(--ink-4));
+  max-width: 78ch;
+}
+.mcm-page .page-caveat b {
+  font-weight: 600;
+}
+
+.mcm-page .page-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 22px 32px;
+}
+.mcm-page .page-scroll.flush {
+  padding: 0;
+}
+
+/* ---- panel card ---- */
+.mcm-page .panel-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.mcm-page .pc-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.mcm-page .pc-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.mcm-page .pc-head .btn,
+.mcm-page .pc-head .pc-right {
+  margin-left: auto;
+}
+.mcm-page .pc-body {
+  padding: 16px;
+}
+.mcm-page .pc-body.tight {
+  padding: 6px 16px 14px;
+}
+
+.mcm-page .card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+.mcm-page .card-pad {
+  padding: 18px;
+}
+
+.mcm-page .stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 14px 15px;
+}
+.mcm-page .stat .k {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.mcm-page .stat .v {
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  margin-top: 5px;
+  line-height: 1;
+}
+.mcm-page .stat .d {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mcm-page .up {
+  color: var(--live);
+}
+.mcm-page .down {
+  color: var(--crit);
+}
+
+.mcm-page .sect-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mcm-page .kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 12.5px;
+}
+.mcm-page .kv:last-child {
+  border-bottom: 0;
+}
+.mcm-page .kv .k {
+  color: var(--ink-3);
+}
+.mcm-page .kv .v {
+  font-weight: 700;
+  text-align: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* ---- buttons ---- */
+.mcm-page .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 11px;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: all 0.12s;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.mcm-page .btn .ic {
+  width: 17px;
+  height: 17px;
+}
+.mcm-page .btn.primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+.mcm-page .btn.primary:hover {
+  background: var(--accent-ink);
+}
+.mcm-page .btn.answer {
+  background: var(--live);
+  color: #fff;
+}
+.mcm-page .btn.danger {
+  background: var(--crit);
+  color: #fff;
+}
+.mcm-page .btn.danger:hover {
+  filter: brightness(0.92);
+}
+.mcm-page .btn.ghost {
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--ink-2);
+}
+.mcm-page .btn.ghost:hover {
+  border-color: var(--accent-edge);
+  color: var(--accent-ink);
+}
+.mcm-page .btn.ai {
+  background: var(--ai);
+  color: #fff;
+}
+.mcm-page .btn.ai:hover {
+  background: var(--ai-ink);
+}
+.mcm-page .btn.sm {
+  height: 30px;
+  padding: 0 11px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.mcm-page .btn.sm .ic {
+  width: 14px;
+  height: 14px;
+}
+.mcm-page .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.mcm-page .mini {
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mcm-page .mini:hover {
+  border-color: var(--ai-edge);
+  color: var(--ai-ink);
+}
+.mcm-page .mini.solid {
+  background: var(--ai);
+  border-color: var(--ai);
+  color: #fff;
+}
+.mcm-page .mini.solid:hover {
+  background: var(--ai-ink);
+  color: #fff;
+}
+.mcm-page .mini .ic {
+  width: 12px;
+  height: 12px;
+}
+
+/* ---- chips, tags, dots ---- */
+.mcm-page .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.mcm-page .chip:hover {
+  border-color: var(--accent-edge);
+  color: var(--accent-ink);
+}
+.mcm-page .chip.on {
+  background: var(--accent-wash);
+  border-color: var(--accent-edge);
+  color: var(--accent-ink);
+}
+
+.mcm-page .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 99px;
+  flex: none;
+}
+.mcm-page .dot.green {
+  background: var(--live);
+  box-shadow: 0 0 0 3px var(--live-wash);
+}
+.mcm-page .dot.amber {
+  background: var(--warn);
+  box-shadow: 0 0 0 3px var(--warn-wash);
+}
+.mcm-page .dot.red {
+  background: var(--crit);
+  box-shadow: 0 0 0 3px var(--crit-wash);
+}
+
+.mcm-page .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+}
+.mcm-page .tag.ai {
+  background: var(--ai-wash);
+  color: var(--ai-ink);
+  border-color: var(--ai-edge);
+}
+.mcm-page .tag.pos {
+  background: var(--live-wash);
+  color: var(--live);
+}
+.mcm-page .tag.neg {
+  background: var(--crit-wash);
+  color: var(--crit);
+}
+.mcm-page .tag.neu {
+  background: var(--surface-3);
+  color: var(--ink-3);
+}
+.mcm-page .tag.warn {
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+.mcm-page .tag.acc {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  border-color: var(--accent-edge);
+}
+
+/* provenance — where a fact came from */
+.mcm-page .src {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: var(--surface-3);
+  color: var(--ink-3);
+  border: 1px solid var(--line);
+  font-family: var(--mono);
+}
+.mcm-page .src.live {
+  background: var(--live-wash);
+  color: var(--live);
+  border-color: transparent;
+}
+.mcm-page .src.ai {
+  background: var(--ai-wash);
+  color: var(--ai-ink);
+  border-color: var(--ai-edge);
+}
+
+/* ---- page-level tab strip ---- */
+.mcm-page .ptabstrip {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+  margin: -4px 0 18px;
+  overflow-x: auto;
+}
+.mcm-page .ptabstrip::-webkit-scrollbar {
+  height: 0;
+}
+.mcm-page .ptabstrip button {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-3);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+.mcm-page .ptabstrip button:hover {
+  color: var(--ink);
+}
+.mcm-page .ptabstrip button.on {
+  color: var(--accent-ink);
+  border-bottom-color: var(--accent);
+}
+/* Radix Tabs mark the open tab with data-state rather than a class, so pages
+   built on <Tabs> light up the same way hand-rolled strips do. */
+.mcm-page .ptabstrip button[data-state='active'] {
+  color: var(--accent-ink);
+  border-bottom-color: var(--accent);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ---- filter toolbar ---- */
+.mcm-page .tbar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.mcm-page .fchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.mcm-page .fchip:hover {
+  border-color: var(--accent-edge);
+  color: var(--accent-ink);
+}
+.mcm-page .fchip.live {
+  background: var(--live-wash);
+  border-color: transparent;
+  color: var(--live);
+}
+
+/* ---- dense KPI strip ---- */
+.mcm-page .kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.mcm-page .kpi {
+  background: var(--surface);
+  padding: 13px 15px;
+}
+.mcm-page .kpi .k {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.mcm-page .kpi .v {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  margin-top: 4px;
+  line-height: 1;
+}
+.mcm-page .kpi .d {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 5px;
+  color: var(--ink-3);
+}
+.mcm-page .kpi .d.up {
+  color: var(--live);
+}
+.mcm-page .kpi .d.dn {
+  color: var(--crit);
+}
+.mcm-page .kpi.alert {
+  background: var(--crit-wash);
+}
+.mcm-page .kpi.alert .v {
+  color: var(--crit);
+}
+.mcm-page .kpi .v.good {
+  color: var(--live);
+}
+.mcm-page .kpi .v.warnv {
+  color: var(--warn);
+}
+.mcm-page .kpi .v.bad {
+  color: var(--crit);
+}
+
+/* ---- tables ---- */
+.mcm-page table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.mcm-page th {
+  text-align: left;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.mcm-page td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line-2);
+  vertical-align: middle;
+}
+.mcm-page tbody tr:last-child td {
+  border-bottom: 0;
+}
+.mcm-page tbody tr:hover {
+  background: var(--surface-2);
+}
+.mcm-page .tbl-wrap {
+  overflow-x: auto;
+}
+.mcm-page td .lnk {
+  color: var(--accent-ink);
+  cursor: pointer;
+  font-weight: 700;
+}
+.mcm-page td .lnk:hover {
+  text-decoration: underline;
+}
+.mcm-page tr.breach td {
+  background: var(--crit-wash);
+}
+
+.mcm-page .state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.mcm-page .state.q {
+  background: var(--live-wash);
+  color: var(--live);
+}
+.mcm-page .state.busy {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+.mcm-page .state.acw {
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+.mcm-page .state.away {
+  background: var(--surface-3);
+  color: var(--ink-3);
+}
+.mcm-page .state.nr {
+  background: var(--crit-wash);
+  color: var(--crit);
+}
+.mcm-page .state.hold {
+  background: var(--hold-wash);
+  color: var(--hold);
+}
+
+/* ---- shared app widgets rendered inside this scope ----
+   TableManager (`components/custom/table-manager.tsx`), DateDropdown and the
+   other shared widgets are used all over the app and carry hard-coded Tailwind
+   greys. Restyling them globally would repaint pages that have not been
+   converted yet, so instead retune just the utilities they use, scoped to this
+   surface. Unlayered rules beat Tailwind's `@layer utilities`, so the greys
+   lose here and nowhere else — no !important needed.
+
+   Structural utilities (padding, flex, width) are deliberately left alone:
+   only colour is the design system's business. */
+.mcm-page .bg-white {
+  background: var(--surface);
+}
+.mcm-page .bg-gray-50 {
+  background: var(--surface-2);
+}
+.mcm-page .bg-gray-100 {
+  background: var(--surface-3);
+}
+.mcm-page .bg-gray-200 {
+  background: var(--surface-3);
+}
+.mcm-page .border-gray-200,
+.mcm-page .border-b-gray-200,
+.mcm-page .border-gray-300 {
+  border-color: var(--line);
+}
+.mcm-page .divide-gray-200 > * + * {
+  border-color: var(--line);
+}
+.mcm-page .text-gray-400 {
+  color: var(--ink-4);
+}
+.mcm-page .text-gray-500 {
+  color: var(--ink-3);
+}
+.mcm-page .text-gray-600,
+.mcm-page .text-gray-700 {
+  color: var(--ink-2);
+}
+.mcm-page .text-gray-800,
+.mcm-page .text-gray-900 {
+  color: var(--ink);
+}
+.mcm-page .text-gray-900\/80 {
+  color: var(--ink-2);
+}
+
+/* Shades the first pass did not reach, found by auditing the pages being
+   converted. Same rule as above: colour only, and only inside this scope. */
+.mcm-page .border-gray-100,
+.mcm-page .border-gray-150,
+.mcm-page .border-t-gray-100,
+.mcm-page .border-b-gray-100 {
+  border-color: var(--line-2);
+}
+.mcm-page .border-gray-400,
+.mcm-page .border-gray-500,
+.mcm-page .border-gray-800 {
+  border-color: var(--ink-4);
+}
+.mcm-page .bg-gray-300 {
+  background: var(--surface-3);
+}
+.mcm-page .bg-gray-500 {
+  background: var(--ink-4);
+}
+
+/* ---- AI cards ---- */
+.mcm-page .aicard {
+  border: 1px solid var(--ai-edge);
+  background: var(--ai-wash);
+  border-radius: var(--r);
+  padding: 11px 12px;
+  position: relative;
+}
+.mcm-page .aicard.warnc {
+  border-color: var(--warn);
+  background: var(--warn-wash);
+}
+.mcm-page .aicard.critc {
+  border-color: var(--crit);
+  background: var(--crit-wash);
+}
+.mcm-page .ac-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.mcm-page .ac-kind {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ai-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mcm-page .aicard.warnc .ac-kind {
+  color: var(--warn);
+}
+.mcm-page .aicard.critc .ac-kind {
+  color: var(--crit);
+}
+.mcm-page .ac-body {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.mcm-page .ac-body strong {
+  font-weight: 800;
+}
+.mcm-page .ac-cite {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  margin-top: 7px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.mcm-page .ac-acts {
+  display: flex;
+  gap: 6px;
+  margin-top: 9px;
+  flex-wrap: wrap;
+}
+
+/* ---- charts ---- */
+.mcm-page .spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 52px;
+}
+.mcm-page .spark i {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+  opacity: 0.28;
+  min-height: 3px;
+}
+.mcm-page .spark i.hi {
+  opacity: 1;
+}
+.mcm-page .hbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.mcm-page .hbar-l {
+  font-size: 12px;
+  width: 130px;
+  flex: none;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.mcm-page .hbar-t {
+  flex: 1;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.mcm-page .hbar-t i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+}
+.mcm-page .hbar-v {
+  font-size: 11.5px;
+  font-weight: 800;
+  width: 44px;
+  text-align: right;
+  flex: none;
+}
+.mcm-page .bar {
+  height: 3px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  margin-top: 6px;
+  overflow: hidden;
+}
+.mcm-page .bar i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+/* ---- home ---- */
+.mcm-page .hero {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.mcm-page .hero h1 {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+.mcm-page .hero p {
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-3);
+  max-width: 56ch;
+}
+.mcm-page .hero-right {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mcm-page .attn {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 13px 15px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.mcm-page .attn + .attn {
+  margin-top: 8px;
+}
+.mcm-page .attn.crit {
+  border-color: var(--crit);
+  background: var(--crit-wash);
+}
+.mcm-page .attn.warn {
+  border-color: var(--warn);
+  background: var(--warn-wash);
+}
+.mcm-page .attn-ic {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.mcm-page .attn.crit .attn-ic {
+  color: var(--crit);
+  border-color: var(--crit);
+}
+.mcm-page .attn.warn .attn-ic {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+.mcm-page .attn-t {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.mcm-page .attn-d {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 2px;
+  line-height: 1.45;
+}
+.mcm-page .attn .btn {
+  margin-left: auto;
+  flex: none;
+}
+
+.mcm-page .quickdial {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.mcm-page .qd {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  text-align: left;
+  width: 100%;
+}
+.mcm-page .qd:hover {
+  border-color: var(--accent-edge);
+  background: var(--accent-wash);
+}
+.mcm-page .qd-av {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 800;
+  background: var(--surface-3);
+  color: var(--ink-2);
+}
+.mcm-page .qd-n {
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .qd-m {
+  font-size: 10.5px;
+  color: var(--ink-4);
+}
+
+/* ---- drawer ---- */
+.mcm-page .scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 21, 38, 0.45);
+  z-index: 120;
+  animation: mcmp-fade 0.16s ease;
+}
+@keyframes mcmp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.mcm-page .drw {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(580px, 94vw);
+  background: var(--surface);
+  z-index: 130;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  border-left: 1px solid var(--line);
+  animation: mcmp-slidein 0.2s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes mcmp-slidein {
+  from {
+    transform: translateX(24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mcm-page .scrim,
+  .mcm-page .drw {
+    animation: none;
+  }
+}
+.mcm-page .drw-h {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+.mcm-page .drw-h h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.mcm-page .drw-b {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.mcm-page .drw-b .kpis {
+  grid-template-columns: repeat(2, 1fr);
+}
+.mcm-page .drw-f {
+  padding: 13px 18px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex: none;
+  background: var(--surface-2);
+}
+
+/* ---- rules / toggles ---- */
+.mcm-page .rule {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.mcm-page .rule + .rule {
+  margin-top: 8px;
+}
+.mcm-page .rule-n {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex: none;
+  font-family: var(--mono);
+}
+.mcm-page .rule-main {
+  flex: 1;
+  min-width: 0;
+}
+.mcm-page .rule-t {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.mcm-page .rule-s {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.mcm-page .toggle {
+  width: 36px;
+  height: 20px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  position: relative;
+  flex: none;
+  transition: background 0.15s;
+  border: 1px solid var(--line);
+}
+.mcm-page .toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 99px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s;
+}
+.mcm-page .toggle.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.mcm-page .toggle.on::after {
+  transform: translateX(16px);
+}
+
+/* ---- flow nodes ---- */
+.mcm-page .flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.mcm-page .fnode {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 11px 13px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mcm-page .fnode.entry {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+.mcm-page .fnode.aiNode {
+  border-color: var(--ai-edge);
+  background: var(--ai-wash);
+}
+.mcm-page .fnode-ic {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+}
+.mcm-page .fnode.entry .fnode-ic {
+  background: var(--surface);
+  border-color: var(--accent-edge);
+  color: var(--accent-ink);
+}
+.mcm-page .fnode.aiNode .fnode-ic {
+  background: var(--surface);
+  border-color: var(--ai-edge);
+  color: var(--ai-ink);
+}
+.mcm-page .fnode-t {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.mcm-page .fnode-s {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 1px;
+}
+.mcm-page .fconn {
+  width: 2px;
+  height: 14px;
+  background: var(--line);
+  margin-left: 26px;
+}
+.mcm-page .fbranch {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-left: 14px;
+}
+
+/* ---- empty / loading ---- */
+.mcm-page .empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: var(--ink-4);
+  text-align: center;
+  padding: 36px 24px;
+}
+.mcm-page .empty .ic {
+  width: 34px;
+  height: 34px;
+  opacity: 0.5;
+}
+.mcm-page .empty p {
+  margin: 0;
+  font-size: 12.5px;
+  max-width: 250px;
+  line-height: 1.5;
+}
+
+.mcm-page .skel {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: mcmp-shimmer 1.3s infinite linear;
+  border-radius: 6px;
+}
+@keyframes mcmp-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mcm-page .skel {
+    animation: none;
+  }
+}
+
+.mcm-page .pulsing {
+  animation: mcmp-pulse 1.4s ease-in-out infinite;
+}
+@keyframes mcmp-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mcm-page .pulsing {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   Wallboard — room-facing full-screen takeover.
+
+   Built without cards or panels. At wall distance a border drawn around every
+   number is noise competing with the number, so the figures sit straight on
+   the page and structure comes from type size, alignment, whitespace and
+   hairline rules instead. Sizes are clamp()ed against the viewport so the one
+   layout holds on a laptop and on a 55" screen across the room.
+
+   Ships light as well as dark — the room it hangs in decides which reads
+   better — so every colour is a token and `.is-light` swaps the set.
+   ============================================================ */
+.mcm-wall {
+  --w-bg: #0a0e14;
+  --w-ink: #f4f7fa;
+  --w-ink-2: #97a3b4;
+  --w-ink-3: #6a7686;
+  --w-line: rgba(255, 255, 255, 0.09);
+  --w-border: rgba(255, 255, 255, 0.2);
+  --w-track: rgba(255, 255, 255, 0.12);
+  --w-tick: rgba(255, 255, 255, 0.35);
+  --w-chip: rgba(255, 255, 255, 0.06);
+  /* The wall runs on the tenant's own accent rather than a palette of its
+     own — `--color-ucass-active` is set from org metadata at runtime, with the
+     literal only as a fallback for a tenant that has none. Lifted toward white
+     here because the configured accent is picked for white backgrounds and
+     goes muddy on this one. */
+  --w-brand: var(--color-ucass-active, #1570ef);
+  --w-good: color-mix(in srgb, var(--w-brand) 58%, #ffffff);
+  /* Under target reads as plain muted ink: the target tick on the meter
+     already shows which side of the line a queue is on, so this doesn't need
+     a third colour to say it again. */
+  --w-warn: var(--w-ink-2);
+  /* The one colour kept apart from the accent — a breach has to be the only
+     thing on the wall that looks like this. */
+  --w-crit: #ff6b6b;
+
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(11px, 1.3vw, 22px) clamp(22px, 3vw, 56px) clamp(9px, 1.1vw, 18px);
+  overflow: auto;
+  background: var(--w-bg);
+  color: var(--w-ink);
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+.mcm-wall.is-light {
+  --w-bg: #f6f7f8;
+  --w-ink: #0f1720;
+  --w-ink-2: #5c6773;
+  --w-ink-3: #8a949f;
+  --w-line: rgba(15, 23, 32, 0.1);
+  --w-border: rgba(15, 23, 32, 0.2);
+  --w-track: rgba(15, 23, 32, 0.11);
+  --w-tick: rgba(15, 23, 32, 0.28);
+  --w-chip: rgba(15, 23, 32, 0.05);
+  /* On white the configured accent is already the right weight — used as-is. */
+  --w-good: var(--w-brand);
+  --w-warn: var(--w-ink-2);
+  --w-crit: #dc2626;
+}
+
+/* The wallboard portals to <body>, outside `.mcm-page`, so it needs its own
+   copy of the helpers the shared scope would otherwise have given it. */
+.mcm-wall .ic {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.mcm-wall .w-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Tone is set once on a container and read by everything inside it, so a
+   queue's health colours its dot, its bar and its percentage from one class. */
+.mcm-wall .tone-good {
+  --tone: var(--w-good);
+}
+.mcm-wall .tone-warn {
+  --tone: var(--w-warn);
+}
+.mcm-wall .tone-crit {
+  --tone: var(--w-crit);
+}
+.mcm-wall .tone-muted {
+  --tone: var(--w-ink-2);
+}
+
+.mcm-wall .w-label {
+  font-size: clamp(9.5px, 0.72vw, 13px);
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--w-ink-2);
+}
+.mcm-wall .w-dot {
+  width: 0.62em;
+  height: 0.62em;
+  border-radius: 50%;
+  background: var(--tone, var(--w-ink-2));
+  flex: none;
+}
+
+/* ---- header ---- */
+.mcm-wall .wh {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: clamp(9px, 1.1vw, 18px);
+}
+.mcm-wall .w-brand {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.mcm-wall .w-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: clamp(9.5px, 0.72vw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--w-good);
+}
+.mcm-wall .w-beacon {
+  width: 0.62em;
+  height: 0.62em;
+  border-radius: 50%;
+  background: var(--w-good);
+  flex: none;
+  animation: mcmp-wall-beacon 2.4s ease-in-out infinite;
+}
+.mcm-wall .wh h2 {
+  margin: 4px 0 0;
+  font-size: clamp(24px, 2.7vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+.mcm-wall .w-brand-sub {
+  margin-top: 2px;
+  font-size: clamp(12px, 1vw, 17px);
+  font-weight: 500;
+  color: var(--w-ink-2);
+}
+.mcm-wall .w-head-right {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: clamp(8px, 0.9vw, 14px);
+}
+.mcm-wall .w-clock-row {
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(10px, 1.1vw, 18px);
+}
+/* Column 1 holds the date over the hours and minutes; the seconds sit in
+   column 2 so they can't drag the date's right edge out with them. */
+.mcm-wall .w-clock {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 6px;
+  align-items: baseline;
+}
+.mcm-wall .w-clock .w-date {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: end;
+  margin-bottom: 2px;
+}
+.mcm-wall .w-clock-time {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: end;
+}
+.mcm-wall .w-clock-secs {
+  grid-column: 2;
+  grid-row: 2;
+}
+.mcm-wall .w-clock-time {
+  font-size: clamp(26px, 3.1vw, 50px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.mcm-wall .w-clock-secs {
+  font-size: clamp(12px, 1vw, 17px);
+  font-weight: 500;
+  color: var(--w-ink-2);
+}
+.mcm-wall .w-date {
+  font-size: clamp(11px, 0.85vw, 15px);
+  font-weight: 500;
+  color: var(--w-ink-2);
+}
+
+/* Two-state segmented control rather than a bare icon button — on a screen
+   nobody is standing at, "which mode am I in" should be visible, not implied
+   by whichever icon happens to be showing. */
+.mcm-wall .w-theme {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  /* Nudged off the baseline so it reads as centred against the time rather
+     than sitting on the bottom of the clock block. */
+  margin-bottom: 6px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--w-chip);
+}
+.mcm-wall .w-theme button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--w-ink-3);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease;
+}
+.mcm-wall .w-theme button:hover {
+  color: var(--w-ink-2);
+}
+.mcm-wall .w-theme button.is-on {
+  background: var(--w-bg);
+  color: var(--w-ink);
+}
+/* A hint first, a button second. Parked at the top centre and mostly
+   transparent so it never competes with the figures, then resolving into a
+   real bordered button on hover or keyboard focus.
+   Positioned against `.mcm-wall` (the header itself is static), which centres
+   it on the wall rather than on the gap between the title and the clock. */
+.mcm-wall .w-exit {
+  position: absolute;
+  top: clamp(12px, 1.3vw, 22px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--w-ink-3);
+  opacity: 0.5;
+  font: inherit;
+  font-size: clamp(9.5px, 0.72vw, 12.5px);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    opacity 0.16s ease,
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+.mcm-wall .w-exit:hover,
+.mcm-wall .w-exit:focus-visible {
+  opacity: 1;
+  border-color: var(--w-border);
+  background: var(--w-chip);
+  color: var(--w-ink-2);
+}
+.mcm-wall .w-exit kbd {
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ---- hero band ---- */
+.mcm-wall .w-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding-bottom: clamp(9px, 1.1vw, 19px);
+  border-bottom: 1px solid var(--w-line);
+}
+.mcm-wall .w-hero-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, 0.55vw, 10px);
+  padding: 0 clamp(12px, 2vw, 40px);
+  text-align: center;
+}
+.mcm-wall .w-hero-cell + .w-hero-cell {
+  border-left: 1px solid var(--w-line);
+}
+.mcm-wall .w-display {
+  font-size: clamp(44px, 6vw, 100px);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+  color: var(--tone, var(--w-ink));
+}
+.mcm-wall .w-hero-foot {
+  font-size: clamp(12px, 1.05vw, 19px);
+  font-weight: 500;
+  color: var(--w-ink-2);
+}
+.mcm-wall .w-hero-foot.is-pending {
+  color: var(--w-warn);
+}
+.mcm-wall .w-hero-foot.is-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tone, var(--w-ink-2));
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: clamp(10px, 0.78vw, 14px);
+}
+
+/* ---- supporting rates ---- */
+.mcm-wall .w-strip {
+  display: flex;
+  flex-wrap: wrap;
+  padding: clamp(8px, 1vw, 16px) 0;
+  border-bottom: 1px solid var(--w-line);
+}
+.mcm-wall .w-cell {
+  flex: 1 1 0;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(3px, 0.4vw, 7px);
+  padding: 0 clamp(10px, 1.4vw, 28px);
+  text-align: center;
+}
+.mcm-wall .w-cell + .w-cell {
+  border-left: 1px solid var(--w-line);
+}
+.mcm-wall .w-cell-value {
+  font-size: clamp(23px, 2.9vw, 49px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--tone, var(--w-ink));
+}
+/* A figure with nothing to say about itself stays in plain ink — colour on
+   the wall should mean something, not decorate every number. */
+.mcm-wall .w-cell-value.tone-muted {
+  color: var(--w-ink);
+}
+
+/* ---- queues ---- */
+.mcm-wall .w-queues {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: clamp(8px, 1vw, 16px);
+}
+.mcm-wall .w-qhead {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: clamp(4px, 0.55vw, 9px);
+}
+.mcm-wall .w-qhead h3 {
+  margin: 0;
+  font-size: clamp(11px, 0.85vw, 15px);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.mcm-wall .w-qmeta {
+  margin-left: auto;
+  font-size: clamp(11px, 0.85vw, 15px);
+  font-weight: 500;
+  color: var(--w-ink-2);
+}
+.mcm-wall .w-qmeta i {
+  margin: 0 6px;
+  font-style: normal;
+  color: var(--w-ink-3);
+}
+/* Scrolls when a tenant has more queues than fit. The scrollbar is drawn thin
+   with no track, so the couple of pixels a tall last row can overhang by
+   don't paint a full-height rule down the edge of the wall. */
+.mcm-wall .w-table {
+  flex: 1 1 auto;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--w-track) transparent;
+}
+.mcm-wall .w-table::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.mcm-wall .w-table::-webkit-scrollbar-track {
+  background: transparent;
+}
+.mcm-wall .w-table::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--w-track);
+}
+.mcm-wall table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.mcm-wall th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  padding: 0 clamp(8px, 1vw, 18px) clamp(5px, 0.6vw, 10px);
+  background: var(--w-bg);
+  color: var(--w-ink-2);
+  font-size: clamp(9.5px, 0.72vw, 13px);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.mcm-wall .w-th-note {
+  margin-left: 8px;
+  font-size: 0.85em;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--w-ink-3);
+  text-transform: none;
+}
+/* No rules between rows — the row rhythm comes from height, and hairlines at
+   this density would read as a grid drawn over the numbers. */
+.mcm-wall td {
+  padding: clamp(5px, 0.55vw, 9px) clamp(8px, 1vw, 18px);
+  font-size: clamp(12.5px, 1.1vw, 18px);
+  line-height: 1.3;
+  font-weight: 500;
+  color: var(--w-ink);
+  vertical-align: middle;
+}
+.mcm-wall th:first-child,
+.mcm-wall td:first-child {
+  padding-left: 0;
+}
+.mcm-wall th:last-child,
+.mcm-wall td:last-child {
+  padding-right: 0;
+}
+.mcm-wall th.mid,
+.mcm-wall td.mid {
+  text-align: center;
+  white-space: nowrap;
+}
+.mcm-wall th.end,
+.mcm-wall td.end {
+  text-align: right;
+  white-space: nowrap;
+}
+.mcm-wall th.sla,
+.mcm-wall td.sla {
+  width: 32%;
+  min-width: 190px;
+}
+.mcm-wall .w-queue-name {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(9px, 0.9vw, 15px);
+  font-weight: 600;
+}
+.mcm-wall .w-zero {
+  color: var(--w-ink-3);
+}
+.mcm-wall .w-hot {
+  color: var(--w-crit);
+  font-weight: 700;
+}
+.mcm-wall .w-sla {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.1vw, 20px);
+}
+.mcm-wall .w-sla-value {
+  min-width: 3.4em;
+  color: var(--tone, var(--w-ink));
+  font-weight: 600;
+}
+.mcm-wall .w-meter {
+  position: relative;
+  flex: 1 1 auto;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--w-track);
+}
+.mcm-wall .w-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tone, var(--w-ink-2));
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* The target tick — a queue's standing against the 80% line is then readable
+   off the bar alone, without reading the percentage. */
+.mcm-wall .w-meter::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: var(--target, 80%);
+  width: 1.5px;
+  border-radius: 2px;
+  background: var(--w-tick);
+}
+.mcm-wall .w-empty {
+  padding: 44px 0;
+  text-align: center;
+  color: var(--w-ink-3);
+}
+
+@keyframes mcmp-wall-beacon {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mcm-wall .w-beacon {
+    animation: none;
+  }
+  .mcm-wall .w-meter i {
+    transition: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .mcm-wall .w-hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .mcm-wall .w-hero-cell + .w-hero-cell {
+    border-left: 0;
+    border-top: 1px solid var(--w-line);
+    padding-top: 28px;
+  }
+  .mcm-wall .w-cell {
+    flex-basis: 50%;
+    min-width: 0;
+    padding-bottom: 18px;
+  }
+  .mcm-wall .w-cell:nth-child(odd) {
+    border-left: 0;
+  }
+}
+
+/* ---- selectable list row ----
+   The console's pattern for a list you pick from: a rounded hit area, a
+   surface-2 hover, and an accent wash plus a left bar for the current
+   selection. Directory's people and department lists use it; anything else
+   with a pick-one list should too, rather than inventing its own.
+
+   Structure only — colour on the contents still comes from the tokens and the
+   compatibility layer above. */
+.mcm-page .list-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.mcm-page .list-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: var(--r);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.mcm-page .list-row:hover {
+  background: var(--surface-2);
+}
+.mcm-page .list-row.on {
+  background: var(--accent-wash);
+}
+.mcm-page .list-row.on::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 26px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+
+.mcm-page .list-row-body {
+  flex: 1;
+  min-width: 0;
+}
+.mcm-page .list-row-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.mcm-page .list-row-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .list-row-meta {
+  margin-left: auto;
+  flex: none;
+  font-size: 10.5px;
+  color: var(--ink-4);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mcm-page .list-row-sub {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* ------------------------------------------------------------------
+   Multi-step user form (Directory ▸ People ▸ Edit, and the Extension
+   page's own edit drawer — they render the same component).
+
+   The steps used to be a plain tab strip, which gave no sense of how
+   far through the save you were or how much was left. This turns them
+   into a numbered progress rail and puts a real primary action in the
+   footer, so saving is reachable from any step rather than only the
+   last one.
+   ------------------------------------------------------------------ */
+.mcm-userform {
+  /* It sits inside the drawer's own white panel, so it must not paint the
+     console's grey page ground over it. */
+  background: var(--surface);
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.mcm-steps {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: none;
+}
+.mcm-steps::-webkit-scrollbar {
+  height: 0;
+}
+
+.mcm-step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px 11px;
+  border: 0;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  transition:
+    color 0.12s ease,
+    background 0.12s ease;
+}
+.mcm-step:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.mcm-step:disabled {
+  cursor: default;
+}
+
+/* The number badge carries the state, so the step reads at a glance. */
+.mcm-step-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.mcm-step.done .mcm-step-n {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  box-shadow: inset 0 0 0 1px var(--accent-edge);
+}
+
+.mcm-step.on {
+  color: var(--accent-ink);
+  border-bottom-color: var(--accent);
+}
+.mcm-step.on .mcm-step-n {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* An invalid step must be obvious from the rail, not only once you land on it. */
+.mcm-step.err {
+  color: var(--crit);
+}
+.mcm-step.err .mcm-step-n {
+  background: color-mix(in srgb, var(--crit) 14%, transparent);
+  color: var(--crit);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--crit) 35%, transparent);
+}
+.mcm-step.err.on {
+  border-bottom-color: var(--crit);
+}
+
+.mcm-step-label {
+  display: none;
+}
+@media (min-width: 720px) {
+  .mcm-step-label {
+    display: inline;
+  }
+}
+
+.mcm-userform-body {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mcm-formfoot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.mcm-formfoot .mcm-formfoot-hint {
+  margin-right: auto;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Field rhythm: the steps mix Input, CustomSelect and PhoneInput, which
+   each bring their own spacing. Only the label typography is normalised
+   here — structure stays whatever the control ships with. */
+.mcm-userform label {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------
+   Console form primitives — grouped sections with a heading and a
+   responsive field grid, the layout enterprise admin consoles use so a
+   long settings form reads as a few short ones.
+
+   Read-only fields get an explicit lock chip. Several fields here are
+   provisioned elsewhere and can never be typed into; greying them out
+   silently reads as "broken", which is what this replaces.
+   ------------------------------------------------------------------ */
+.mcm-page .mcm-personhead {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  flex: none;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.mcm-page .mcm-personhead-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.mcm-page .mcm-personhead-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.mcm-page .mcm-fsec {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  padding: 16px;
+}
+.mcm-page .mcm-fsec + .mcm-fsec {
+  margin-top: 14px;
+}
+.mcm-page .mcm-fsec-h {
+  margin-bottom: 14px;
+}
+.mcm-page .mcm-fsec-t {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+.mcm-page .mcm-fsec-d {
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  line-height: 1.45;
+}
+
+.mcm-page .mcm-fgrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px 18px;
+}
+@media (min-width: 640px) {
+  .mcm-page .mcm-fgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mcm-page .mcm-fgrid .wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.mcm-page .mcm-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+.mcm-page .mcm-field-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mcm-page .mcm-field-h label,
+.mcm-page .mcm-field-h .mcm-field-l {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Says *why* a field cannot be edited, and where it is edited instead. */
+.mcm-page .mcm-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px 2px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--ink-3);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.mcm-page .mcm-field-note {
+  color: var(--ink-4);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------------------------
+   Rule panels — the collapsible cards on the Call Rules step.
+
+   They were assembled from one-off utility stacks, so header heights,
+   inner padding and the coloured status dot drifted between panels.
+   This gives all of them one geometry.
+   ------------------------------------------------------------------ */
+.mcm-page .mcm-rule {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.mcm-page .mcm-rule + .mcm-rule {
+  margin-top: 12px;
+}
+
+.mcm-page .mcm-rule-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 54px;
+  padding: 10px 14px;
+  text-align: left;
+}
+.mcm-page .mcm-rule-h.tap {
+  cursor: pointer;
+}
+.mcm-page .mcm-rule-h.tap:hover {
+  background: var(--surface-2);
+}
+
+.mcm-page .mcm-rule-t {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.mcm-page .mcm-rule-t.bad {
+  color: var(--crit);
+}
+
+/* Status dot: a ring, coloured by what the rule governs. */
+.mcm-page .mcm-dot {
+  display: block;
+  width: 13px;
+  height: 13px;
+  flex: none;
+  border-radius: 999px;
+  border: 2px solid var(--ink-4);
+}
+.mcm-page .mcm-dot.ok {
+  border-color: var(--live);
+}
+.mcm-page .mcm-dot.acc {
+  border-color: var(--accent);
+}
+.mcm-page .mcm-dot.bad {
+  border-color: var(--crit);
+}
+
+.mcm-page .mcm-rule-b {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--line-2);
+  padding-top: 14px;
+}
+
+/* Chevron: rotation is set inline from state rather than through a
+   composed utility class, which only ever resolved because another
+   file happened to emit the same class. */
+.mcm-page .mcm-chev {
+  display: inline-flex;
+  color: var(--ink-3);
+  transition: transform 0.2s ease;
+}
+.mcm-page .mcm-rule-h.tap:hover .mcm-chev {
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------
+   Settings & Permissions step.
+
+   `common-settings` is shared by ten screens (call queues, IVR menus,
+   AI agents, department, number forwarding, general settings), so it is
+   NOT edited to style this one. Instead the console form passes an
+   `mcm-settings` class and everything here hangs off that, which means
+   the other nine screens are untouched by design.
+   ------------------------------------------------------------------ */
+.mcm-page .mcm-settings [class*='rounded-xl'] {
+  border-radius: var(--r);
+  border-color: var(--line);
+  /* The stock card carries a hand-written rgba shadow that reads as muddy
+     next to the console's flat panels. */
+  box-shadow: none;
+}
+
+.mcm-page .mcm-settings [class*='rounded-xl'][class*='p-4'] {
+  padding: 14px 16px;
+}
+
+/* Card titles: the step mixes <p>, <h5> and <h6> at four different
+   weights. One scale for all of them. */
+.mcm-page .mcm-settings h5,
+.mcm-page .mcm-settings h6 {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.mcm-page .mcm-settings .text-gray-500,
+.mcm-page .mcm-settings .text-gray-600 {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------------------
+   Audit fixes for the user edit drawer.
+   ------------------------------------------------------------------ */
+
+/* 1. Readable measure. The drawer is ~1450px wide and every row stretched
+      the full width, so a label sat a thousand pixels from the control it
+      belongs to. Enterprise consoles cap form content; this does the same
+      and keeps the header, steps, body and footer on one shared column so
+      their left edges line up. */
+/* Compound, not descendant: both classes sit on the same <form>, so
+   `.mcm-page .mcm-userform` matched nothing and the form ran full-bleed. */
+.mcm-page.mcm-userform > * {
+  width: 100%;
+  max-width: 1040px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 2. Toggles. The stock switch paints a WHITE track when off, sitting on a
+      white card, so only the grey thumb was visible — it read as a stray
+      dot rather than a control. Off = filled track + white thumb, which is
+      the convention every major console follows. The on state is left to
+      the tenant's brand colour. */
+.mcm-page [data-slot='switch'] {
+  width: 38px;
+  height: 22px;
+  border-color: var(--line);
+  box-shadow: none;
+}
+.mcm-page [data-slot='switch'][data-state='unchecked'] {
+  background: var(--ink-4);
+  border-color: transparent;
+}
+/* On = the console accent. Left to itself this used `--primary`, which
+   defaults to near-black, so an enabled toggle read as dark rather than
+   active. Scoped to `.mcm-page` so every console switch agrees. */
+.mcm-page [data-slot='switch'][data-state='checked'] {
+  background: var(--accent);
+  border-color: transparent;
+}
+/* The Radix/Tailwind base component positions this thumb with its own
+   `data-[state=...]:translate-x-*` utilities. In Tailwind v4 those compile
+   to the standalone CSS `translate` property, not `transform` — and
+   `translate` and `transform` are separate properties that both apply to
+   the final position (the individual translate/rotate/scale properties
+   render first, `transform` on top of that), so they ADD rather than one
+   overriding the other. The previous version of this rule set `transform:
+   translateX(...)`, which stacked on top of Tailwind's own `translate:
+   calc(100% - 2px)` for the checked state instead of replacing it — e.g.
+   for an 18px-wide thumb that's Tailwind's own 16px plus this rule's 18px,
+   34px of travel inside a track with only 36px of interior width, well
+   past the right edge. Setting `translate` here instead overrides the
+   same property Tailwind sets, via ordinary cascade (this selector is
+   already more specific), so only one offset ever applies.
+   Track interior (38px track, 1px border each side) is 36×20. An 18px
+   thumb centered in the 20px interior height already sits with a 1px
+   margin top and bottom via the track's own `items-center`, untouched
+   here. Horizontally it's given a 2px margin from the track's straight
+   edge in both states, so a round thumb clears the rounded track's curve
+   in both states — unchecked at 2px from the left, checked at 2px from
+   the right (that inner width is 36px, so 36 - 2 - 18 = 16px of travel). */
+.mcm-page [data-slot='switch'] [data-slot='switch-thumb'] {
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(13 21 38 / 0.25);
+  translate: 2px 0;
+}
+.mcm-page [data-slot='switch'][data-state='checked'] [data-slot='switch-thumb'] {
+  translate: 16px 0;
+}
+
+/* 3. Radio dots were a hairline ring that all but vanished against the
+      card. Same ink as body text, so they read as controls. */
+.mcm-page [data-slot='radio-group-item'] {
+  width: 17px;
+  height: 17px;
+  border-width: 1.5px;
+  border-color: var(--ink-4);
+}
+.mcm-page [data-slot='radio-group-item'][data-state='checked'] {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+.mcm-page [data-slot='radio-group-item'][data-state='checked'] svg {
+  fill: var(--accent);
+  color: var(--accent);
+}
+
+/* 4. The row actions ("Select") are real buttons but render in --primary,
+      which defaults to near-black, so they read as plain text. Give them
+      the console's secondary-button shape; colour still comes from the
+      tenant's brand token. */
+.mcm-page .mcm-settings [data-slot='button'] {
+  min-width: 84px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------
+   Invite people drawer.
+
+   The invitee row used to collapse into a single six-across flex line at
+   `lg`, which in a ~2000px drawer stretched First name → Extension over
+   the full width with the labels shown only on the first row. It is now
+   a card per invitee with its own labels, which is how every console
+   handles repeatable people entry.
+   ------------------------------------------------------------------ */
+.mcm-invite {
+  background: var(--surface);
+}
+
+.mcm-invite .mcm-invitee {
+  border-color: var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  align-items: start;
+}
+
+/* The order summary was pinned to half-width on the right, floating away
+   from the fields it prices. */
+.mcm-invite .order-summary-wrap {
+  justify-content: flex-start;
+}
+
+.mcm-invite [data-slot='button'] {
+  border-radius: var(--r-sm);
+}
+
+/* Your own availability, on your own row in People. Nobody else's row carries
+   one — availability is yours to set and nobody else's. */
+.mcm-page .mcm-presence-set {
+  display: block;
+  margin-top: 5px;
+  max-width: 112px;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mcm-page .mcm-presence-set:hover:not(:disabled) {
+  border-color: var(--accent-edge);
+  color: var(--ink);
+}
+.mcm-page .mcm-presence-set:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ==================================================================
+   Admin area
+   ------------------------------------------------------------------
+   `.mcm-admin` sits on the Admin shell, so every screen underneath
+   inherits the console tokens and the Tailwind compatibility layer.
+   What follows is the structure the compat layer cannot reach:
+   the nav's own geometry, page headers, and table surfaces.
+   ================================================================== */
+
+/* ---- Admin Hub nav ---- */
+.mcm-admin .divide-gray-200 > * + * {
+  border-color: var(--line-2);
+}
+
+.mcm-admin [data-slot='accordion-trigger'],
+.mcm-admin .accordion-trigger {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* The nav's section rows are a fixed 56px block; tighten to console rhythm.
+   Scoped to the nav — `h-14` is used inside pages too, and shrinking those
+   would squash the Call Rules panels. */
+.mcm-admin .mcm-adminnav .h-14 {
+  height: 46px;
+  min-height: 46px;
+}
+
+.mcm-admin a,
+.mcm-admin [role='button'] {
+  border-radius: var(--r-sm);
+}
+
+/* ---- page headers ----
+   Admin pages open with a bare bold <p>; this gives them the same
+   heading scale the console uses everywhere else. */
+.mcm-admin .text-lg {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* ---- tables ----
+   TableManager renders the shared table used by most Admin screens. */
+.mcm-admin table thead th {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.mcm-admin table tbody td {
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--line-2);
+}
+.mcm-admin table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+/* ---- cards ----
+   The hand-written rgba shadows read muddy beside the console's flat
+   panels; the border carries the separation instead. */
+.mcm-admin [class*='rounded-xl'],
+.mcm-admin [class*='rounded-lg'] {
+  border-radius: var(--r);
+}
+.mcm-admin [class*='shadow-sm'],
+.mcm-admin [class*='shadow-\\[1px_1px_2px_rgba\\(0\\,0\\,0\\,0\\.05\\)\\]'] {
+  box-shadow: none;
+}
+
+/* ---- inputs ---- */
+.mcm-admin input,
+.mcm-admin select,
+.mcm-admin textarea {
+  border-radius: var(--r-sm);
+}
+
+/* ---- the note strip above Admin tables ---- */
+/* Deliberately scoped away from the nav: painting whole accordion groups in
+   accent-wash turned the sidebar into stacked blue blocks. */
+.mcm-admin .mcm-adminpage [class*='bg-ucass-primary-200'] {
+  background: var(--accent-wash);
+}
+
+/* ---- Admin landing page ----
+   The whole area laid out at once, grouped, rather than hidden behind an
+   accordion you have to open to discover what is inside. */
+.mcm-adminhome {
+  background: var(--ground);
+}
+
+.mcm-adminhome-head {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.mcm-adminhome-eyebrow {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mcm-adminhome-head h1 {
+  margin: 3px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.mcm-adminhome-head p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.mcm-adminhome-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 240px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+}
+.mcm-adminhome-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.mcm-adminhome-search input::placeholder {
+  color: var(--ink-4);
+  font-weight: 500;
+}
+
+.mcm-adminhome-tabs {
+  flex: none;
+  margin: 0;
+  padding: 0 22px;
+  background: var(--surface);
+}
+
+.mcm-adminhome-body {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 22px 32px;
+}
+
+/* Columns, not grid rows. In a grid every card in a row stretches to the
+   tallest one, so a one-item section left a tall empty box beside a seven-item
+   one — which is what made the page look scattered. Columns let each card take
+   only the height it needs and pack up the page. */
+.mcm-admingrid {
+  column-gap: 16px;
+  column-count: 1;
+}
+.mcm-admingrid > * {
+  break-inside: avoid;
+  margin-bottom: 16px;
+}
+@media (min-width: 700px) {
+  .mcm-admingrid {
+    column-count: 2;
+  }
+}
+@media (min-width: 1120px) {
+  .mcm-admingrid {
+    column-count: 3;
+  }
+}
+@media (min-width: 1560px) {
+  .mcm-admingrid {
+    column-count: 4;
+  }
+}
+
+.mcm-admincard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 16px 6px 10px;
+}
+.mcm-admincard-h {
+  padding: 0 12px 10px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mcm-admincard ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+.mcm-admincard li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--r-sm);
+}
+.mcm-admincard li:hover {
+  background: var(--surface-2);
+}
+.mcm-admincard li a {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 7px 12px;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.mcm-admincard li:hover a {
+  color: var(--accent-ink);
+}
+.mcm-admincard-group {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-4);
+}
+
+.mcm-adminhome-empty {
+  margin: 40px 0 0;
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 13.5px;
+}
+
+/* ---- Admin page header bar ----
+   29 Admin screens open with the same 65px title strip. The compat layer
+   retints it; this gives it the console's geometry so every page starts
+   the same way. */
+.mcm-admin .min-h-\[65px\] {
+  min-height: 58px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+/* Section headings inside a page. */
+.mcm-admin h5,
+.mcm-admin h6 {
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+/* Dashed empty-state boxes read as unfinished with a hard grey dash. */
+.mcm-admin .border-dashed {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+
+/* Search inputs across Admin sit in pill fields like the rest of the console. */
+.mcm-admin input[type='text'],
+.mcm-admin input[type='search'] {
+  border-color: var(--line);
+}
+.mcm-admin input:focus-visible,
+.mcm-admin select:focus-visible,
+.mcm-admin textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Pagination strip at the foot of Admin tables. */
+.mcm-admin .rounded-full {
+  border-radius: 999px;
+}
+
+/* ---- Admin nav search ---- */
+.mcm-admin .mcm-adminnav-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 12px 8px;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+}
+.mcm-admin .mcm-adminnav-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.mcm-admin .mcm-adminnav-search input::placeholder {
+  color: var(--ink-4);
+  font-weight: 500;
+}
+.mcm-admin .mcm-adminnav-empty {
+  margin: 0;
+  padding: 18px 14px;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+
+/* ---- Admin breadcrumb headers ----
+   Most section pages title themselves "Parent › Current". Both halves were
+   rendering near-black — the parent as text-gray-900 and the current as
+   text-primary, which defaults to near-black — so neither read as current.
+   Parent goes quiet, current takes the weight. */
+/* Two header shapes exist across Admin: "Parent › Current" and a bare title.
+   The bare title must stay the page title — the earlier rule muted it to 13px
+   grey along with the breadcrumb parent, which made those pages look unheaded.
+   `:has()` separates the two. */
+.mcm-admin .min-h-\[65px\] p.text-lg,
+.mcm-admin .min-h-\[65px\] > div.text-lg,
+.mcm-admin .min-h-\[65px\] > div > p.text-lg,
+.mcm-admin .min-h-\[65px\] > div > div.text-lg {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.mcm-admin .min-h-\[65px\] p.text-lg:has(.text-md),
+.mcm-admin .min-h-\[65px\] div.text-lg:has(.text-md) {
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 700;
+}
+.mcm-admin .min-h-\[65px\] .text-lg .text-md,
+.mcm-admin .min-h-\[65px\] .text-lg .text-primary {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.mcm-admin .min-h-\[65px\] .text-lg svg {
+  color: var(--ink-4);
+  width: 15px;
+  height: 15px;
+}
+
+/* Filter/action clusters in those headers. */
+.mcm-admin .min-h-\[65px\] .filters {
+  gap: 8px;
+}
+
+/* ---- status pills used across Numbers, Billing and 10DLC ---- */
+.mcm-admin .bg-green-100 {
+  background: color-mix(in srgb, var(--live) 14%, transparent);
+}
+.mcm-admin .text-green-500,
+.mcm-admin .text-green-600 {
+  color: var(--live);
+}
+.mcm-admin .bg-red-100 {
+  background: color-mix(in srgb, var(--crit) 12%, transparent);
+}
+.mcm-admin .text-red-500,
+.mcm-admin .text-red-600 {
+  color: var(--crit);
+}
+.mcm-admin .bg-yellow-100,
+.mcm-admin .bg-orange-100 {
+  background: color-mix(in srgb, var(--warn) 15%, transparent);
+}
+.mcm-admin .text-yellow-600,
+.mcm-admin .text-orange-500,
+.mcm-admin .text-orange-600 {
+  color: var(--warn);
+}
+
+/* ---- primary accent inside Admin ----
+   `--primary` is the tenant's brand colour and defaults to near-black, which
+   makes "current page" and "active tab" markers invisible. Inside Admin the
+   console accent carries state instead. */
+.mcm-admin .text-primary {
+  color: var(--accent-ink);
+}
+.mcm-admin .border-primary {
+  border-color: var(--accent);
+}
+.mcm-admin .bg-primary {
+  background: var(--accent);
+}
+.mcm-admin .bg-primary\/10 {
+  background: var(--accent-wash);
+}
+
+/* ---- Admin list page shell ----
+   Replaces the breadcrumb strip with a real page head. `TableManager` still
+   renders the table itself; this is the frame around it. */
+.mcm-admin .mcm-adminpage {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  background: var(--ground);
+}
+
+.mcm-admin .mcm-adminpage-head {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 22px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.mcm-admin .mcm-adminpage-eyebrow {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mcm-admin .mcm-adminpage-title h1 {
+  margin: 3px 0 0;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.mcm-admin .mcm-adminpage-title p {
+  margin: 4px 0 0;
+  max-width: 68ch;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.mcm-admin .mcm-adminpage-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcm-admin .mcm-adminpage-bar {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.mcm-admin .mcm-adminpage-body {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: 16px 22px 24px;
+}
+
+/* The page head owns the title now, so the old strip must not double up. */
+.mcm-admin .mcm-adminpage .min-h-\[65px\] {
+  display: none;
+}
+
+/* ---- Admin list page: density and the note strip ----
+   `.mcm-admin table` styles TableManager's output; these bring it to the same
+   rhythm as the Directory tables and tidy what sits around it. */
+.mcm-admin .mcm-adminpage table th {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  color: var(--ink-4);
+  padding: 9px 12px;
+  background: var(--surface-2);
+}
+.mcm-admin .mcm-adminpage table td {
+  padding: 10px 12px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+/* Search should not stretch the full width of a 1900px screen. */
+.mcm-admin .mcm-adminpage-bar > * {
+  max-width: 380px;
+  width: 100%;
+}
+
+/* The billing/plan notice above some tables — a quiet strip, not body copy. */
+.mcm-admin .mcm-adminpage-body > .panel-card > .tbl-wrap > div > p:first-child {
+  margin: 0 0 12px;
+  padding: 10px 13px;
+  border: 1px solid var(--accent-edge);
+  border-radius: var(--r-sm);
+  background: var(--accent-wash);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* Pagination strip under Admin tables. */
+.mcm-admin .mcm-adminpage select,
+.mcm-admin .mcm-adminpage-body select {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: 12.5px;
+}
+
+/* ---- Lifting the remaining Admin headers ----
+   Sixteen screens still use the original header block. Rather than rewrite each
+   one's JSX, the block itself is given the console page head's proportions, so
+   every Admin screen reads the same whether or not it has been moved onto
+   `AdminPage`. Pages on the new shell hide this block entirely. */
+.mcm-admin .min-h-\[65px\] {
+  min-height: 62px;
+  align-items: center;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  gap: 12px;
+}
+
+/* Search and action clusters in those headers. */
+.mcm-admin .min-h-\[65px\] input {
+  min-height: 36px;
+  border-radius: var(--r-sm);
+  border-color: var(--line);
+  font-size: 13px;
+}
+.mcm-admin .min-h-\[65px\] [data-slot='button'] {
+  min-height: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* The body under those headers: put it on the page ground with breathing room,
+   matching the pages already on the new shell. */
+.mcm-admin .min-h-\[65px\] + div {
+  padding: 16px 22px 24px;
+}
+
+/* Intro paragraphs directly under a header read as a quiet note, not body copy. */
+.mcm-admin .min-h-\[65px\] + div > p.text-sm:first-child {
+  margin: 0 0 12px;
+  padding: 10px 13px;
+  border: 1px solid var(--accent-edge);
+  border-radius: var(--r-sm);
+  background: var(--accent-wash);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* ==================================================================
+   Admin nav — the console's list, not stacked cards.
+   Rows were 56px with a 24px icon and a tinted block behind every
+   accordion group. This makes it a quiet, dense list where the only
+   emphasis is the page you are on.
+   ================================================================== */
+.mcm-admin .mcm-adminnav {
+  padding: 4px 8px 14px;
+}
+
+/* No dividers between sections — the type carries the grouping. */
+.mcm-admin .mcm-adminnav.divide-y > * + * {
+  border-top: 0;
+}
+
+/* Every row: section triggers and leaf tiles alike. */
+.mcm-admin .mcm-adminnav .h-14,
+.mcm-admin .mcm-adminnav .min-h-14 {
+  height: 38px;
+  min-height: 38px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  gap: 10px;
+}
+.mcm-admin .mcm-adminnav .h-14:hover,
+.mcm-admin .mcm-adminnav .min-h-14:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* Icons sized to the text, not to the row. */
+.mcm-admin .mcm-adminnav svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.mcm-admin .mcm-adminnav .w-6 {
+  width: 17px;
+}
+.mcm-admin .mcm-adminnav .h-6 {
+  height: 17px;
+}
+
+/* No tinted blocks behind groups, and no stray borders. */
+.mcm-admin .mcm-adminnav [class*='bg-ucass-primary-200'] {
+  background: transparent;
+}
+.mcm-admin .mcm-adminnav [data-slot='accordion-content'],
+.mcm-admin .mcm-adminnav [class*='border'] {
+  border: 0;
+}
+
+/* Children sit under their section, indented once. */
+.mcm-admin .mcm-adminnav .pl-10 {
+  padding-left: 34px;
+}
+
+/* The current page: accent text on a soft wash, with a left rail. The old
+   treatment put a 2px rail on the RIGHT, which read as a scrollbar. */
+.mcm-admin .mcm-adminnav .text-primary {
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+.mcm-admin .mcm-adminnav .border-r-primary {
+  border-right: 0 !important;
+  background: var(--accent-wash);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* Section labels stay quiet until you are inside them. */
+.mcm-admin .mcm-adminnav [data-slot='accordion-trigger'] p,
+.mcm-admin .mcm-adminnav .font-medium {
+  font-weight: 600;
+}
+
+/* The sidebar's own title ("Admin Hub"). It sat at page-title scale, competing
+   with the actual page title beside it. */
+.mcm-admin .mcm-adminnav-search ~ *,
+.mcm-admin h4.text-lg {
+  letter-spacing: -0.01em;
+}
+.mcm-admin h4.text-lg {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+/* ---- Side drawer carrying a console form ----
+   The drawer is a platform component shared everywhere, so this styles only
+   the case where console content is inside it. */
+.mcm-page.mcm-userform {
+  padding: 6px 20px 18px;
+}
+
+/* Its title sat flush against the drawer's top edge with no breathing room. */
+#drawer-example:has(.mcm-userform) > div:first-child,
+#drawer-example:has(.mcm-invite) > div:first-child {
+  /* The drawer opens directly under the app header, so its title landed hard
+     against the top edge with nothing above it. This gives the title room to
+     sit in. */
+  min-height: 66px;
+  padding-top: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+#drawer-example:has(.mcm-userform) h5,
+#drawer-example:has(.mcm-invite) h5 {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* The drawer itself gets the console ground so the form's white sections read
+   as cards rather than merging into one sheet. */
+#drawer-example:has(.mcm-userform) {
+  background: var(--ground);
+}
+
+/* "All admin screens" — the way back to the Admin landing page. It sits above
+   the sections because it is not one of them. */
+.mcm-admin .mcm-adminnav-all {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 8px 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.mcm-admin .mcm-adminnav-all:hover {
+  border-color: var(--accent-edge);
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+.mcm-admin .mcm-adminnav-all.on {
+  border-color: var(--accent-edge);
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+.mcm-admin .mcm-adminnav-all svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+/* ==================================================================
+   Integration
+   ------------------------------------------------------------------
+   A catalogue of things you can connect. Cards were ragged because
+   they stretched to the tallest in each grid row and their internals
+   had no shared rhythm; this gives them one.
+   ================================================================== */
+.mcm-admin .mcm-intpage {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--ground);
+}
+
+.mcm-admin .mcm-intpage-head {
+  flex: none;
+  padding: 18px 22px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.mcm-admin .mcm-intpage-eyebrow {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mcm-admin .mcm-intpage-head h1 {
+  margin: 3px 0 0;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.mcm-admin .mcm-intpage-head p {
+  margin: 4px 0 0;
+  max-width: 68ch;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.mcm-admin .mcm-intgrid {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  gap: 14px;
+  padding: 18px 22px 26px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-content: start;
+}
+
+/* Equal-height cards with the action pinned to the bottom, so a two-line
+   description and a one-line one still line their Connect links up. */
+.mcm-admin .mcm-intcard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+.mcm-admin .mcm-intcard:hover {
+  border-color: var(--accent-edge);
+  box-shadow: var(--shadow-sm);
+}
+
+/* The logo tile. */
+.mcm-admin .mcm-intcard .h-16.w-16 {
+  height: 46px;
+  width: 46px;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+}
+.mcm-admin .mcm-intcard .h-16.w-16 img {
+  width: 26px;
+  height: 26px;
+}
+
+.mcm-admin .mcm-intcard h3,
+.mcm-admin .mcm-intcard .text-primary {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.mcm-admin .mcm-intcard p {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+/* Connect / Coming soon sits on the floor of the card. */
+.mcm-admin .mcm-intcard > :last-child {
+  margin-top: auto;
+}
+
+/* Integration heads that also carry actions. */
+.mcm-admin .mcm-intpage-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+/* ==================================================================
+   Statement of account
+   ================================================================== */
+.mcm-admin .mcm-soa {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* The four figures that answer "where does this account stand". */
+.mcm-admin .mcm-soa-figures {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.mcm-admin .mcm-soa-fig {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.mcm-admin .mcm-soa-fig.warn {
+  border-left-color: var(--warn);
+}
+.mcm-admin .mcm-soa-fig.bad {
+  border-left-color: var(--crit);
+}
+.mcm-admin .mcm-soa-fig-l {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mcm-admin .mcm-soa-fig-v {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-admin .mcm-soa-fig-s {
+  font-size: 11.5px;
+  color: var(--ink-4);
+}
+
+.mcm-admin .mcm-soa-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  overflow: hidden;
+}
+.mcm-admin .mcm-soa-card-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line-2);
+}
+.mcm-admin .mcm-soa-card-h h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.mcm-admin .mcm-soa-card-h p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.mcm-admin .mcm-soa-period {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+.mcm-admin .mcm-soa-period-v {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* Allowance meters — what is left of what was bought. */
+.mcm-admin .mcm-soa-meters {
+  display: grid;
+  gap: 18px 24px;
+  padding: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.mcm-admin .mcm-soa-meter-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+.mcm-admin .mcm-soa-meter-l {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.mcm-admin .mcm-soa-meter-v {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-admin .mcm-soa-meter-v.over {
+  color: var(--crit);
+}
+.mcm-admin .mcm-soa-bar {
+  height: 7px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.mcm-admin .mcm-soa-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+.mcm-admin .mcm-soa-bar-fill.warm {
+  background: var(--warn);
+}
+.mcm-admin .mcm-soa-bar-fill.hot {
+  background: var(--crit);
+}
+.mcm-admin .mcm-soa-note {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-4);
+}
+
+/* Row count under a Directory table. */
+.mcm-page .mcm-tblfoot {
+  padding: 10px 14px;
+  border-top: 1px solid var(--line-2);
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Plan-change notice on Billing ▸ Plan. */
+.mcm-admin .mcm-planchange {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 15px;
+  border: 1px solid var(--accent-edge);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r);
+  background: var(--accent-wash);
+}
+.mcm-admin .mcm-planchange.down {
+  border-color: color-mix(in srgb, var(--live) 35%, transparent);
+  border-left-color: var(--live);
+  background: color-mix(in srgb, var(--live) 9%, transparent);
+}
+.mcm-admin .mcm-planchange strong {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.mcm-admin .mcm-planchange span {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+/* What credit buys — on Billing ▸ Credit & Payment. */
+.mcm-admin .mcm-creditwhat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.mcm-admin .mcm-creditwhat strong {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.mcm-admin .mcm-creditwhat ul {
+  margin: 2px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mcm-admin .mcm-creditwhat li {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.mcm-admin .mcm-creditwhat span {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* The tab strip is a flex row, so pushing Clear to the far end keeps it from
+   reading as a fourth tab. */
+.mcm-adminhome-tabs {
+  display: flex;
+  align-items: center;
+}
+.mcm-adminhome-clear {
+  margin-left: auto;
+  padding: 0 10px;
+  height: 26px;
+  border-radius: var(--r-sm);
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+}
+.mcm-adminhome-clear:hover {
+  color: var(--crit);
+  background: var(--surface-3);
+}
+
+/* ── Directory favourites ─────────────────────────────────────────────────
+   The star in a table row. `.mini` gives it the shape of the other row
+   actions; this only colours it once it is on, so a list of favourites reads
+   at a glance without the star competing with call/message when it is off. */
+.mcm-page .mini.mcm-fav-on,
+.mcm-page .mini.mcm-fav-on:hover {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 35%, var(--line));
+  background: color-mix(in srgb, var(--warn) 10%, var(--surface));
+}
+
+/* ── Call coverage ────────────────────────────────────────────────────────
+   The count chip goes red when numbers are dropping calls, so the headline
+   figure carries its own severity rather than relying on the reader to know
+   that a non-zero count is bad. */
+.mcm-page .fchip.bad {
+  border-color: color-mix(in srgb, var(--crit) 35%, var(--line));
+  background: color-mix(in srgb, var(--crit) 8%, var(--surface));
+  color: var(--crit);
+}
+.mcm-page .fchip.bad .num {
+  color: var(--crit);
+}
+
+/* A call is a path, so what gets written is shown as one — ending on the
+   step that catches the caller. */
+.mcm-flowpath {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 0;
+  padding: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+}
+.mcm-flowstep {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mcm-flowpath .chip {
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.mcm-flowpath .chip.end {
+  background: color-mix(in srgb, var(--live) 12%, var(--surface));
+  border-color: transparent;
+  color: var(--live);
+}
+.mcm-flowpath .arw {
+  color: var(--ink-4);
+  font-size: 13px;
+}
+
+.mcm-flowfacts {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mcm-flowfacts li {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-3);
+}
+.mcm-flowfacts strong {
+  color: var(--ink-2);
+}
+
+/* ── Call Rules: the precedence chain ─────────────────────────────────────
+   Forward All Calls, Incoming Calls and the fallback look like three
+   independent switches but are read in order, so a person can turn on
+   forwarding while tuning ring times and silently stop their phone ringing.
+   The summary states the outcome; the rank labels state the order. */
+.mcm-callsummary {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--live);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.mcm-callsummary.warn {
+  border-left-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 7%, var(--surface));
+}
+.mcm-callsummary-l {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mcm-callsummary p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Compact callers (My Phone) read the label and its outcome as one sentence
+   instead of a caption over a headline — "When someone calls you now — All
+   calls go to your voicemail." on one line where it fits, wrapping onto its
+   own line only once it doesn't. */
+.mcm-callsummary.inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  row-gap: 2px;
+}
+.mcm-callsummary.inline .mcm-callsummary-l {
+  flex: none;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 11.5px;
+}
+.mcm-callsummary-sep {
+  flex: none;
+  color: var(--ink-4);
+}
+.mcm-callsummary.inline p {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: normal;
+}
+
+.mcm-rule-rank {
+  flex: none;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--ink-3);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.mcm-rule-rank.off {
+  background: color-mix(in srgb, var(--warn) 14%, var(--surface));
+  color: var(--warn);
+}
+@media (max-width: 720px) {
+  .mcm-rule-rank {
+    display: none;
+  }
+}
+
+/* Sticky action bar for a form whose Submit sits inside the scrolling area.
+   Several pages put the save button at the natural end of a long form, which
+   means it is below the fold until the person scrolls to the bottom — easy to
+   miss entirely, and the most common reason a change is filled in and never
+   saved. Sticking it to the bottom of its own scroll container keeps it on
+   screen without moving it out of the form it belongs to. */
+.mcm-stickyfoot {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 0;
+  background: var(--surface-1, #fff);
+  border-top: 1px solid var(--line, #e5e7eb);
+}
+
+/* Pushes any hint text to the left of the buttons. */
+.mcm-stickyfoot .mcm-stickyfoot-hint {
+  margin-right: auto;
+  color: var(--ink-3, #6b7280);
+  font-size: 12px;
+}
+
+/* Briefly outlines the section a setup-guide step jumped to. Without it the
+   page scrolls and nothing tells you which row you landed on. */
+.mcm-flash {
+  animation: mcm-flash-outline 1.6s ease-out;
+}
+
+@keyframes mcm-flash-outline {
+  0%,
+  60% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #2563eb) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Settings screens — see components/mcm/setting-card.tsx
+
+   Built on the tokens above, so light and dark follow the rest of the admin
+   without these rules naming a colour.
+   --------------------------------------------------------------------------- */
+
+.mcm-setcard {
+  /* `flex: 0 0 auto` because these sit in fixed-height flex columns on several
+     screens. Without it each card shrinks to share the height between them, the
+     rows disappear and the header button gets clipped by the overflow rule. */
+  flex: 0 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  margin-bottom: 12px;
+}
+
+.mcm-setcard-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 16px 11px;
+  border-bottom: 1px solid var(--line);
+}
+.mcm-setcard-ht {
+  min-width: 0;
+}
+.mcm-setcard-h h3 {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.mcm-setcard-h p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  max-width: 62ch;
+}
+.mcm-setcard-aside {
+  flex: 0 0 auto;
+}
+.mcm-setcard-body {
+  padding: 4px 16px;
+}
+
+/* One decision. Label and explanation left, control right; the control drops
+   below the text on narrow screens rather than being squeezed. */
+.mcm-setrow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
+}
+.mcm-setcard-body > .mcm-setrow:last-child,
+.mcm-setnest > .mcm-setrow:last-child {
+  border-bottom: 0;
+}
+
+.mcm-setrow-t {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.mcm-setrow-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--ink);
+}
+.mcm-setrow-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--ink) 60%, transparent);
+  max-width: 66ch;
+}
+.mcm-setrow-c {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 280px;
+  padding-top: 1px;
+}
+.mcm-setrow-full {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.mcm-setrow-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+/* Says plainly that a setting is stored but does not change anything yet. */
+.mcm-setrow-flag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  background: var(--warn-wash);
+  color: var(--warn);
+  white-space: nowrap;
+}
+/* Works, but only inside this app. Blue rather than amber: nothing is missing,
+   it simply does not reach as far as somebody might assume. */
+.mcm-setrow-flag.is-app {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+/* Waiting on you, not on us. Grey, because nothing is wrong. */
+.mcm-setrow-flag.is-off {
+  background: var(--line-2);
+  color: var(--ink-3);
+}
+
+/* Sub-settings. The rule down the left ties them to the row that governs them. */
+.mcm-setnest {
+  margin: 0 0 2px 0;
+  padding: 0 0 0 18px;
+  border-left: 1px solid var(--line);
+}
+
+.mcm-setgrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  padding: 4px 0 12px;
+}
+
+@media (max-width: 640px) {
+  .mcm-setrow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .mcm-setrow-c {
+    max-width: none;
+  }
+}
+
+.mcm-setcard-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+.mcm-setcard-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.mcm-setcard-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  background: var(--warn-wash);
+  color: var(--warn);
+  white-space: nowrap;
+}
+.mcm-setcard-badge.is-on {
+  background: var(--live-wash);
+  color: var(--live);
+}
+.mcm-setcard-badge.is-app {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+.mcm-setcard-badge.is-off {
+  background: var(--line-2);
+  color: var(--ink-3);
+}
+/* The sentence under a card. It takes the colour of the badge above it, so the
+   two are obviously one statement rather than two. Amber by default, which is
+   "coming soon"; plain grey when the card makes no claim about itself at all. */
+.mcm-setcard-note {
+  margin: 0;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--warn-wash);
+  color: var(--warn);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.mcm-setcard-note.is-on {
+  background: var(--live-wash);
+  color: var(--live);
+}
+.mcm-setcard-note.is-app {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+.mcm-setcard-note.is-off,
+.mcm-setcard-note.is-plain {
+  background: var(--line-2);
+  color: var(--ink-3);
+}
+
+/* A plain text box or dropdown inside a settings row.
+   Most settings screens carry shadcn controls, which bring their own styling;
+   the console pages do not, and an unstyled native field beside a styled card
+   reads as broken. Opt-in by class so nothing that already looks right changes. */
+.mcm-field {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: inherit;
+  font-size: 13px;
+}
+.mcm-field:hover {
+  border-color: var(--accent);
+}
+.mcm-field:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* A note attached to the row above - why a setting cannot be changed, or what is
+   still missing before it takes effect. Sits under the row rather than beside it,
+   so a long explanation does not squeeze the control. */
+.mcm-setrow-note {
+  margin: -4px 0 10px;
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  background: var(--warn-wash);
+  color: var(--warn);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.mcm-setrow-note.is-on {
+  background: var(--live-wash);
+  color: var(--live);
+}
+
+/* The base note is amber - advice, or something not yet in effect. An error is
+   something that will certainly strand a caller, so it reads louder. Same shape,
+   different weight, and the difference is visible without reading the words. */
+.mcm-setrow-note.is-error {
+  background: var(--crit-wash);
+  color: var(--crit);
+  font-weight: 500;
+}
+
+/* Guidance rather than a warning - the sentence that helps somebody choose. */
+.mcm-setrow-note.is-info {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+
+/* ---------------------------------------------------------------------------
+   Account trouble — see components/mcm/account-state-banner.tsx
+   Sits above the page, not inside it: what it says applies to the whole console,
+   not to whichever screen happens to be open.
+   --------------------------------------------------------------------------- */
+
+.mcm-acctbanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.mcm-acctbanner.is-warn {
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+.mcm-acctbanner.is-stop {
+  background: var(--crit-wash);
+  color: var(--crit);
+}
+
+.mcm-acctbanner-t {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+}
+.mcm-acctbanner-t strong {
+  font-weight: 650;
+}
+.mcm-acctbanner-t span {
+  opacity: 0.92;
+}
+
+.mcm-acctbanner-a {
+  flex: 0 0 auto;
+  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid currentColor;
+  font-weight: 600;
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+}
+.mcm-acctbanner-a:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+
+/* ============================================================
+   Queues table (Performance › Queues).
+
+   Scoped to `.queues-table`, which this page passes to the shared
+   TableManager — that component is used on roughly 84 screens, so none of
+   what follows leaks out of here.
+
+   The shape of it: no card around the table, no vertical rules, a header
+   that recedes so the data outweighs it, whitespace instead of borders to
+   separate the column groups, and colour spent only where it changes what
+   you do — the service level.
+   ============================================================ */
+
+/* 1. Off the floating card and onto the page. */
+.mcm-page .queues-table {
+  border: 0;
+  border-radius: 0;
+  /* TableManager hard-codes `bg-white` on its scroll container, and a utility
+     in Tailwind's layer outranks this sheet whatever the specificity. Forced
+     here rather than by touching the shared component, and contained to this
+     one table by the `.queues-table` scope. */
+  background-color: transparent !important;
+}
+.mcm-page .queues-table table {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 3. The header recedes: small, medium weight, muted, wide-tracked. */
+.mcm-page .queues-table thead,
+.mcm-page .queues-table thead tr {
+  background-color: transparent;
+}
+.mcm-page .queues-table th {
+  padding: 0 14px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background-color: transparent;
+  color: var(--ink-3);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* 12/13. Room to breathe, and a separator faint enough to guide the eye
+   without drawing a grid over the numbers. 2. No vertical rules anywhere. */
+.mcm-page .queues-table td {
+  height: 54px;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  vertical-align: middle;
+}
+.mcm-page .queues-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* 11. Hover only makes the row easier to follow. */
+.mcm-page .queues-table tbody tr {
+  transition: background-color 0.14s ease;
+}
+.mcm-page .queues-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+/* 7. Numbers right-align, so the column reads as a column. */
+.mcm-page .queues-table th:nth-child(n + 3),
+.mcm-page .queues-table td:nth-child(n + 3) {
+  text-align: right;
+}
+
+/* 5/6. Whitespace carries the grouping — identity | live | volume |
+   performance — instead of dividers. */
+.mcm-page .queues-table th:nth-child(3),
+.mcm-page .queues-table td:nth-child(3),
+.mcm-page .queues-table th:nth-child(7),
+.mcm-page .queues-table td:nth-child(7),
+.mcm-page .queues-table th:nth-child(9),
+.mcm-page .queues-table td:nth-child(9) {
+  padding-left: 38px;
+}
+/* The outer cells keep their padding so nothing sits hard against the edge —
+   flush against it, the row highlight and the separators ran straight into the
+   boundary and the table read as cut off rather than as ending. */
+.mcm-page .queues-table th:first-child,
+.mcm-page .queues-table td:first-child {
+  padding-left: 16px;
+}
+.mcm-page .queues-table th:last-child,
+.mcm-page .queues-table td:last-child {
+  padding-right: 16px;
+}
+/* Rounding the ends of the hovered row finishes it off, so the tint reads as
+   a highlighted row rather than a band clipped by something. */
+.mcm-page .queues-table tbody tr:hover td:first-child {
+  border-top-left-radius: 9px;
+  border-bottom-left-radius: 9px;
+}
+.mcm-page .queues-table tbody tr:hover td:last-child {
+  border-top-right-radius: 9px;
+  border-bottom-right-radius: 9px;
+}
+
+/* 4/14. The queue name is the strongest thing in the row, in ink rather than
+   the accent so it doesn't read as a link at rest. */
+.mcm-page .queues-table .qt-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.14s ease;
+}
+.mcm-page .queues-table .qt-name:hover {
+  color: var(--accent);
+}
+.mcm-page .queues-table .qt-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--tone, var(--ink-4));
+}
+
+/* 8. Supporting figures step back so the ones that matter stand out. */
+.mcm-page .queues-table .qt-mute {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+/* 9/10. Service level: the figure plus a hairline meter, and the only colour
+   in the table. */
+.mcm-page .queues-table .qt-sla {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  min-width: 62px;
+}
+.mcm-page .queues-table .qt-sla-v {
+  font-weight: 600;
+  color: var(--tone, var(--ink));
+}
+.mcm-page .queues-table .qt-sla-bar {
+  display: block;
+  width: 100%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.mcm-page .queues-table .qt-sla-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tone, var(--ink-4));
+}
+
+/* Health, read off the same thresholds the console grades on. */
+.mcm-page .queues-table .tone-good {
+  --tone: var(--live);
+}
+.mcm-page .queues-table .tone-warn {
+  --tone: var(--warn);
+}
+.mcm-page .queues-table .tone-crit {
+  --tone: var(--crit);
+}
+.mcm-page .queues-table .tone-muted {
+  --tone: var(--ink-4);
+}
+
+/* ---- portrait stat card ----
+   Taller than wide, with the chart sitting on the floor of the card and
+   bleeding to both edges. The figure and its label are pinned to the top so
+   that a card with no history to plot still lines up with one that has. */
+
+/* Six columns of a full-width row come out ~240px on a large screen, which is
+   wider than the card is tall. Capping the row holds each card near 196px so
+   it stays upright; below this width the columns simply shrink and the cards
+   only get more upright. */
+.mcm-page .stat-row {
+  max-width: 1216px;
+}
+.mcm-page .stat-portrait {
+  display: flex;
+  flex-direction: column;
+  /* Upright at laptop widths, where a sixth of the content comes out near
+     200px, without growing so tall that the queue table below is pushed off
+     the fold — the row and the table have to share the screen. */
+  min-height: 212px;
+  padding: 15px 15px 0;
+  overflow: hidden;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+/* Only the edge responds. Washing the whole card tinted the figure's own
+   background, which read as a selected state rather than a pointed-at one. */
+.mcm-page .stat-portrait:hover {
+  border-color: var(--stat-hover-line);
+}
+/* One size and weight for every card's figure, whatever it holds — a queue
+   name and a percentage should not look like different kinds of thing. */
+.mcm-page .stat-portrait .v {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+.mcm-page .stat-portrait .d {
+  font-weight: 500;
+  color: var(--ink-3);
+}
+/* Sits on the floor of the card and bleeds to both edges. Held well back in
+   weight — it is context for the figure above it, not a second headline. */
+.mcm-page .stat-portrait .stat-spark {
+  display: block;
+  width: calc(100% + 30px);
+  height: 46px;
+  margin: auto -15px 0;
+  color: var(--accent);
+  opacity: 0.55;
+}
+
+/* ---- flat KPI band (Performance) ----
+   The same hairline grid, but minimal: four across in two rows, more air, and
+   hierarchy carried by type size rather than by colour or a tinted card. Only
+   the two tones that mean something — under target, and breaching — are
+   allowed to colour a figure. */
+.mcm-page .kpis-flat {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-radius: var(--r);
+}
+@media (min-width: 760px) {
+  .mcm-page .kpis-flat {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.mcm-page .kpis-flat .kpi {
+  padding: 12px 16px;
+}
+.mcm-page .kpis-flat .kpi .k {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  color: var(--ink-3);
+}
+.mcm-page .kpis-flat .kpi .v {
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  margin-top: 5px;
+}
+.mcm-page .kpis-flat .kpi .d {
+  font-size: 11.5px;
+  font-weight: 500;
+  margin-top: 4px;
+  color: var(--ink-3);
+}
+/* A breaching figure is already red — washing its whole cell as well made the
+   band read as an alert panel rather than a set of readings. */
+.mcm-page .kpis-flat .kpi.alert {
+  background: var(--surface);
+}
