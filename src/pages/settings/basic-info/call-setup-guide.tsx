@@ -41,7 +41,6 @@ const asObject = (value: unknown): any => {
 const CallSetupGuide = ({ userInfo }: { userInfo: any }) => {
   const info = userInfo?.user_info || {};
   const extension = String(info?.extension || '').trim();
-  const fullName = `${info?.first_name || ''} ${info?.last_name || ''}`.trim();
 
   const { data: assignedNumbers = [] } = useGetAssignedDIDNumbers(info?.uuid || userInfo?.uuid);
 
@@ -62,8 +61,7 @@ const CallSetupGuide = ({ userInfo }: { userInfo: any }) => {
       title: 'Your extension',
       status: extension ? `Colleagues reach you on ${extension}` : 'No extension assigned yet',
       ok: Boolean(extension),
-      explain:
-        'Your internal number. Anyone inside the company can dial it directly, and outside numbers are pointed at it.',
+      explain: 'Your internal number.',
       action: extension ? undefined : { label: 'Ask an admin', to: '/admin-settings/people' },
     },
     {
@@ -76,8 +74,7 @@ const CallSetupGuide = ({ userInfo }: { userInfo: any }) => {
             .join(', ') + (numbers.length > 3 ? ` and ${numbers.length - 3} more` : '')
         : 'No outside number points here yet',
       ok: numbers.length > 0,
-      explain:
-        'The public numbers people outside the company dial to reach you. Without one, only colleagues can call you.',
+      explain: 'Add a number for outside callers.',
       action: { label: 'Numbers', to: '/admin-settings/numbers/in-use' },
     },
     {
@@ -88,8 +85,7 @@ const CallSetupGuide = ({ userInfo }: { userInfo: any }) => {
           : `Callers fall back to ${String(failureAction?.type || '').toLowerCase()}`
         : 'Nothing is set, so callers are hung up on',
       ok: fallbackSet,
-      explain:
-        'Covers a rejected call, a call you miss, and a call that arrives while you are offline. With nothing set here the switch simply ends the call, and the caller hears silence.',
+      explain: 'Choose what happens to missed calls.',
       action: { label: 'Set it on My Phone', to: '/admin-settings/account/phone' },
     },
     {
@@ -98,9 +94,7 @@ const CallSetupGuide = ({ userInfo }: { userInfo: any }) => {
         ? `Your greeting: ${voicemailGreeting?.label || 'set'}`
         : 'No greeting, so callers get a bare tone',
       ok: greetingSet,
-      explain: fullName
-        ? `A greeting that names you — "You have reached the voicemail of ${fullName}" — tells callers they reached the right person before they start talking.`
-        : 'A greeting that names you tells callers they reached the right person before they start talking.',
+      explain: 'Add a greeting for callers.',
       action: { label: 'Greetings', to: '/admin-settings/account/greetings' },
     },
   ];
@@ -112,12 +106,8 @@ const CallSetupGuide = ({ userInfo }: { userInfo: any }) => {
       <McmIconSprite />
       <header>
         <div>
-          <h2>How your calls reach you</h2>
-          <p>
-            {outstanding
-              ? `${outstanding} of these ${outstanding === 1 ? 'is' : 'are'} not set up yet. Until they are, some callers will not get through.`
-              : 'Everything is set up — calls reach you, and the ones you miss reach your voicemail.'}
-          </p>
+          <h2 className="acepeak-heading">How your calls reach you</h2>
+          <p>{outstanding ? 'Finish these so no call gets missed.' : "You're all set."}</p>
         </div>
         <span className={`mcm-setupguide-pill${outstanding ? ' warn' : ''}`}>
           {outstanding ? `${outstanding} to finish` : 'All set'}
@@ -131,17 +121,17 @@ const CallSetupGuide = ({ userInfo }: { userInfo: any }) => {
               <Ic n={step.ok ? 'check' : 'alert'} size={13} />
             </span>
             <div className="mcm-setupguide-body">
-              <h3>{step.title}</h3>
+              <div className="acepeak-setupguide-titlerow">
+                <h3>{step.title}</h3>
+                {step.action && (
+                  <Link className="mcm-setupguide-action" to={step.action.to}>
+                    {step.action.label}
+                  </Link>
+                )}
+              </div>
               <p className="mcm-setupguide-status">{step.status}</p>
               <p className="mcm-setupguide-explain">{step.explain}</p>
             </div>
-            {step.action ? (
-              <Link className="mcm-setupguide-action" to={step.action.to}>
-                {step.action.label}
-              </Link>
-            ) : (
-              <span />
-            )}
           </li>
         ))}
       </ol>

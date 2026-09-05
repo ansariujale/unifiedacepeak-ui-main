@@ -3,6 +3,8 @@ import { Input } from '@/components/ui/input';
 import { useGetSite } from '@/hooks/common';
 import { ISELECTVALUE } from '@/interfaces/api-interfaces';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 
 import { useFormContext } from 'react-hook-form';
 import PhoneInput from 'react-phone-input-2';
@@ -10,12 +12,67 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { FC, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTemplateList } from '@/services/api';
+
+/** A section heading with its description. `tooltip` swaps the description
+ * from an always-visible paragraph to an info icon that reveals it on hover —
+ * opt in per caller so existing consumers of this form keep their current
+ * look untouched. */
+const SectionHeading = ({
+  title,
+  description,
+  tooltip = false,
+}: {
+  title: string;
+  description: string;
+  tooltip?: boolean;
+}) => {
+  return (
+    <div className="mcm-fsec-h">
+      {tooltip ? (
+        <div className="flex items-center gap-1.5">
+          <div className="mcm-fsec-t">{title}</div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-4 w-4 items-center justify-center rounded-full text-gray-400"
+                aria-label={description}
+              >
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="acepeak-tooltip-content" side="right" align="center">
+              {description}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      ) : (
+        <>
+          <div className="mcm-fsec-t">{title}</div>
+          <div className="mcm-fsec-d">{description}</div>
+        </>
+      )}
+    </div>
+  );
+};
+
 const BasicInformation: FC<any> = ({
   isChooseTemplate = true,
   chooseTemplate,
   setChooseTemplate,
   isSiteDisabled = false,
   customClass = 'xxl:max-h-[calc(100vh-450px)] xxl:h-[calc(100vh_-_21rem)]',
+  /** Off by default — only the Profile page opts in, so every other screen
+   * that renders this form keeps its current descriptions unchanged. */
+  compactDescriptions = false,
+  /** Rendered at the end of the Contact section — undefined for every
+   * existing consumer, so only the Profile page (which passes its Submit
+   * button here) changes. */
+  contactExtra = null,
+  /** Off by default — only the Profile page opts in, to gate First Name /
+   * Last Name / Job Title behind its own "Edit Profile" affordance. Every
+   * other consumer keeps these fields always editable. */
+  identityDisabled = false,
 }) => {
   const { data: dataSiteList = [], isLoading } = useGetSite();
 
@@ -95,12 +152,11 @@ const BasicInformation: FC<any> = ({
           everything below it is provisioned elsewhere. Splitting them makes
           that obvious instead of leaving three greyed boxes unexplained. */}
       <section className="mcm-fsec">
-        <div className="mcm-fsec-h">
-          <div className="mcm-fsec-t">Identity</div>
-          <div className="mcm-fsec-d">
-            The name shown across the console, directory and caller ID.
-          </div>
-        </div>
+        <SectionHeading
+          title="Identity"
+          description="The name shown across the console, directory and caller ID."
+          tooltip={compactDescriptions}
+        />
         <div className="mcm-fgrid">
           <div className="mcm-field">
             <Input
@@ -109,6 +165,7 @@ const BasicInformation: FC<any> = ({
               {...register('basic.first_name')}
               error={(errors.basic as any)?.first_name?.message}
               maxLength={50}
+              disabled={identityDisabled}
             />
           </div>
           <div className="mcm-field">
@@ -118,6 +175,7 @@ const BasicInformation: FC<any> = ({
               {...register('basic.last_name')}
               error={(errors.basic as any)?.last_name?.message}
               maxLength={50}
+              disabled={identityDisabled}
             />
           </div>
           {/* The save payload has always carried job_title and the server
@@ -129,19 +187,18 @@ const BasicInformation: FC<any> = ({
               {...register('basic.job_title')}
               error={(errors.basic as any)?.job_title?.message}
               maxLength={80}
+              disabled={identityDisabled}
             />
           </div>
         </div>
       </section>
 
       <section className="mcm-fsec">
-        <div className="mcm-fsec-h">
-          <div className="mcm-fsec-t">Workplace</div>
-          <div className="mcm-fsec-d">
-            Which site this user belongs to. The extension is assigned when the user is created and
-            cannot be changed here.
-          </div>
-        </div>
+        <SectionHeading
+          title="Workplace"
+          description="Which site this user belongs to. The extension is assigned when the user is created and cannot be changed here."
+          tooltip={compactDescriptions}
+        />
         <div className="mcm-fgrid">
           <div className="mcm-field">
             <div className="mcm-field-h">
@@ -172,13 +229,11 @@ const BasicInformation: FC<any> = ({
       </section>
 
       <section className="mcm-fsec">
-        <div className="mcm-fsec-h">
-          <div className="mcm-fsec-t">Contact</div>
-          <div className="mcm-fsec-d">
-            How this person is reached. Both are managed on the user&rsquo;s own account and are
-            shown here for reference.
-          </div>
-        </div>
+        <SectionHeading
+          title="Contact"
+          description="How this person is reached. Both are managed on the user's own account and are shown here for reference."
+          tooltip={compactDescriptions}
+        />
         <div className="mcm-fgrid">
           <div className="mcm-field">
             <div className="mcm-field-h">
@@ -196,6 +251,7 @@ const BasicInformation: FC<any> = ({
             <span className="mcm-field-note">Also the sign-in address.</span>
           </div>
         </div>
+        {contactExtra}
       </section>
 
       {isChooseTemplate && (

@@ -42,12 +42,22 @@ interface CallRulesProps {
   UUID?: string;
   userData?: any;
   customClass?: any;
+  /** Off by default — only My Phone opts in, so the admin screen that edits
+   * another person's forwarding keeps its current, fully-spelled-out copy. */
+  compactDescriptions?: boolean;
+  /** Undefined by default, in which case CustomSelect falls back to its own
+   * default (document.body) — only My Phone passes a real node, to keep its
+   * dropdown menus inside its own page-scoped styling instead of portaled
+   * out to the app root. */
+  selectMenuPortalTarget?: HTMLElement | null;
 }
 
 const CallRules: FC<CallRulesProps> = ({
   UUID,
   userData,
   customClass = 'h-[calc(100vh_-_17rem)]',
+  compactDescriptions = false,
+  selectMenuPortalTarget,
 }) => {
   const [collapse, setCollapse] = useState(collapseInitialState);
   const [isOpenModal, setIsOpenModal] = useState(false);
@@ -207,33 +217,68 @@ const CallRules: FC<CallRulesProps> = ({
      is not applied. Every branch keeps its own wording, because which rule an
      admin has chosen is still worth reading back to them.
      Restore the "what a caller gets" wording when the rules are honoured. */
-  const savedIntent = dndOn
-    ? `Do Not Disturb is on, and your fallback is set to ${describeTarget(summaryRules?.failureAction)}.`
-    : forwardingAll
-      ? `Every call is set to go to ${describeTarget(summaryRules?.forwardCall)}.`
-      : activeDevices
-        ? `${activeDevices} ${activeDevices === 1 ? 'device is' : 'devices are'} switched on, with ${describeTarget(summaryRules?.failureAction)} as the fallback.`
-        : `No device is switched on, and your fallback is ${describeTarget(summaryRules?.failureAction)}.`;
+  const fallbackTarget = describeTarget(summaryRules?.failureAction);
+  const hasFallback = Boolean(summaryRules?.failureAction?.type?.value);
+  const deviceNoun = activeDevices === 1 ? 'device is' : 'devices are';
 
-  const summary = `${savedIntent} This is saved, but the call path does not read it yet — your devices ring as normal whatever is set here.`;
+  const savedIntent = compactDescriptions
+    ? dndOn
+      ? `Do Not Disturb is on, fallback: ${fallbackTarget}.`
+      : forwardingAll
+        ? `All calls go to ${describeTarget(summaryRules?.forwardCall)}.`
+        : activeDevices
+          ? hasFallback
+            ? `${activeDevices} ${deviceNoun} on, fallback: ${fallbackTarget}.`
+            : `${activeDevices} ${deviceNoun} on, but no fallback is set.`
+          : hasFallback
+            ? `No device is on. Fallback: ${fallbackTarget}.`
+            : 'No device is on, and no fallback is set.'
+    : dndOn
+      ? `Do Not Disturb is on, and your fallback is set to ${fallbackTarget}.`
+      : forwardingAll
+        ? `Every call is set to go to ${describeTarget(summaryRules?.forwardCall)}.`
+        : activeDevices
+          ? `${activeDevices} ${deviceNoun} switched on, with ${fallbackTarget} as the fallback.`
+          : `No device is switched on, and your fallback is ${fallbackTarget}.`;
+
+  const summary = compactDescriptions
+    ? `${savedIntent} Devices ring as usual.`
+    : `${savedIntent} This is saved, but the call path does not read it yet — your devices ring as normal whatever is set here.`;
 
   /* Always 'warn': what is on screen is not in force, whichever rule is chosen,
      and an 'ok' tone would suggest one of these states is working. */
   const summaryTone = 'warn';
 
-  return (
-    <div className={`flex flex-col gap-4 overflow-y-auto pr-1 pt-2 ${customClass}`}>
-      <div className="flex flex-col gap-3">
-        <div className="mcm-fsec-h">
-          <div className="mcm-fsec-t">Call Rules</div>
-          <div className="mcm-fsec-d">
-            These rules are read in order: Do Not Disturb first, then Forward All Calls, and only if
-            both are off do your devices ring. Whatever is still unanswered falls to the last rule.
-          </div>
-        </div>
+  const didOptions =
+    assignedDIDList && assignedDIDList?.length
+      ? assignedDIDList.map((item: { did_number: string }) => ({
+          label: item?.did_number?.startsWith('+') ? item?.did_number : `+${item?.did_number}`,
+          value: item?.did_number,
+        }))
+      : [];
 
-        <div className={`mcm-callsummary ${summaryTone}`} role="status">
+  return (
+    <div
+      className={`flex flex-col overflow-y-auto pr-1 ${compactDescriptions ? 'gap-3 pt-1' : 'gap-4 pt-2'} ${customClass}`}
+    >
+      <div className={`flex flex-col ${compactDescriptions ? 'gap-2.5' : 'gap-3'}`}>
+        {!compactDescriptions && (
+          <div className="mcm-fsec-h">
+            <div className="mcm-fsec-t">Call Rules</div>
+            <div className="mcm-fsec-d">
+              These rules are read in order: Do Not Disturb first, then Forward All Calls, and only if
+              both are off do your devices ring. Whatever is still unanswered falls to the last rule.
+            </div>
+          </div>
+        )}
+
+        <div className={`mcm-callsummary ${summaryTone}${compactDescriptions ? ' inline' : ''}`} role="status">
           <span className="mcm-callsummary-l">When someone calls you now</span>
+          {compactDescriptions && (
+            <span className="mcm-callsummary-sep" aria-hidden="true">
+              —
+            </span>
+          )}
           <p>{summary}</p>
         </div>
         {/* <div className="border border-gray-200 rounded-xl flex flex-col"> */}
@@ -244,15 +289,16 @@ const CallRules: FC<CallRulesProps> = ({
             describes an intention, not what happens to a caller today. Saying
             "checked first" without this reads as a working precedence order.
             Delete this in the same change that makes the rules real. */}
-        <p className="mcm-setrow-note is-info mb-3">
-          Coming soon — these rules are saved, but calls are not routed by them yet. The order below
-          is how they will apply once they are switched on.
+        <p className={`mcm-setrow-note is-info ${compactDescriptions ? 'mb-2' : 'mb-3'}`}>
+          {compactDescriptions
+            ? 'Coming soon — saved, but not yet applied to calls.'
+            : 'Coming soon — these rules are saved, but calls are not routed by them yet. The order below is how they will apply once they are switched on.'}
         </p>
         <div className="mcm-rule">
           <span className="block">
             <div className="mcm-rule-h">
               <div className="mcm-rule-t">
-                <span className="mcm-dot ok" />
+                {!compactDescriptions && <span className="mcm-dot ok" />}
                 {/* <CallForward className="w-6 h-6 text-green-400" /> */}
                 <label htmlFor="forwardCall" className="cursor-pointer truncate">
                   Forward All Calls
@@ -264,7 +310,7 @@ const CallRules: FC<CallRulesProps> = ({
                   />
                 )}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center gap-3">
                 <Switch
                   id="forwardCall"
                   className="cursor-pointer"
@@ -292,7 +338,12 @@ const CallRules: FC<CallRulesProps> = ({
                 watch={watch}
                 errors={errors}
                 forwardState="callRules.forwardCall"
-                description="Every call goes here immediately — your devices are not rung at all. Use it when you are away; switch it off to go back to normal ringing."
+                menuPortalTarget={selectMenuPortalTarget}
+                description={
+                  compactDescriptions
+                    ? 'Every call goes here immediately — devices do not ring.'
+                    : 'Every call goes here immediately — your devices are not rung at all. Use it when you are away; switch it off to go back to normal ringing.'
+                }
                 isUser={true}
                 SITE_UUID={watch('basic.site.value')}
                 selectedUserExt={watch('basic.extension')}
@@ -337,7 +388,7 @@ const CallRules: FC<CallRulesProps> = ({
               className="mcm-rule-h tap"
             >
               <div className="mcm-rule-t">
-                <span className="mcm-dot acc" />
+                {!compactDescriptions && <span className="mcm-dot acc" />}
                 {/* <CallIncoming className="w-6 h-6 text-primary" /> */}
                 <span className={`truncate${errors?.callRules ? ' text-red' : ''}`}>
                   Incoming Calls
@@ -374,12 +425,14 @@ const CallRules: FC<CallRulesProps> = ({
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col items-start gap-5 px-3 sm:flex-row sm:items-center">
                   <p className="text-gray-800 text-sm w-full">
-                    Which of your devices ring, in what order, and for how long before the call is
-                    treated as missed.{' '}
+                    {compactDescriptions
+                      ? 'Which devices ring, in what order, and for how long.'
+                      : 'Which of your devices ring, in what order, and for how long before the call is treated as missed. '}
                   </p>
                   <div className="pl-1 w-full max-w-60">
                     <CustomSelect
                       options={RING_MODE_OPTIONS}
+                      menuPortalTarget={selectMenuPortalTarget}
                       handleChange={(e: ISELECTVALUE | null) => {
                         setValue('callRules.incomingCall.deviceOptionValue', e, {
                           shouldValidate: true,
@@ -411,128 +464,163 @@ const CallRules: FC<CallRulesProps> = ({
                 {incomingCall?.deviceOptionValue?.value === 'simultaneously' && (
                   <div className="overflow-x-auto">
                     <div className="flex min-w-[720px] flex-col rounded-xl border border-gray-200">
-                      <div className="flex justify-between rounded-t-xl bg-gray-100 p-2">
-                        <p className="w-1/5 font-medium text-sm">&nbsp;</p>
-                        <p className="w-full font-medium text-sm">Active</p>
-                        <p className="w-full font-medium text-sm">Name</p>
-                        <p className="w-full font-medium text-sm">Ring For</p>
-                        <p className="w-1/5 font-medium text-sm">&nbsp;</p>
+                      <div
+                        className={`flex justify-between rounded-t-xl bg-gray-100 ${compactDescriptions ? 'px-8 py-2' : 'p-2'}`}
+                      >
+                        {compactDescriptions ? (
+                          <>
+                            <p className="w-full font-medium text-sm">Name</p>
+                            <p className="w-full font-medium text-sm">Ring For</p>
+                            <p className="w-full text-right font-medium text-sm">Status</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="w-1/5 font-medium text-sm">&nbsp;</p>
+                            <p className="w-full font-medium text-sm">Active</p>
+                            <p className="w-full font-medium text-sm">Name</p>
+                            <p className="w-full font-medium text-sm">Ring For</p>
+                            <p className="w-1/5 font-medium text-sm">&nbsp;</p>
+                          </>
+                        )}
                         {/* <p className="w-1/4 font-medium text-sm">Action</p> */}
                       </div>
                       <div className="border-b-0 border-gray-200">
                         {incomingCall?.deviceOptions &&
                           Object.keys(incomingCall?.deviceOptions)?.map((objKey) => {
+                            const nameCell = (
+                              <p className="w-full text-sm">
+                                {incomingCall?.deviceOptions?.[objKey]?.option?.value ===
+                                user_extension ? (
+                                  <div className="flex items-center gap-3">
+                                    <span>
+                                      {incomingCall?.deviceOptions?.[objKey].type === 'mobile' ? (
+                                        <MobileOutlined className="w-5 h-5" />
+                                      ) : incomingCall?.deviceOptions?.[objKey].type === 'pstn' ? (
+                                        <LandlineOutlined className="w-5 h-5" />
+                                      ) : (
+                                        <Monitor className="w-5 h-5" />
+                                      )}
+                                    </span>
+                                    <span>
+                                      {
+                                        DEVICE_TYPE_NAME_CONST[
+                                          incomingCall?.deviceOptions?.[objKey]
+                                            .type as keyof typeof DEVICE_TYPE_NAME_CONST
+                                        ]
+                                      }
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="flex flex-col text-sm">
+                                    <span>
+                                      <div className="flex items-center gap-3">
+                                        <span>{/* <FaRegUser className="text-xl" /> */}</span>
+                                        <div className="flex flex-col">
+                                          <span className="capitalize font-bold">{objKey}</span>
+                                          <span className="flex items-center gap-2">
+                                            {`(${incomingCall?.deviceOptions[objKey]?.option?.value})`}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </span>
+                                  </span>
+                                )}
+                              </p>
+                            );
+                            const ringForCell = (
+                              <p className="w-full">
+                                {incomingCall?.deviceOptions?.[objKey]?.status && (
+                                  <CustomSelect
+                                    className="w-64"
+                                    options={RINGING_OPTIONS}
+                                    menuPortalTarget={selectMenuPortalTarget}
+                                    handleChange={(e: ISELECTVALUE | null) => {
+                                      if (
+                                        incomingCall?.deviceOptionValue?.value === 'simultaneously'
+                                      ) {
+                                        Object.keys(incomingCall?.deviceOptions || {}).forEach(
+                                          (key) => {
+                                            if (incomingCall?.deviceOptions?.[key]?.status) {
+                                              setValue(
+                                                `callRules.incomingCall.deviceOptions.${key}.value`,
+                                                e,
+                                                { shouldValidate: true },
+                                              );
+                                            }
+                                          },
+                                        );
+                                      } else {
+                                        setValue(
+                                          `callRules.incomingCall.deviceOptions.${objKey}.value`,
+                                          e,
+                                          {
+                                            shouldValidate: true,
+                                          },
+                                        );
+                                      }
+                                    }}
+                                    value={incomingCall?.deviceOptions?.[objKey]?.value}
+                                  />
+                                )}
+                              </p>
+                            );
+                            const statusCell = (
+                              <p
+                                className={
+                                  compactDescriptions ? 'flex w-full justify-end' : 'w-full text-sm'
+                                }
+                              >
+                                <Switch
+                                  className="cursor-pointer"
+                                  onCheckedChange={(checked: boolean) => {
+                                    setValue(
+                                      `callRules.incomingCall.deviceOptions.${objKey}.status`,
+                                      checked,
+                                    );
+                                    if (!checked) {
+                                      setValue(
+                                        `callRules.incomingCall.deviceOptions.${objKey}.value`,
+                                        {
+                                          label: '6 times / 30 secs',
+                                          value: '30',
+                                        },
+                                      );
+
+                                      if (objKey === 'phone') {
+                                        setValue(
+                                          `callRules.incomingCall.deviceOptions.${objKey}.phone`,
+                                          '',
+                                        );
+                                      }
+                                    }
+                                  }}
+                                  checked={watch(
+                                    `callRules.incomingCall.deviceOptions.${objKey}.status`,
+                                  )}
+                                />
+                              </p>
+                            );
+
                             return (
                               <div
                                 key={objKey}
-                                className="flex min-w-[720px] items-center justify-between border-b border-gray-200 p-2 last:border-b-0"
+                                className={`flex min-w-[720px] items-center justify-between border-b border-gray-200 last:border-b-0 ${compactDescriptions ? 'px-8 py-2' : 'p-2'}`}
                               >
-                                <p className="w-1/5 font-medium text-sm">&nbsp;</p>
-                                <p className="w-full text-sm">
-                                  <Switch
-                                    className="cursor-pointer"
-                                    onCheckedChange={(checked: boolean) => {
-                                      setValue(
-                                        `callRules.incomingCall.deviceOptions.${objKey}.status`,
-                                        checked,
-                                      );
-                                      if (!checked) {
-                                        setValue(
-                                          `callRules.incomingCall.deviceOptions.${objKey}.value`,
-                                          {
-                                            label: '6 times / 30 secs',
-                                            value: '30',
-                                          },
-                                        );
-
-                                        if (objKey === 'phone') {
-                                          setValue(
-                                            `callRules.incomingCall.deviceOptions.${objKey}.phone`,
-                                            '',
-                                          );
-                                        }
-                                      }
-                                    }}
-                                    checked={watch(
-                                      `callRules.incomingCall.deviceOptions.${objKey}.status`,
-                                    )}
-                                  />
-                                </p>
-                                <p className="w-full text-sm">
-                                  {incomingCall?.deviceOptions?.[objKey]?.option?.value ===
-                                  user_extension ? (
-                                    <div className="flex items-center gap-3">
-                                      <span>
-                                        {incomingCall?.deviceOptions?.[objKey].type === 'mobile' ? (
-                                          <MobileOutlined className="w-5 h-5" />
-                                        ) : incomingCall?.deviceOptions?.[objKey].type ===
-                                          'pstn' ? (
-                                          <LandlineOutlined className="w-5 h-5" />
-                                        ) : (
-                                          <Monitor className="w-5 h-5" />
-                                        )}
-                                      </span>
-                                      <span>
-                                        {
-                                          DEVICE_TYPE_NAME_CONST[
-                                            incomingCall?.deviceOptions?.[objKey]
-                                              .type as keyof typeof DEVICE_TYPE_NAME_CONST
-                                          ]
-                                        }
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <span className="flex flex-col text-sm">
-                                      <span>
-                                        <div className="flex items-center gap-3">
-                                          <span>{/* <FaRegUser className="text-xl" /> */}</span>
-                                          <div className="flex flex-col">
-                                            <span className="capitalize font-bold">{objKey}</span>
-                                            <span className="flex items-center gap-2">
-                                              {`(${incomingCall?.deviceOptions[objKey]?.option?.value})`}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </span>
-                                    </span>
-                                  )}
-                                </p>
-                                <p className="w-full">
-                                  {incomingCall?.deviceOptions?.[objKey]?.status && (
-                                    <CustomSelect
-                                      className="w-64"
-                                      options={RINGING_OPTIONS}
-                                      handleChange={(e: ISELECTVALUE | null) => {
-                                        if (
-                                          incomingCall?.deviceOptionValue?.value ===
-                                          'simultaneously'
-                                        ) {
-                                          Object.keys(incomingCall?.deviceOptions || {}).forEach(
-                                            (key) => {
-                                              if (incomingCall?.deviceOptions?.[key]?.status) {
-                                                setValue(
-                                                  `callRules.incomingCall.deviceOptions.${key}.value`,
-                                                  e,
-                                                  { shouldValidate: true },
-                                                );
-                                              }
-                                            },
-                                          );
-                                        } else {
-                                          setValue(
-                                            `callRules.incomingCall.deviceOptions.${objKey}.value`,
-                                            e,
-                                            {
-                                              shouldValidate: true,
-                                            },
-                                          );
-                                        }
-                                      }}
-                                      value={incomingCall?.deviceOptions?.[objKey]?.value}
-                                    />
-                                  )}
-                                </p>
-                                <p className="w-1/5 font-medium text-sm">&nbsp;</p>
+                                {compactDescriptions ? (
+                                  <>
+                                    {nameCell}
+                                    {ringForCell}
+                                    {statusCell}
+                                  </>
+                                ) : (
+                                  <>
+                                    <p className="w-1/5 font-medium text-sm">&nbsp;</p>
+                                    {statusCell}
+                                    {nameCell}
+                                    {ringForCell}
+                                    <p className="w-1/5 font-medium text-sm">&nbsp;</p>
+                                  </>
+                                )}
                               </div>
                             );
                           })}
@@ -543,12 +631,24 @@ const CallRules: FC<CallRulesProps> = ({
                 {incomingCall?.deviceOptionValue?.value === 'sequential' && (
                   <div className="overflow-x-auto">
                     <div className="flex min-w-[720px] flex-col rounded-xl border border-gray-200">
-                      <div className="flex justify-between rounded-t-xl bg-gray-100 p-2">
+                      <div
+                        className={`flex justify-between rounded-t-xl bg-gray-100 ${compactDescriptions ? 'px-8 py-2' : 'p-2'}`}
+                      >
                         <p className="w-1/5 font-medium text-sm">&nbsp;</p>
-                        <p className="w-full font-medium text-sm">Active</p>
-                        <p className="w-full font-medium text-sm">Name</p>
-                        <p className="w-full font-medium text-sm">Ring For</p>
-                        <p className="w-1/5 font-medium text-sm">&nbsp;</p>
+                        {compactDescriptions ? (
+                          <>
+                            <p className="w-full font-medium text-sm">Name</p>
+                            <p className="w-full font-medium text-sm">Ring For</p>
+                            <p className="w-full text-right font-medium text-sm">Status</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="w-full font-medium text-sm">Active</p>
+                            <p className="w-full font-medium text-sm">Name</p>
+                            <p className="w-full font-medium text-sm">Ring For</p>
+                            <p className="w-1/5 font-medium text-sm">&nbsp;</p>
+                          </>
+                        )}
                         {/* <p className="w-1/4 font-bold">Action</p> */}
                       </div>
                       <div className="w-full">
@@ -560,6 +660,8 @@ const CallRules: FC<CallRulesProps> = ({
                             handleEditDevice,
                             user_extension,
                             watch,
+                            menuPortalTarget: selectMenuPortalTarget,
+                            compactDescriptions,
                           }}
                         />
                       </div>
@@ -589,8 +691,13 @@ const CallRules: FC<CallRulesProps> = ({
                       watch={watch}
                       errors={errors}
                       forwardState="callRules.failureAction"
+                      menuPortalTarget={selectMenuPortalTarget}
                       label="If Busy / Unanswered / Unreachable"
-                      description="The last stop for a call: you rejected it, nobody picked up, or your devices were offline. Leave this on voicemail — if it is unset the switch simply ends the call and the caller hears silence."
+                      description={
+                        compactDescriptions
+                          ? 'Fallback for a missed, rejected, or offline call. Voicemail is safest — unset means the caller hears silence.'
+                          : 'The last stop for a call: you rejected it, nobody picked up, or your devices were offline. Leave this on voicemail — if it is unset the switch simply ends the call and the caller hears silence.'
+                      }
                       isUser={true}
                       SITE_UUID={watch('basic.site.value')}
                       selectedUserExt={watch('basic.extension')}
@@ -601,76 +708,122 @@ const CallRules: FC<CallRulesProps> = ({
             )}
           </span>
         </div>
-        <div className="border border-gray-200 bg-white rounded-xl p-3">
-          <span className={`block transition-all duration-300 `}>
-            <div
-              className="flex items-center justify-between gap-2 h-14 cursor-pointer px-3"
-              onClick={() =>
-                setCollapse((prev) => ({
-                  ...prev,
-                  outgoingCall: !prev.outgoingCall,
-                }))
-              }
-            >
-              <div className="mcm-rule-t">
-                <span className="mcm-dot acc" />
-                <span className="truncate">Outgoing Calls</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div
-                  className="mcm-chev"
-                  style={{ transform: `rotate(${collapse?.outgoingCall ? 0 : -90}deg)` }}
-                >
-                  <ChevronIcon className="w-5 h-5" />
+        {compactDescriptions ? (
+          <div className="mcm-rule">
+            <span className="block">
+              <div
+                onClick={() =>
+                  setCollapse((prev) => ({
+                    ...prev,
+                    outgoingCall: !prev.outgoingCall,
+                  }))
+                }
+                className="mcm-rule-h tap"
+              >
+                <div className="mcm-rule-t">
+                  <span className="truncate">Outgoing Calls</span>
                 </div>
-              </div>
-            </div>
-
-            {collapse?.outgoingCall && (
-              <div className="flex flex-col gap-5 px-3 pb-3">
-                <div className="border border-gray-200 rounded-xl">
-                  <div className="flex flex-col divide-gray-200">
-                    <label>
-                      <span className="block max-h-36 transition-all duration-300 peer-checked/showLabel:max-h-72">
-                        <div className="flex sm:flex-row flex-col items-center justify-between gap-2 min-h-16 cursor-pointer p-3">
-                          <div className="flex flex-col gap-1.5">
-                            <p className="font-semibold truncate text-md text-gray-900">
-                              Default Caller ID
-                            </p>
-                            <p className="text-gray-800 text-sm">
-                              Select the number that will be displayed to the people that you called
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-3 sm:w-1/5 w-full">
-                            <CustomSelect
-                              options={
-                                assignedDIDList && assignedDIDList?.length
-                                  ? assignedDIDList.map((item: { did_number: string }) => ({
-                                      label: item?.did_number?.startsWith('+')
-                                        ? item?.did_number
-                                        : `+${item?.did_number}`,
-                                      value: item?.did_number,
-                                    }))
-                                  : []
-                              }
-                              handleChange={(e: ISELECTVALUE | null) => {
-                                setValue(`callRules.outgoingCall.defaultCallerId`, e, {
-                                  shouldValidate: true,
-                                });
-                              }}
-                              value={watch('callRules.outgoingCall.defaultCallerId') || {}}
-                            />
-                          </div>
-                        </div>
-                      </span>
-                    </label>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="mcm-chev"
+                    style={{ transform: `rotate(${collapse?.outgoingCall ? 0 : -90}deg)` }}
+                  >
+                    <ChevronIcon className="w-5 h-5" />
                   </div>
                 </div>
               </div>
-            )}
-          </span>
-        </div>
+
+              {collapse?.outgoingCall && (
+                <div className="mcm-rule-b">
+                  <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-1">
+                      <p className="font-semibold truncate text-sm text-gray-900">
+                        Default Caller ID
+                      </p>
+                      <p className="text-gray-600 text-xs">Number shown to people you call.</p>
+                    </div>
+                    <div className="w-full sm:w-1/2 sm:max-w-60">
+                      <CustomSelect
+                        menuPortalTarget={selectMenuPortalTarget}
+                        options={didOptions}
+                        handleChange={(e: ISELECTVALUE | null) => {
+                          setValue(`callRules.outgoingCall.defaultCallerId`, e, {
+                            shouldValidate: true,
+                          });
+                        }}
+                        value={watch('callRules.outgoingCall.defaultCallerId') || {}}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </span>
+          </div>
+        ) : (
+          <div className="border border-gray-200 bg-white rounded-xl p-3">
+            <span className={`block transition-all duration-300 `}>
+              <div
+                className="flex items-center justify-between gap-2 h-14 cursor-pointer px-3"
+                onClick={() =>
+                  setCollapse((prev) => ({
+                    ...prev,
+                    outgoingCall: !prev.outgoingCall,
+                  }))
+                }
+              >
+                <div className="mcm-rule-t">
+                  <span className="mcm-dot acc" />
+                  <span className="truncate">Outgoing Calls</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="mcm-chev"
+                    style={{ transform: `rotate(${collapse?.outgoingCall ? 0 : -90}deg)` }}
+                  >
+                    <ChevronIcon className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+
+              {collapse?.outgoingCall && (
+                <div className="flex flex-col gap-5 px-3 pb-3">
+                  <div className="border border-gray-200 rounded-xl">
+                    <div className="flex flex-col divide-gray-200">
+                      <label>
+                        <span className="block max-h-36 transition-all duration-300 peer-checked/showLabel:max-h-72">
+                          <div className="flex sm:flex-row flex-col items-center justify-between gap-2 min-h-16 cursor-pointer p-3">
+                            <div className="flex flex-col gap-1.5">
+                              <p className="font-semibold truncate text-md text-gray-900">
+                                Default Caller ID
+                              </p>
+                              <p className="text-gray-800 text-sm">
+                                Select the number that will be displayed to the people that you
+                                called
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-3 sm:w-1/5 w-full">
+                              <CustomSelect
+                                menuPortalTarget={selectMenuPortalTarget}
+                                options={didOptions}
+                                handleChange={(e: ISELECTVALUE | null) => {
+                                  setValue(`callRules.outgoingCall.defaultCallerId`, e, {
+                                    shouldValidate: true,
+                                  });
+                                }}
+                                value={watch('callRules.outgoingCall.defaultCallerId') || {}}
+                              />
+                            </div>
+                          </div>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </span>
+          </div>
+        )}
       </div>
       {isOpenModal && (
         <AddCoworkerModal

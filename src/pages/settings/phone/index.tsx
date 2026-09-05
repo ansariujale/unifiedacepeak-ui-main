@@ -2,22 +2,45 @@ import CallRules from '@/pages/admin-settings/people/update-forwarding/call-rule
 import { getUserDetails, updateUserSettings, userUpdateStatus } from '@/services/api';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { phoneSettingsSchema } from './schema';
 import { handleAlert } from '@/lib/utils';
 import { RING_TYPE_LABELS, RINGING_OPTIONS } from '@/constants/forwarding-consts';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 import { useSocketEvents } from '@/hooks/use-socket-events';
 import { useUser } from '@/hooks/use-user';
 import { invalidateGlobalUsersDirectory } from '@/lib/invalidate-global-users-directory';
 import { mergeCallForwarding } from '@/lib/call-forwarding-record';
+import '@/components/mcm/mcm-page.css';
 
 const IncomingCalls = () => {
   const [schemaContext, setSchemaContext] = useState(null);
   const queryClient: any = useQueryClient();
   const { socketEventsManager } = useSocketEvents();
   const { user } = useUser();
+  /* react-select portals its open dropdown menu to document.body by default
+     — outside this page's own DOM subtree, which is why page-scoped CSS
+     (ancestor selectors, or a custom class threaded through the option) can
+     never reliably reach it: it isn't a descendant of .acepeak-myphone once
+     rendered. Giving it this node as its portal target instead keeps it a
+     real descendant of the page, so the *actual*, unmodified react-select
+     classes (.custom-react-select__option--is-focused etc.) can be styled
+     with a plain ancestor-scoped rule below — no custom class needed. This
+     node sits as a direct child of the page's own <section>, not nested
+     inside any of the scrolling/overflow-hidden cards, so the portaled menu
+     (still absolutely positioned, matching how react-select already
+     behaves when portaled to document.body) isn't clipped by them either. */
+  const [selectPortalNode, setSelectPortalNode] = useState<HTMLDivElement | null>(null);
+  /* Briefly self-reveals on load, the same as the Profile page's info
+     tooltip, so the icon reads as interactive before anyone has hovered it. */
+  const [showHeaderHint, setShowHeaderHint] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHeaderHint(false), 700);
+    return () => clearTimeout(timer);
+  }, []);
   const { data: userDetails } = useQuery({
     queryKey: ['userInfoForPhoneSettings'],
     queryFn: getUserDetails,
@@ -452,39 +475,266 @@ const IncomingCalls = () => {
   }, [watch]);
 
   return (
-    <section className="w-full bg-gray-200/15 flex flex-col overflow-x-auto overflow-y-hidden">
-      <div className="flex items-center justify-between p-3 border-b border-gray-200 min-h-[65px] bg-white">
-        <div>
-          <p className="text-gray-900 font-semibold text-lg">My Phone</p>
-          <p className="text-gray-500 text-xs">
-            How calls reach you: your devices, forwarding rules and what happens when you do not
-            answer.
-          </p>
+    <section className="acepeak-myphone flex h-full w-full flex-col overflow-hidden bg-[#efefef]">
+      {/* The dropdown menu portal target — see the comment on
+          selectPortalNode above. Zero-size and unstyled; it exists only as
+          an attachment point. */}
+      <div ref={setSelectPortalNode} />
+      {/* Same brand tokens and fixes as the Profile page's own style block —
+          duplicated per-page rather than shared, since each page owns its
+          scope. Kept identical on purpose so the two screens read as one
+          system. */}
+      <style>{`
+        .acepeak-myphone {
+          font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+          --ap-primary: #DC2626;
+          --ap-primary-hover: #B91C1C;
+          --ap-secondary: #EF4444;
+          --ap-secondary-2: #F87171;
+          --ap-soft-bg: #FFF1F2;
+          /* Every dropdown's focused/selected option was still the app-wide
+             blue despite an earlier attempt to recolour it with an ancestor-
+             scoped rule targeting react-select's own BEM classes
+             (.custom-react-select__option--is-focused etc). The reason:
+             that colour actually comes from a global !important rule in
+             index.css, inside "@layer base". Per the CSS cascade layers
+             spec, !important declarations invert layer priority — a named
+             layer beats anything unlayered, however specific — so this
+             page's own unlayered !important rule could never win against
+             it, no matter how it was targeted.
+             Fixed at the source instead: those global rules in index.css
+             now read their colour from --select-option-active-bg / -fg,
+             falling back to the same tokens (--color-gray-100, --primary,
+             etc.) they always used, so every other page is unaffected.
+             Setting the two variables here — plain custom-property
+             inheritance, no !important or layer fight needed — is what
+             actually reaches the portaled option elements, since
+             selectPortalNode (below) keeps them real DOM descendants of
+             this page rather than of document.body. Hover and the current
+             selection are separate variables in index.css on purpose — only
+             the selection reads this page's red; hover keeps its own
+             medium-light grey rather than also turning red, so the two
+             states of a dropdown stay visually distinct. */
+          --select-option-active-bg: var(--ap-secondary-2);
+          --select-option-active-fg: #000;
+          --select-option-hover-bg: #E5E7EB;
+          --select-option-hover-fg: #000;
+          /* The closed dropdown box's own border — hover and focus/open —
+             read the app-wide --primary too (same index.css, same
+             !important-in-@layer-base pattern as the option colours
+             above), which is why it showed blue rather than this page's
+             own palette. A dark neutral grey here, not the page's red,
+             since a field border reads as "active", not as an accent. */
+          --select-control-border: #4B5563;
+        }
+        .acepeak-myphone .mcm-page {
+          --accent: var(--ap-primary);
+          --accent-ink: var(--ap-primary-hover);
+          --accent-wash: var(--ap-soft-bg);
+          --accent-edge: #FCA5A5;
+          --sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+        }
+        .acepeak-myphone .acepeak-heading,
+        .acepeak-myphone .mcm-fsec-t {
+          color: #000;
+          font-style: normal;
+          font-weight: 700;
+        }
+        /* The page's own main heading only. */
+        .acepeak-myphone .acepeak-page-title {
+          font-family: 'Instrument Serif', serif;
+          font-style: italic;
+          font-weight: 400;
+          font-size: 27px;
+          line-height: 41px;
+          color: #171717;
+        }
+        .acepeak-tooltip-content {
+          background: #fdf7f5 !important;
+          color: #000 !important;
+          border: none !important;
+          width: max-content !important;
+          max-width: 340px !important;
+          white-space: normal !important;
+          line-height: 1.5 !important;
+          box-shadow: 0 6px 20px rgba(17, 17, 17, 0.18) !important;
+        }
+        .acepeak-tooltip-content svg {
+          fill: #fdf7f5 !important;
+        }
+        .acepeak-myphone,
+        .acepeak-myphone [data-slot='input'],
+        .acepeak-myphone [data-slot='button'],
+        .acepeak-myphone .mcm-fsec,
+        .acepeak-myphone .mcm-rule,
+        .acepeak-myphone .rounded-xl {
+          box-shadow: none !important;
+        }
+        .acepeak-myphone [data-slot='input']:not(:disabled) {
+          border-color: #D1D5DB !important;
+        }
+        .acepeak-myphone [data-slot='input']:not(:disabled):hover,
+        .acepeak-myphone [data-slot='input']:not(:disabled):focus {
+          border-color: #9CA3AF !important;
+          outline: none !important;
+        }
+        .acepeak-myphone .acepeak-info-trigger:hover {
+          color: var(--ap-primary);
+        }
+        .acepeak-myphone [data-slot='button'][type='submit'] {
+          background: #000 !important;
+          border-color: #000 !important;
+          color: #fff !important;
+        }
+        .acepeak-myphone [data-slot='button'][type='submit']:hover {
+          background: #1a1a1a !important;
+          border-color: #1a1a1a !important;
+        }
+        /* The voicemail-not-saved warning, restyled to the same compact,
+           left-accented card the rest of the app's warnings use. */
+        .acepeak-myphone .mcm-notsaved {
+          padding: 10px 12px;
+          border-radius: 10px;
+          font-size: 12.5px;
+        }
+        /* The switch sits flush against the card's own padding, reading as
+           closer to the edge than the chevrons on the rows below it (which
+           are a much smaller control at the same padding). A touch more
+           right padding gives it the same visual breathing room. */
+        .acepeak-myphone .mcm-rule-h {
+          padding-right: 18px;
+        }
+        /* CallRules' own root element (rendered as the last child of the
+           .mcm-page wrapper below) carries "overflow-y-auto" unconditionally
+           in its own source — see call-rules/index.tsx, it's baked into the
+           className regardless of the customClass prop this page passes it.
+           This form is meant to be the page's one scroll container; if
+           anything ever gives that inner element a bounded height, its own
+           overflow-y-auto activates as a second, nested, independently-
+           scrolling region, and the mouse wheel scrolls THAT first — leaving
+           the Submit row, which sits after it in the DOM but outside it,
+           visually stationary until the inner scroll is exhausted. Neither
+           element has any position other than static; this is what made a
+           static, normal-flow Submit row read as pinned in place. Height and
+           overflow are both cleared so that scroll can only ever happen
+           here, at the form. */
+        .acepeak-myphone .mcm-page > div:last-child {
+          overflow: visible !important;
+          height: auto !important;
+          max-height: none !important;
+        }
+        /* No custom switch CSS here anymore. mcm-page.css already carries a
+           complete, purpose-built switch design — 38x22px track, 18x18px
+           thumb, translateX(17px) when checked (see the "Audit fixes for the
+           user edit drawer" section there) — meant to apply everywhere
+           .mcm-page is used. It was blocked only by mcm-page.css's own
+           ".mcm-page button" reset stripping the switch's border before that
+           was excluded at the source. Every override attempted on this page
+           was fighting that already-correct, already-used-elsewhere system
+           instead of just letting it apply. */
+        /* Submit is a normal-flow footer, not a fixed/sticky overlay — this
+           just gives it its own clearly separated action area so it can
+           never read as floating over the content above it. position:
+           static is already the default; asserted explicitly so nothing
+           can turn it into an overlay. */
+        .acepeak-myphone .acepeak-submit-row,
+        .acepeak-myphone [data-slot='button'][type='submit'] {
+          position: static !important;
+          top: auto !important;
+          bottom: auto !important;
+          left: auto !important;
+          right: auto !important;
+          transform: none !important;
+          z-index: auto !important;
+        }
+        .acepeak-myphone .acepeak-submit-row {
+          border-top: 1px solid #f0f2f6;
+          padding-top: 14px;
+          margin-top: 4px;
+        }
+        /* Tighter rhythm between the rule cards — closer to the Profile
+           page's density than the shared component's own default spacing,
+           which was tuned for the roomier admin per-user screen. */
+        .acepeak-myphone .mcm-rule + .mcm-rule {
+          margin-top: 8px;
+        }
+        .acepeak-myphone .mcm-rule-h {
+          min-height: 48px;
+        }
+        /* The "on" switch reads var(--accent), which this page already
+           points at --ap-primary (#DC2626) above — a plain red, not orange.
+           Hardcoded here anyway, !important, so the colour that actually
+           renders is never at the mercy of that variable chain resolving
+           some other way than intended. */
+        .acepeak-myphone [data-slot='switch'][data-state='checked'] {
+          background-color: #DC2626 !important;
+          border-color: #DC2626 !important;
+        }
+      `}</style>
+      <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 bg-white">
+        <div className="flex items-center gap-1.5">
+          <p className="acepeak-page-title text-gray-900 font-semibold text-lg">My Phone</p>
+          <Tooltip open={showHeaderHint || undefined}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="acepeak-info-trigger inline-flex h-4 w-4 items-center justify-center rounded-full text-gray-400"
+                aria-label="About this page"
+              >
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="acepeak-tooltip-content" side="right" align="center">
+              Your devices, forwarding rules, and what happens when you miss a call.
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
-      <FormProvider {...methods}>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="gap-3 flex flex-col justify-between h-full p-3"
-        >
-          {!fallbackSaved ? (
-            <div className="mcm-notsaved" role="status">
-              <strong>Voicemail is not saved yet.</strong>
-              <span>
-                “If Busy / Unanswered / Unreachable” shows Send to Voicemail below, but nothing has
-                been stored for this account — so unanswered and rejected calls are hung up on
-                instead. Press Submit to apply it.
-              </span>
+      {/* This div, not the <form> it contains, owns scrolling — the one and
+          only scrollable region on the page. Everything inside it (CallRules,
+          then Submit) is plain sequential content with no height/overflow of
+          its own, so there is nothing left that could form a second,
+          independently-scrolling region. */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 p-4 md:p-6">
+            <div
+              className="mcm-page"
+              style={
+                {
+                  display: 'block',
+                  height: 'auto',
+                  minHeight: 0,
+                  overflow: 'visible',
+                  background: 'transparent',
+                  fontFamily: 'inherit',
+                  fontSize: 'inherit',
+                  lineHeight: 'inherit',
+                  '--sans': 'inherit',
+                  '--mono': 'inherit',
+                } as CSSProperties
+              }
+            >
+              {!fallbackSaved ? (
+                <div className="mcm-notsaved mb-3" role="status">
+                  <strong>Voicemail isn&rsquo;t saved yet.</strong>
+                  <span>Unanswered calls are hung up instead — press Submit to apply it.</span>
+                </div>
+              ) : null}
+              <CallRules
+                customClass=""
+                compactDescriptions
+                selectMenuPortalTarget={selectPortalNode}
+              />
             </div>
-          ) : null}
-          <CallRules customClass="md:min-h-[calc(100vh_-_13rem)]" />
-          <div className="flex justify-end gap-2">
-            <Button variant={'primary'} type="submit" disabled={isPendingUpdateMember}>
-              {isPendingUpdateMember ? 'Please wait...' : 'Submit'}
-            </Button>
-          </div>
-        </form>
-      </FormProvider>
+            <div className="acepeak-submit-row flex justify-end gap-2">
+              <Button variant={'primary'} type="submit" disabled={isPendingUpdateMember}>
+                {isPendingUpdateMember ? 'Please wait...' : 'Submit'}
+              </Button>
+            </div>
+          </form>
+        </FormProvider>
+      </div>
     </section>
   );
 };

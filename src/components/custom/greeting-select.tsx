@@ -25,6 +25,10 @@ interface IGREETINGPROPS {
   onGreetingUploadStart?: () => void;
   onGreetingUploadSuccess?: () => void;
   width?: string;
+  /** Undefined by default — CustomSelect then falls back to its own default
+   * (document.body). Only passed by callers that want this dropdown's menu
+   * kept inside their own page's scoped styling. */
+  menuPortalTarget?: HTMLElement | null | boolean;
 }
 
 interface GreetingSelectValue extends ISELECTVALUE {
@@ -46,6 +50,7 @@ const SelectGreeting: FC<IGREETINGPROPS> = ({
   refetch = () => {},
   onGreetingUploadStart = () => {},
   onGreetingUploadSuccess = () => {},
+  menuPortalTarget,
 }) => {
   const { user } = useUser();
   const { company_info } = user;
@@ -90,6 +95,7 @@ const SelectGreeting: FC<IGREETINGPROPS> = ({
               }}
               value={value}
               isClearable={true}
+              menuPortalTarget={menuPortalTarget}
             />
           </div>
           {value?.value && (
