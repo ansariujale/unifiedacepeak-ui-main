@@ -1,0 +1,278 @@
+/* ==========================================================================
+   KPI Overview Card
+   Used on: AI Receptionists, Chat Agents, and Sessions screens.
+   Reference implementation: Chat Agents screen.
+
+   Markup shape:
+
+   <div class="kpi-grid">
+     <div class="kpi-card">
+       <span class="kpi-card__label">Total receptionists</span>
+       <span class="kpi-card__value-row">
+         <span class="kpi-card__value">4</span>
+         <span class="kpi-card__helper">
+           <span class="kpi-card__helper-dot"></span>
+           3 live
+         </span>
+       </span>
+       <span class="kpi-card__description">Voice agents on this account</span>
+     </div>
+     <!-- repeat kpi-card for each stat, 5 max per row -->
+   </div>
+
+   Notes:
+   - Card count per row should be 5 (or fewer) — the grid divides evenly into
+     up to 5 columns and collapses to 2 then 1 on smaller screens. Grids with
+     more than 5 stats take the .kpi-grid--cols-4 modifier and wrap onto a
+     second row; the dividers close themselves up on the last row and the
+     last column whatever the count is.
+   - kpi-card__label, kpi-card__value and kpi-card__description are all
+     forced to a single line (white-space: nowrap) so a long label (e.g.
+     "Total receptionists") or a long fallback value (e.g. "Not analyzed")
+     never wraps and stretches the whole row's height.
+   - kpi-card__value supports two optional tone modifiers:
+     kpi-card__value--warn and kpi-card__value--critical.
+   - Colours are held in --kpi-* custom properties so the one dark-mode block
+     at the foot of this file can restage the whole card. Everything above it
+     is the light palette exactly as specified.
+   ========================================================================== */
+
+.kpi-grid,
+.kpi-section-heading {
+  --kpi-surface: #ffffff;
+  --kpi-border: #e2e8f0; /* slate-200 */
+  --kpi-divider: #f1f5f9; /* slate-100 */
+  --kpi-label: #404040; /* neutral-700 */
+  --kpi-value: #171717; /* neutral-900 */
+  --kpi-value-warn: #d97706; /* amber-600 */
+  --kpi-value-critical: #dc2626; /* red-600 */
+  --kpi-description: #a3a3a3; /* neutral-400 */
+  --kpi-helper-bg: #f0fdf4; /* green-50 */
+  --kpi-helper-ink: #15803d; /* green-700 */
+  --kpi-helper-dot: #22c55e; /* green-500 */
+  --kpi-heading: #dc2626; /* red-600 */
+  --kpi-rule: #e5e5e5; /* neutral-200 */
+  --kpi-veil: rgba(255, 255, 255, 0.7);
+}
+
+.kpi-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  background: var(--kpi-surface);
+  border: 1px solid var(--kpi-border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+@media (min-width: 640px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .kpi-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .kpi-grid--cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Loading overlay shown while stats are (re)fetching */
+.kpi-grid__loading {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  background: var(--kpi-veil);
+  backdrop-filter: blur(1px);
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* gap-1.5 */
+  padding: 16px; /* p-4 */
+  min-width: 0;
+  border-bottom: 1px solid var(--kpi-divider);
+}
+
+/* Divider between cards: bottom border on mobile (stacked),
+   right border from sm breakpoint up (side by side). Omit on the
+   last card in the row. */
+@media (min-width: 640px) {
+  .kpi-card {
+    border-right: 1px solid var(--kpi-divider);
+  }
+}
+
+.kpi-card:last-child {
+  border-bottom: 0;
+  border-right: 0;
+}
+
+/* Multi-row grids. `:nth-child(Nn + 1):nth-last-child(-n + N)` is the first
+   card of the final row — it and everything after it closes the bottom
+   dividers, so the rules hold for any number of stats, not just a full grid. */
+@media (min-width: 640px) {
+  .kpi-card:nth-child(2n) {
+    border-right: 0;
+  }
+  .kpi-card:nth-child(2n + 1):nth-last-child(-n + 2),
+  .kpi-card:nth-child(2n + 1):nth-last-child(-n + 2) ~ .kpi-card {
+    border-bottom: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .kpi-card:nth-child(2n) {
+    border-right: 1px solid var(--kpi-divider);
+  }
+  .kpi-card:nth-child(2n + 1):nth-last-child(-n + 2),
+  .kpi-card:nth-child(2n + 1):nth-last-child(-n + 2) ~ .kpi-card {
+    border-bottom: 1px solid var(--kpi-divider);
+  }
+
+  .kpi-grid:not(.kpi-grid--cols-4) .kpi-card:nth-child(5n) {
+    border-right: 0;
+  }
+  .kpi-grid:not(.kpi-grid--cols-4) .kpi-card:nth-child(5n + 1):nth-last-child(-n + 5),
+  .kpi-grid:not(.kpi-grid--cols-4) .kpi-card:nth-child(5n + 1):nth-last-child(-n + 5) ~ .kpi-card {
+    border-bottom: 0;
+  }
+
+  .kpi-grid--cols-4 .kpi-card:nth-child(4n) {
+    border-right: 0;
+  }
+  .kpi-grid--cols-4 .kpi-card:nth-child(4n + 1):nth-last-child(-n + 4),
+  .kpi-grid--cols-4 .kpi-card:nth-child(4n + 1):nth-last-child(-n + 4) ~ .kpi-card {
+    border-bottom: 0;
+  }
+}
+
+.kpi-card__label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--kpi-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-card__value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px; /* gap-1.5 */
+  min-width: 0;
+}
+
+.kpi-card__value {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25; /* leading-tight */
+  letter-spacing: -0.01em; /* tracking-tight */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+  color: var(--kpi-value); /* neutral-900, default tone */
+}
+
+.kpi-card__value--warn {
+  color: var(--kpi-value-warn);
+}
+
+.kpi-card__value--critical {
+  color: var(--kpi-value-critical);
+}
+
+/* Optional pill next to the value, e.g. "3 live" */
+.kpi-card__helper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  border-radius: 9999px;
+  background: var(--kpi-helper-bg);
+  color: var(--kpi-helper-ink);
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.kpi-card__helper-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 9999px;
+  background: var(--kpi-helper-dot);
+}
+
+.kpi-card__description {
+  font-size: 12px;
+  color: var(--kpi-description);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Section heading that sits above the grid ("OVERVIEW") */
+.kpi-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.kpi-section-heading__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--kpi-heading);
+  white-space: nowrap;
+}
+
+.kpi-section-heading__rule {
+  height: 1px;
+  flex: 1;
+  background: var(--kpi-rule);
+}
+
+/* A grid seated inside another card (the Queues hero) drops its own frame and
+   keeps only the hairline that separates it from what it sits under. */
+.kpi-grid--flush {
+  border: 0;
+  border-top: 1px solid var(--kpi-border);
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+/* ---- dark ----
+   The app themes by a `.dark` class on the root, so this restages the palette
+   onto the console's own tokens rather than re-picking colours. */
+.dark .kpi-grid,
+.dark .kpi-section-heading {
+  --kpi-surface: var(--surface, #111827);
+  --kpi-border: var(--line, #26314a);
+  --kpi-divider: var(--line-2, #1c2537);
+  --kpi-label: var(--ink-2, #c3cddf);
+  --kpi-value: var(--ink, #eef2f9);
+  --kpi-value-warn: var(--warn, #f0a24b);
+  --kpi-value-critical: var(--crit, #f87171);
+  --kpi-description: var(--ink-4, #6b7a96);
+  --kpi-helper-bg: var(--live-wash, #0f2f2c);
+  --kpi-helper-ink: var(--live, #2dd4bf);
+  --kpi-helper-dot: var(--live, #2dd4bf);
+  --kpi-heading: var(--accent, #f87171);
+  --kpi-rule: var(--line, #26314a);
+  --kpi-veil: rgba(17, 24, 39, 0.7);
+}

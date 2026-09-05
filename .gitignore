@@ -1,0 +1,38 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+node_modules
+.vite
+dist
+dist-ssr
+*.local
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+package-lock.json
+.env
+# Compiled Python bytecode. Two .pyc files under backend-patches/ were tracked
+# by accident, so every run of those services dirtied the working tree with an
+# unreadable binary diff. The sources next to them are what matters.
+__pycache__/
+*.py[cod]
+
+# Encrypted credential archives — must never reach a remote
+secrets-backup/
+
+# Live-managed by Claude Code; accumulates local command text incl. credentials
+.claude/settings.json
+
+# Local dev-server launch config (machine-specific ports)
+.claude/launch.json

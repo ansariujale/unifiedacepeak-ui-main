@@ -1,0 +1,85 @@
+import { useMemo, useState } from 'react';
+import { useUser } from '@/hooks/use-user';
+import DialpadTranscriptManager from '@/components/dialpad/components/dialpad-transcript-manager';
+import { ConsoleIconSprite } from './icons';
+import CallListColumn, { type ConsoleCallRow, type ConsoleLogSource } from './call-list-column';
+import StageColumn from './stage-column';
+import { useConsoleCall } from './use-console-call';
+import { useCallLogRefresh } from './use-call-log-refresh';
+import { checklistState, contactDisplayName, toConsoleTurns } from './copilot-adapter';
+import './console.css';
+
+/**
+ * MCM Unified Console — phone console.
+ *
+ * Layout, states and surfaces follow the "MCM Unified Console" design artifact:
+ * a three-zone console (call list │ softphone stage │ intelligence panel) with
+ * the call lifecycle idle → incoming/dialing → active → wrap-up.
+ *
+ * Everything on screen is driven by the platform: the stage is bound to the
+ * real jssip session in DialpadContext, the call list to the call-log API, the
+ * transcript to the speech service, notes/dispositions/history to the same
+ * endpoints the dialpad uses. The parts with no service behind them yet live
+ * in `copilot-adapter.ts` and label themselves as such.
+ */
+const PhoneConsole = () => {
+  const { user } = useUser();
+  const { dialpad, session, state, secs, endWrapup } = useConsoleCall();
+
+  /* A call placed from this page did not show up in the list beside it until
+     the query happened to refetch. This watches for hangup and refreshes. */
+  useCallLogRefresh();
+  const [selectedCall, setSelectedCall] = useState<ConsoleCallRow | null>(null);
+  const [logSource, setLogSource] = useState<ConsoleLogSource>('call');
+
+  const agentName =
+    `${user?.user_info?.first_name || ''} ${user?.user_info?.last_name || ''}`.trim() || 'You';
+
+  const turns = useMemo(
+    () => toConsoleTurns(session?.transcriptionMessages, agentName, contactDisplayName(session)),
+    [session?.transcriptionMessages, agentName, session],
+  );
+
+  const spoken = useMemo(() => turns.filter((t) => !t.isSummary), [turns]);
+  const checklist = useMemo(() => checklistState(spoken), [spoken]);
+
+  return (
+    <div className="mcm-console">
+      <ConsoleIconSprite />
+      {/* Headless. It relays transcript socket messages onto the session and
+          auto-starts transcription per the user's settings. Normally mounted by
+          the Dialpad component, but DialpadGlobalOverlay renders nothing on
+          /phone — without this the console's live transcript would stay empty
+          on the one page that shows it. */}
+      <DialpadTranscriptManager />
+      <div className="phone-grid">
+        <CallListColumn
+          selectedId={selectedCall?.id || null}
+          onSelect={(row) => {
+            setSelectedCall(row);
+          }}
+          source={logSource}
+          onSourceChange={(next) => {
+            setLogSource(next);
+            setSelectedCall(null);
+          }}
+          liveNumber={session?.remoteNumber}
+        />
+        <StageColumn
+          state={state}
+          session={session}
+          secs={secs}
+          dialpad={dialpad}
+          turns={spoken}
+          checklist={checklist}
+          onEndWrapup={endWrapup}
+          selectedCall={selectedCall}
+          onBackToDialer={() => setSelectedCall(null)}
+          onOpenTranscript={() => {}}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default PhoneConsole;

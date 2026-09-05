@@ -1,0 +1,44 @@
+/* The one list of company settings sections.
+ *
+ * The router builds its child routes from this, and the sub-navigation builds
+ * its links from it, so a section cannot exist in one and be missing from the
+ * other. Adding a section means adding one row here and one route.
+ *
+ * `path` is relative to /admin-settings/company — the layout links there and
+ * the router mounts the sections there, so the two cannot drift apart.
+ */
+
+export interface CompanySection {
+  path: string;
+  label: string;
+}
+
+export const COMPANY_SECTIONS: CompanySection[] = [
+  { path: 'phone-rules', label: 'Phone rules' },
+  { path: 'greetings', label: 'Greetings' },
+  { path: 'voicemail', label: 'Ringing & voicemail' },
+  { path: 'emergency-address', label: 'Emergency address' },
+  { path: 'holidays', label: 'Holidays' },
+  { path: 'calling', label: 'Calling' },
+  { path: 'messaging', label: 'Messaging' },
+  { path: 'policies', label: 'Policies' },
+  /* Sits straight after Policies on purpose. Policies is where an admin decides
+     the company's answer; this is where that answer is put onto the people who
+     already work here, who none of the other screens reach. */
+  { path: 'apply-to-people', label: 'Apply to people' },
+  { path: 'profile-fields', label: 'Profile fields' },
+  { path: 'security', label: 'Security' },
+];
+
+/* Where /admin-settings/company/rules-era links and the bare /company path
+   should land. Kept as a constant so the redirects and the router agree. */
+export const COMPANY_DEFAULT_SECTION = 'phone-rules';
+
+/* The address of the phone rules section.
+ *
+ * The sidebar's "Company Rules" entry, the summary card's Edit button and the
+ * setup guide's "Call handling" step all pointed at Policies, which holds
+ * recording consent and data retention — not the hours, ring time and voicemail
+ * those three describe. Anyone following them landed on the wrong screen. They
+ * now share this one constant, so a future move cannot separate them again. */
+export const COMPANY_RULES_PATH = `/admin-settings/company/${COMPANY_DEFAULT_SECTION}`;
