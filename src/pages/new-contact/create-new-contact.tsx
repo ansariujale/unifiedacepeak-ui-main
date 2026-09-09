@@ -16,6 +16,7 @@ import { mediaUploadUrl, addContact, upsertContact } from '@/services/api';
 import { useUser } from '@/hooks/use-user';
 import { Icon } from '@/assets/icons/icon';
 import CustomSelect from '@/components/custom/custom-select';
+import { CustomDatePicker } from '@/components/custom/custom-datepicker';
 import { ContactFormValues, CreateNewContactProps } from '@/interfaces/contact-interface';
 import PhoneInput from 'react-phone-input-2';
 import countryList from '@/lib/countries.json';
@@ -699,13 +700,19 @@ const CreateContactNew: React.FC<CreateNewContactProps> = ({
               isDisabled={isDisable}
             />
             <div className="flex flex-col gap-1.5 w-full">
-              <Input
-                type="date"
-                {...register('dob')}
+              <CustomDatePicker
+                className="contact-dob-trigger"
                 label="Birth Date"
+                placeholder="mm/dd/yyyy"
+                value={watch('dob') ? moment(watch('dob'), 'YYYY-MM-DD').toDate() : null}
+                onChange={(date) =>
+                  setValue('dob', date ? moment(date).format('YYYY-MM-DD') : '', {
+                    shouldValidate: true,
+                  })
+                }
                 error={errors?.dob?.message}
                 disabled={isDisable}
-                max={today}
+                maxDate={moment(today, 'YYYY-MM-DD').toDate()}
               />
             </div>
           </div>

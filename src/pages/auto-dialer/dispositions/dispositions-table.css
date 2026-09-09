@@ -48,30 +48,17 @@
 }
 .disp-card th,
 .disp-card td {
-  text-align: left;
-}
-.disp-card th:nth-child(1),
-.disp-card td:nth-child(1) {
-  width: 25%;
-}
-.disp-card th:nth-child(2),
-.disp-card td:nth-child(2) {
-  width: 25%;
-}
-.disp-card th:nth-child(3),
-.disp-card td:nth-child(3) {
-  width: 25%;
-}
-.disp-card th:nth-child(4),
-.disp-card td:nth-child(4) {
   width: 25%;
   text-align: center;
+  vertical-align: middle;
 }
 /* The action icons render in a block-level flex span, which
    text-align:center can't budge — switching it to inline-flex lets the
    td's centering actually reach it. */
-.disp-card td:nth-child(4) > span {
+.disp-card td > span {
   display: inline-flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .disp-toolbar {
@@ -104,7 +91,7 @@
 .disp-search input:focus-visible {
   outline: none;
   border-radius: 99px;
-  border-color: #fca5a5;
+  border-color: #dc2626;
   box-shadow: none;
 }
 .disp-search-ico {

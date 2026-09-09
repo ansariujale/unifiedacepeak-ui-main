@@ -1,0 +1,14 @@
+/* index.css's app-wide `button:disabled { background-color: ... !important }`
+   rule (inside `@layer base`) was painting every disabled calendar day
+   with a solid gray fill. An unlayered override always loses to a
+   layered `!important` rule regardless of specificity, so this has to
+   sit in the same layer to actually win. Only the fill/border are
+   cancelled here — the muted text color and not-allowed cursor from
+   that same rule are left alone, so a disabled day still reads as
+   unavailable. */
+@layer base {
+  button.rdp-day:disabled {
+    background-color: transparent !important;
+    border-color: transparent !important;
+  }
+}

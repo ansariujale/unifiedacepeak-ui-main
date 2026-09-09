@@ -35,6 +35,49 @@ export interface ILead {
   groupDetail: any[];
   contactPic?: string;
 }
+/* TEMP: sample rows for reviewing the table with the account empty.
+   Mimics the real API's response shape (rather than TableManager's
+   `staticData` escape hatch) so the footer's record count and
+   page-number pager still work correctly. Remove this function and go
+   back to `fetcherFn: getGroupContactsById` once real data exists. */
+const fetchDummyLeads = () =>
+  Promise.resolve({
+    data: {
+      data: {
+        result: {
+          totalItems: 3,
+          totalPages: 1,
+          rows: [
+            {
+              _id: 'dummy-1',
+              createdAt: '2026-09-05T10:00:00.000Z',
+              name: { first: 'Test', last: 'Sharma' },
+              contact: { email: 'test.sharma@example.com', phone: '+14422129610' },
+              meta: { updatedBy: [] },
+              groupMeta: [{ _id: 'g1', groupName: 'VIP' }],
+            },
+            {
+              _id: 'dummy-2',
+              createdAt: '2026-09-03T10:00:00.000Z',
+              name: { first: 'Aakash', last: 'Rao' },
+              contact: { email: 'aakash.rao@example.com', phone: '+19578642210' },
+              meta: { updatedBy: [] },
+              groupMeta: [{ _id: 'g2', groupName: 'New Leads' }],
+            },
+            {
+              _id: 'dummy-3',
+              createdAt: '2026-09-01T10:00:00.000Z',
+              name: { first: 'Priya', last: 'Nair' },
+              contact: { email: 'priya.nair@example.com', phone: '+16008314958' },
+              meta: { updatedBy: [] },
+              groupMeta: [],
+            },
+          ],
+        },
+      },
+    },
+  });
+
 const extractUpdatedByName = (
   updatedByIds: string | string[] | undefined,
   userId: string,
@@ -354,7 +397,7 @@ const AllLeadsList: FC<any> = ({
           tableRef,
           columns,
           fetcherKey: 'getGroupContactsById',
-          fetcherFn: getGroupContactsById,
+          fetcherFn: fetchDummyLeads,
           extraParams: {
             // groupId: '',
             ...payloadExtraParams,

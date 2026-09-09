@@ -16,6 +16,7 @@ import { UploadIcon } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import './dnc-upload-theme.css';
 
 const ALLOWED_FILE_TYPES = [
   'text/csv',
@@ -96,7 +97,10 @@ const UploadDnc: FC<{ drawerState: boolean; setDrawerState: (state: boolean) => 
   return (
     <>
       <Dialog open={drawerState} onOpenChange={(val) => setDrawerState(val)}>
-        <DialogContent className="w-1/4 p-3  max-h-[99%] overflow-y-auto" showCloseButton={false}>
+        <DialogContent
+          className="dnc-upload-modal w-full sm:w-[480px] lg:w-[480px] p-5 min-h-[30rem] max-h-[99%] overflow-y-auto"
+          showCloseButton={false}
+        >
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="w-full flex flex-col gap-3 justify-between h-full"
@@ -167,10 +171,10 @@ const UploadDnc: FC<{ drawerState: boolean; setDrawerState: (state: boolean) => 
               <div className="flex gap-4 flex-row">
                 <label
                   htmlFor="file-upload"
-                  className="flex flex-col items-center justify-center w-full h-44 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer bg-white hover:border-gray-400"
+                  className="flex flex-col items-center justify-center w-full h-44 border-2 border-dashed border-primary bg-red-50 rounded-xl cursor-pointer hover:border-primary transition-colors"
                 >
                   <div className="flex flex-col items-center">
-                    <UploadIcon className="w-5 h-5" />
+                    <UploadIcon className="w-5 h-5 text-primary" />
 
                     <p className="pt-2 text-sm text-gray-900">Upload File</p>
                     <p className="mt-2 text-sm text-gray-700">Supported Format .csv, .xlsx, .xls</p>
@@ -203,10 +207,20 @@ const UploadDnc: FC<{ drawerState: boolean; setDrawerState: (state: boolean) => 
               </a>
             </div>
             <div className="justify-end flex gap-2">
-              <Button type="button" variant={'transparent'} onClick={() => setDrawerState(false)}>
+              <Button
+                type="button"
+                variant={'secondary'}
+                className="rounded-full bg-white border border-gray-300 text-gray-900 hover:bg-gray-50"
+                onClick={() => setDrawerState(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" variant={'primary'} disabled={!watch('file') || isPending}>
+              <Button
+                type="submit"
+                variant={'dark'}
+                className="rounded-full"
+                disabled={!watch('file') || isPending}
+              >
                 {isPending ? 'Saving...' : 'Save'}
               </Button>
             </div>

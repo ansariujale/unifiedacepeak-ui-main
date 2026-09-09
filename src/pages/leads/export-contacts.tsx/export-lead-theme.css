@@ -1,0 +1,37 @@
+/* Export Leads modal — the Group select shows a red border the moment
+   the modal opens (react-hook-form's required-field validation on an
+   empty value), and both the global focus/open-state rule and the
+   error-state rule paint that border red via `!important` inside
+   `@layer base` (index.css) — an unlayered override loses to those
+   regardless of specificity, so this has to sit in the same layer. */
+@layer base {
+  .export-lead-modal .custom-react-select__control--is-focused,
+  .export-lead-modal .custom-react-select__control--menu-is-open,
+  .export-lead-modal .react-select-error .custom-react-select__control {
+    border-color: #d1d5db !important;
+    box-shadow: none !important;
+  }
+}
+
+/* The Group menu portals to <body>, outside `.export-lead-modal`'s own
+   DOM subtree, so it can't be reached with a `.export-lead-modal
+   .whatever` descendant selector — CustomSelect's `inputClass` prop
+   is the workaround: it becomes part of react-select's
+   `classNamePrefix`, which (because it contains a space) stamps this
+   literal class onto every generated part, menu/option included, no
+   matter where they're portaled to. Only overrides the hover/focused
+   text colour — the app-wide red-on-pink option highlight otherwise
+   applied everywhere else is left alone. */
+@layer base {
+  .export-lead-group.custom-react-select__option:hover,
+  .export-lead-group.custom-react-select__option--is-focused {
+    color: #171717 !important;
+    background-color: #f3f4f6 !important;
+  }
+  .export-lead-group.custom-react-select__option--is-selected,
+  .export-lead-group.custom-react-select__option--is-selected:hover,
+  .export-lead-group.custom-react-select__option--is-selected.custom-react-select__option--is-focused {
+    background-color: #fdecec !important;
+    color: #171717 !important;
+  }
+}

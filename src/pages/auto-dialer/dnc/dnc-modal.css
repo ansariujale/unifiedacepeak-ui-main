@@ -47,17 +47,26 @@
   gap: 12px;
   padding: 18px 20px 0;
 }
+.dnc-modal .dnc-title-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
 .dnc-modal .dnc-title {
-  font-size: 17px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.25;
   color: var(--dnc-ink);
 }
-.dnc-modal .dnc-sub {
-  margin-top: 4px;
-  font-size: 12.5px;
-  line-height: 1.45;
+.dnc-modal .dnc-info {
+  display: inline-flex;
   color: var(--dnc-muted);
+  cursor: default;
+}
+.dnc-modal .dnc-info .ic,
+.dnc-modal .dnc-info svg {
+  width: 15px;
+  height: 15px;
 }
 .dnc-modal .dnc-close {
   display: grid;
@@ -82,59 +91,37 @@
   color: var(--dnc-red);
 }
 
-/* ── step rail ─────────────────────────────────────────────────
+/* ── step breadcrumb ──────────────────────────────────────────
+   Same trail style as the Add Campaign modal: step names in a row,
+   a chevron between them, current step bold black, the rest muted.
    Presentational only — this form submits in one go. It is marked
    aria-hidden so assistive tech is not told about a step that does
    not exist. */
-.dnc-modal .dnc-steps {
+.dnc-modal .dnc-crumbs {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 20px 0;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 20px 0;
 }
-.dnc-modal .dnc-step {
-  display: flex;
+.dnc-modal .dnc-crumb-item {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+}
+.dnc-modal .dnc-crumb-sep {
+  color: var(--dnc-red);
   flex: none;
 }
-.dnc-modal .dnc-step-n {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 99px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  background: #f3f4f6;
-  color: #9ca3af;
-}
-.dnc-modal .dnc-step.is-on .dnc-step-n {
-  background: var(--dnc-red);
-  color: #ffffff;
-}
-.dnc-modal .dnc-step-l {
-  font-size: 11.5px;
+.dnc-modal .dnc-crumb-btn {
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--dnc-muted);
-  white-space: nowrap;
 }
-.dnc-modal .dnc-step.is-on .dnc-step-l {
-  color: var(--dnc-red);
-}
-.dnc-modal .dnc-rail {
-  flex: 1;
-  height: 2px;
-  border-radius: 99px;
-  background: var(--dnc-line);
-  overflow: hidden;
-}
-.dnc-modal .dnc-rail i {
-  display: block;
-  width: 45%;
-  height: 100%;
-  background: var(--dnc-red);
+.dnc-modal .dnc-crumb-item.is-on .dnc-crumb-btn {
+  color: #171717;
+  font-weight: 800;
 }
 
 /* ── fields ────────────────────────────────────────────────── */
@@ -167,16 +154,19 @@
 .dnc-modal [data-slot='input']:hover {
   border-color: var(--dnc-edge);
 }
-/* The ring is an outline, not a box-shadow: `shadow-sm` on the shared Input
-   owns box-shadow, and contesting it here would be a coin toss. Outline is
-   uncontested and paints the same 3px halo. */
 .dnc-modal [data-slot='input']:focus {
   border-color: var(--dnc-red);
-  outline: 3px solid rgba(252, 165, 165, 0.45);
-  outline-offset: 0;
+  outline: none;
 }
 .dnc-modal .dnc-invalid [data-slot='input'] {
   border-color: var(--dnc-red);
+}
+/* Email stays optional — a malformed-then-cleared address shouldn't keep
+   reading as an error border the way the required Phone/Name fields
+   should. Two classes beats the rule above's one on specificity, so this
+   wins regardless of source order. */
+.dnc-modal .dnc-email-field.dnc-invalid [data-slot='input'] {
+  border-color: #d1d5db;
 }
 .dnc-modal .dnc-err {
   margin-top: 5px;
@@ -197,11 +187,12 @@
   background: #ffffff;
 }
 .dnc-modal .dnc-foot [data-slot='button'] {
-  height: 42px;
-  min-height: 42px;
-  border-radius: 10px;
+  height: 36px;
+  min-height: 36px;
+  border-radius: 999px;
   padding: 0 18px;
   font-weight: 600;
+  font-size: 13px;
   transition:
     background-color 0.17s ease,
     border-color 0.17s ease,
@@ -249,8 +240,7 @@
   }
   .dnc-modal .react-tel-input .form-control:focus {
     border-color: var(--dnc-red) !important;
-    outline: 3px solid rgba(252, 165, 165, 0.45) !important;
-    outline-offset: 0 !important;
+    outline: none !important;
     box-shadow: none !important;
   }
   .dnc-modal .react-tel-input .flag-dropdown {

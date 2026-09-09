@@ -339,7 +339,7 @@ const AddEditCampaign: FC<any> = ({ setDrawerState, selectedCampaign }) => {
       >
         <div className="acp-form">
           <div className="acp-head">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <DialogTitle className="acp-title">
                 {isEditMode ? 'Update Campaign' : 'Add Campaign'}
               </DialogTitle>
@@ -349,6 +349,31 @@ const AddEditCampaign: FC<any> = ({ setDrawerState, selectedCampaign }) => {
                 </DialogDescription>
               )}
             </div>
+            {!isEditMode && (
+              /* TEMP: lets this account fill Basic Information with
+                 placeholder values so the later steps can be reached and
+                 reviewed while there's no real caller ID/lead data yet.
+                 Doesn't touch the form's own defaultValues, so a fresh
+                 "New campaign" still opens empty for everyone else.
+                 Remove this button once real data exists. */
+              <button
+                type="button"
+                className="acp-fill-demo"
+                onClick={() => {
+                  setValue('name', 'Sample Outreach Campaign', { shouldValidate: true });
+                  setValue(
+                    'callerId',
+                    [{ label: '+14422129610', value: '+14422129610' }],
+                    { shouldValidate: true },
+                  );
+                  setValue('groupId', [{ label: 'Sample Lead Group', value: 'demo-group' }], {
+                    shouldValidate: true,
+                  });
+                }}
+              >
+                Fill sample data
+              </button>
+            )}
             <button
               type="button"
               className="acp-close"

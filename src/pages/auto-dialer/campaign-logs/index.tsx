@@ -10,6 +10,79 @@ import useDebounce from '@/hooks/use-debounce';
 import { campaignTypeOptions } from '../campaign/const';
 import './campaign-logs-head.css';
 
+/* TEMP: sample rows for reviewing the table with the account empty (the
+   real endpoint currently errors — no DB connection in this env).
+   Mimics the real API's response shape, `states` included, so both the
+   KPI cards and the table's footer/pager keep working. Remove and go
+   back to the default fetcher (drop the `fetcherFnOverride` prop below)
+   once real data exists. */
+const fetchDummyCampaignLogs = () =>
+  Promise.resolve({
+    data: {
+      data: {
+        result: {
+          totalItems: 3,
+          totalPages: 1,
+          rows: [
+            {
+              _id: 'dummy-log-1',
+              contactName: 'Test Sharma',
+              contactNumber: '+14422129610',
+              type: 'CALL',
+              didNumber: '+14422129610',
+              campaignDetail: { campaignName: 'Spring promo outreach' },
+              billSec: 184,
+              callEndTime: '2026-09-05T10:12:00.000Z',
+              totalCallAttempts: 2,
+              sipcallDetail: [],
+              disposition: { disposition: 'INTERESTED' },
+              systemDisposition: 'ANSWERED',
+              notes: [],
+            },
+            {
+              _id: 'dummy-log-2',
+              contactName: 'Aakash Rao',
+              contactNumber: '+19578642210',
+              type: 'CALL',
+              didNumber: '+19578642210',
+              campaignDetail: { campaignName: 'Renewal reminders' },
+              billSec: 0,
+              callEndTime: '2026-09-03T15:40:00.000Z',
+              totalCallAttempts: 1,
+              sipcallDetail: [],
+              disposition: { disposition: '' },
+              systemDisposition: 'NO_ANSWER',
+              notes: [],
+            },
+            {
+              _id: 'dummy-log-3',
+              contactName: 'Priya Nair',
+              contactNumber: '+16008314958',
+              type: 'CALL',
+              didNumber: '+16008314958',
+              campaignDetail: { campaignName: 'Welcome call series' },
+              billSec: 245,
+              callEndTime: '2026-09-01T09:05:00.000Z',
+              totalCallAttempts: 3,
+              sipcallDetail: [],
+              disposition: { disposition: 'CALLBACK' },
+              systemDisposition: 'ANSWERED',
+              notes: [],
+            },
+          ],
+          states: {
+            totalCall: 3,
+            DialedCall: 3,
+            PendingCall: 0,
+            connected: 2,
+            DialedButNotAnswered: 1,
+            dnc: 0,
+          },
+        },
+      },
+    },
+  });
+
 const CampaignLogs = () => {
   const [campaignType, setCampaignType] = useState<ISELECTVALUE>();
   const [campaign, setCampaign] = useState<any>();
@@ -80,10 +153,12 @@ const CampaignLogs = () => {
             }}
             value={campaignType}
             inputClass="team_chat cl-filter"
+            className="w-auto flex-none"
           />
           <CustomSelect
             isClearable
             placeholder="Campaign name"
+            className="w-auto flex-none"
             isLoading={isPendingDepartmentList}
             options={
               (campaignListData &&
@@ -196,6 +271,7 @@ const CampaignLogs = () => {
             activityType="campaignLogs"
             contactId={''}
             notesOnlyAction
+            fetcherFnOverride={fetchDummyCampaignLogs}
             onTableSuccess={(data) => {
               if (data?.data?.data?.result) {
                 setCampaignStatistics(data.data.data.result);

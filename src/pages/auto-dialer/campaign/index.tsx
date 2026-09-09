@@ -67,6 +67,80 @@ export interface ModalState {
   type: string | null;
 }
 
+/* TEMP: sample rows for reviewing the table with the account empty.
+   Mimics the real API's response shape (rather than TableManager's
+   `staticData` escape hatch, which leaves the footer's record count
+   and page-number pager broken) so those keep working correctly.
+   Remove this function and go back to `fetcherFn: campaignList` once
+   real data exists. */
+const fetchDummyCampaigns = () =>
+  Promise.resolve({
+    data: {
+      data: {
+        result: {
+          totalItems: 3,
+          totalPages: 1,
+          rows: [
+            {
+              _id: 'dummy-1',
+              name: 'Spring promo outreach',
+              dialMethod: 'PREVIEW',
+              createdAt: '2026-08-20T10:00:00.000Z',
+              startDate: '2026-08-28T00:00:00.000Z',
+              endDate: '2026-09-28T00:00:00.000Z',
+              campaignStatus: 'PROCESSING',
+              members: JSON.stringify([
+                { user_uuid: 'u1', label: 'Kiran Yadav' },
+                { user_uuid: 'u2', label: 'Lisa' },
+              ]),
+              campaignAnalytics: {
+                assignedLeads: 420,
+                dialedLeads: 260,
+                answeredLeads: 140,
+                totalCallNotAnswered: 90,
+                totalDnc: 30,
+              },
+            },
+            {
+              _id: 'dummy-2',
+              name: 'Renewal reminders',
+              dialMethod: 'PREDICTIVE',
+              createdAt: '2026-08-12T10:00:00.000Z',
+              startDate: '2026-08-15T00:00:00.000Z',
+              endDate: '2026-09-15T00:00:00.000Z',
+              campaignStatus: 'PAUSE',
+              members: JSON.stringify([{ user_uuid: 'u3', label: 'Alex Dunphy' }]),
+              campaignAnalytics: {
+                assignedLeads: 180,
+                dialedLeads: 180,
+                answeredLeads: 96,
+                totalCallNotAnswered: 60,
+                totalDnc: 24,
+              },
+            },
+            {
+              _id: 'dummy-3',
+              name: 'Welcome call series',
+              dialMethod: 'NORMAL',
+              createdAt: '2026-09-01T10:00:00.000Z',
+              startDate: '2026-09-05T00:00:00.000Z',
+              endDate: '2026-10-05T00:00:00.000Z',
+              campaignStatus: 'NEW',
+              members: JSON.stringify([]),
+              campaignAnalytics: {
+                assignedLeads: 60,
+                dialedLeads: 0,
+                answeredLeads: 0,
+                totalCallNotAnswered: 0,
+                totalDnc: 0,
+              },
+            },
+          ],
+        },
+      },
+    },
+  });
+
 const STATUS_FILTERS: Array<[string, string]> = [
   ['ALL', 'All'],
   ['PROCESSING', 'Running'],
@@ -272,7 +346,6 @@ const Campaign = ({ embedded = false }: { embedded?: boolean }) => {
         }
         return (
           <span className="win">
-            <Ic n="cal" />
             <span className="num">
               {convertDateFormateApis(data?.startDate, 'DD MMM')} –{' '}
               {convertDateFormateApis(data?.endDate, 'DD MMM')}
@@ -713,7 +786,9 @@ const Campaign = ({ embedded = false }: { embedded?: boolean }) => {
                         <span className="menu-item-check">
                           {statusFilter === value && <Check size={14} />}
                         </span>
-                        {value === 'PROCESSING' ? <span className="dot green" /> : null}
+                        <span className="menu-item-dot">
+                          {value === 'PROCESSING' && <span className="dot green" />}
+                        </span>
                         {label}
                       </DropdownMenuItem>
                     ))}
@@ -762,7 +837,7 @@ const Campaign = ({ embedded = false }: { embedded?: boolean }) => {
               tableRef: campaignTableRef,
               columns,
               fetcherKey: 'getCampaignListForPreview',
-              fetcherFn: campaignList,
+              fetcherFn: fetchDummyCampaigns,
               emptyTablePlaceholder: 'No campaigns found',
               descriptionEmptyTable: 'Create a campaign to start dialling',
               getRowClassName: () => 'rowlink',

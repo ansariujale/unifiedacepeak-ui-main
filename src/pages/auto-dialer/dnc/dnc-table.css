@@ -41,6 +41,22 @@
 .dnc-card thead {
   background: #e5e7eb !important;
 }
+/* 5 equal columns, header label and cell content sharing one alignment
+   rule per column so each heading sits directly over its own values. */
+.dnc-card .table-scroll table {
+  table-layout: fixed;
+}
+.dnc-card th,
+.dnc-card td {
+  width: 20%;
+  text-align: center;
+  vertical-align: middle;
+}
+.dnc-card td > span {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+}
 
 .dnc-toolbar {
   display: flex;
@@ -72,7 +88,7 @@
 .dnc-search input:focus-visible {
   outline: none;
   border-radius: 99px;
-  border-color: #fca5a5;
+  border-color: #dc2626;
   box-shadow: none;
 }
 .dnc-search-ico {

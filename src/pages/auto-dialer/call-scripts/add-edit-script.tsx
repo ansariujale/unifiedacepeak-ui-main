@@ -90,70 +90,81 @@ const ScriptForm = ({
   }, []);
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-auto xl:overflow-hidden">
+    <div className="flex h-full min-h-0 w-full flex-col">
       <div className="h-full min-h-0">
-        <div className="flex h-full min-h-0 w-full flex-col gap-4 rounded-xl bg-white">
-          <form className="flex h-full min-h-0 flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-            <Controller
-              control={control}
-              name={'name'}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  placeholder="Enter name"
-                  label="Name"
-                  error={errors?.name?.message}
-                  maxLength={50}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name={'dialMethod'}
-              render={({ field }) => (
-                <CustomSelect
-                  {...field}
-                  label={'Type'}
-                  placeholder="Select type"
-                  handleChange={(value) => field.onChange(value)}
-                  options={dailMethodsArr}
-                  error={errors?.dialMethod?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="content"
-              render={({ field }) => (
-                <div className="flex h-full min-h-0 flex-1 flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Content</Label>
-                    {errors?.content && (
-                      <div className="flex items-start">
-                        {errors?.content?.message && (
-                          <ErrorTooltip text={errors?.content?.message} />
-                        )}
-                      </div>
-                    )}
+        <div className="flex h-full min-h-0 w-full flex-col rounded-xl bg-white">
+          <form className="flex h-full min-h-0 flex-col" onSubmit={handleSubmit(onSubmit)}>
+            {/* Fields scroll independently of the footer below — the footer
+                is a separate, fixed-in-place flex child (`flex-none`), never
+                sharing space with (or getting overlapped by) this area, no
+                matter how tall the content editor grows. */}
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+              <Controller
+                control={control}
+                name={'name'}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    placeholder="Enter name"
+                    label="Name"
+                    error={errors?.name?.message}
+                    maxLength={50}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name={'dialMethod'}
+                render={({ field }) => (
+                  <CustomSelect
+                    {...field}
+                    label={'Type'}
+                    placeholder="Select type"
+                    handleChange={(value) => field.onChange(value)}
+                    options={dailMethodsArr}
+                    error={errors?.dialMethod?.message}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="content"
+                render={({ field }) => (
+                  <div className="flex h-full min-h-0 flex-1 flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Content</Label>
+                      {errors?.content && (
+                        <div className="flex items-start">
+                          {errors?.content?.message && (
+                            <ErrorTooltip text={errors?.content?.message} />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div
+                      className={`flex min-h-[200px] flex-1 overflow-hidden rounded-xl border p-2 md:min-h-[250px] w-full ${
+                        errors?.content?.message ? 'border-red-500' : ''
+                      }`}
+                    >
+                      <TextEditor
+                        key={editorKey}
+                        initialValue={field?.value}
+                        onChange={field?.onChange}
+                        readOnly={false}
+                        maxHeight="max-h-full w-full"
+                      />
+                    </div>
                   </div>
-                  <div
-                    className={`flex min-h-[200px] flex-1 overflow-hidden rounded-xl border p-2 md:min-h-[250px] w-full ${
-                      errors?.content?.message ? 'border-red-500' : ''
-                    }`}
-                  >
-                    <TextEditor
-                      key={editorKey}
-                      initialValue={field?.value}
-                      onChange={field?.onChange}
-                      readOnly={false}
-                      maxHeight="max-h-full w-full"
-                    />
-                  </div>
-                </div>
-              )}
-            />
-            <div className="flex justify-end gap-2 border-t border-gray-100 pt-2">
-              <Button type="submit" variant={'primary'} disabled={isPending} className="min-w-24">
+                )}
+              />
+            </div>
+            <div className="flex flex-none justify-end gap-2 pt-4">
+              <Button
+                type="submit"
+                variant={'primary'}
+                disabled={isPending}
+                className="min-w-24 cs-modal-save"
+              >
                 {isPending ? <Loader variant="blue" /> : 'Save'}
               </Button>
             </div>

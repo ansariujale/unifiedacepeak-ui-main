@@ -47,6 +47,11 @@ interface ActivityListProps {
   showActions?: boolean;
   notesOnlyAction?: boolean;
   onTableSuccess?: (data: any) => void;
+  /* TEMP: lets a caller swap in a fake fetcher (e.g. while the real
+     endpoint has no data/is unreachable) without changing what every
+     other consumer of this shared list gets — omit it and behaviour is
+     identical to before. */
+  fetcherFnOverride?: (...args: any[]) => Promise<any>;
 }
 const renderDispositionBadge = (value: string) => {
   const cleanValue = `${value || ''}`.replace(/_/g, ' ').trim();
@@ -210,6 +215,7 @@ const ActivityList = ({
   showActions = true,
   notesOnlyAction = false,
   onTableSuccess = () => null,
+  fetcherFnOverride,
 }: ActivityListProps) => {
   const [{ url, src }, setTranscriptionState] = useState<any>(initialDrawerState);
   const [sipcallId, setSipcallId] = useState<string>('');
@@ -698,7 +704,7 @@ const ActivityList = ({
       <TableManager
         columns={columns}
         onSuccess={onTableSuccess}
-        fetcherFn={fetchers[activityType as keyof typeof fetchers]}
+        fetcherFn={fetcherFnOverride || fetchers[activityType as keyof typeof fetchers]}
         fetcherKey={activityType}
         extraParams={{
           ...(activityType === 'campaignLogs' ? {} : { contact_id: contactId }),

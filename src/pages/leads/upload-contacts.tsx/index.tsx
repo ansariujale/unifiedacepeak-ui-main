@@ -40,7 +40,18 @@ const UploadContacts: FC<IUploadContactProps> = ({
     generatedBy: !isLead ? 'COMPANY' : null,
     displayType: 'dropdown',
   });
-  const filteredGroupList = groupList;
+  /* TEMP: no lead groups exist in this environment yet, which left
+     "Group" with nothing to pick and no way to try the upload flow.
+     Falls back to sample rows only when the real list is empty, so it
+     disappears on its own once real groups exist. */
+  const filteredGroupList =
+    isLead && groupList.length === 0
+      ? [
+          { _id: 'demo-group-1', groupName: 'Spring Promo Leads' },
+          { _id: 'demo-group-2', groupName: 'Renewal Reminders' },
+          { _id: 'demo-group-3', groupName: 'Welcome Call Series' },
+        ]
+      : groupList;
   const queryClient: any = useQueryClient();
   const {
     control,
@@ -145,7 +156,11 @@ const UploadContacts: FC<IUploadContactProps> = ({
         }}
       >
         <DialogContent
-          className="sm:w-1/2 lg:w-1/4 p-3 min-h-[26rem] max-h-[99%] overflow-y-auto"
+          className={
+            isLead
+              ? 'w-full sm:w-[480px] lg:w-[480px] p-5 min-h-[30rem] max-h-[99%] overflow-y-auto bg-white'
+              : 'sm:w-1/2 lg:w-1/4 p-3 min-h-[26rem] max-h-[99%] overflow-y-auto'
+          }
           showCloseButton={false}
         >
           <form
@@ -237,10 +252,14 @@ const UploadContacts: FC<IUploadContactProps> = ({
               <div className="flex gap-4 flex-row">
                 <label
                   htmlFor="file-upload"
-                  className="flex flex-col items-center justify-center w-full h-44 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer bg-white hover:border-gray-400"
+                  className={`flex flex-col items-center justify-center w-full h-44 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                    isLead
+                      ? 'border-primary bg-red-50 hover:border-primary'
+                      : 'border-gray-200 bg-white hover:border-gray-400'
+                  }`}
                 >
                   <div className="flex flex-col items-center">
-                    <UploadIcon className="w-5 h-5" />
+                    <UploadIcon className={`w-5 h-5 ${isLead ? 'text-primary' : ''}`} />
 
                     <p className="pt-2 text-sm text-gray-900">Upload File</p>
                     <p className="mt-2 text-sm text-gray-700">Supported Format .csv, .xlsx, .xls</p>
@@ -273,10 +292,22 @@ const UploadContacts: FC<IUploadContactProps> = ({
               </a>
             </div>
             <div className="justify-end flex gap-2">
-              <Button type="button" variant={'transparent'} onClick={handleUploadModalClose}>
+              <Button
+                type="button"
+                variant={isLead ? 'secondary' : 'transparent'}
+                className={
+                  isLead ? 'rounded-full bg-white border border-gray-300 text-gray-900 hover:bg-gray-50' : ''
+                }
+                onClick={handleUploadModalClose}
+              >
                 Cancel
               </Button>
-              <Button type="submit" variant={'primary'} disabled={!watch('file') || isPending}>
+              <Button
+                type="submit"
+                variant={isLead ? 'dark' : 'primary'}
+                className={isLead ? 'rounded-full' : ''}
+                disabled={!watch('file') || isPending}
+              >
                 {isPending ? 'Saving...' : 'Save'}
               </Button>
             </div>

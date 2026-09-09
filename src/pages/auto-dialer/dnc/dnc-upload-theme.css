@@ -1,0 +1,22 @@
+/* Upload DNC modal — matches the Upload Lead modal's look (bigger
+   panel, white background, pink/red dropzone, pill buttons). Only
+   used by this one modal (`UploadDnc` isn't shared elsewhere), so
+   these rules are unscoped by page context — just scoped by this
+   file only being imported here. */
+.dnc-upload-modal {
+  background: #ffffff !important;
+}
+
+/* Country select shows a red border the instant the modal opens
+   (required-field validation on an empty value) — same global
+   focus/open-state and error-state rules as elsewhere, both
+   `!important` inside `@layer base`, so the override has to sit in
+   the same layer to win regardless of specificity. */
+@layer base {
+  .dnc-upload-modal .custom-react-select__control--is-focused,
+  .dnc-upload-modal .custom-react-select__control--menu-is-open,
+  .dnc-upload-modal .react-select-error .custom-react-select__control {
+    border-color: #d1d5db !important;
+    box-shadow: none !important;
+  }
+}

@@ -1,12 +1,12 @@
 import CustomSelect from '@/components/custom/custom-select';
+import { CustomDatePicker } from '@/components/custom/custom-datepicker';
 import countriesData from '@/assets/json/countries.json';
 import { ISELECTVALUE } from '@/interfaces/api-interfaces';
-import { useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { useEffect, useMemo, useState } from 'react';
 import { useUser } from '@/hooks/use-user';
 import parsePhoneNumberFromString from 'libphonenumber-js';
-import { Input } from '@/components/ui/input';
-import { calculateSelectedDays, getTodayInTimezone } from '@/lib/utils';
+import { getTodayInTimezone } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import moment from 'moment';
 import { Switch } from '@/components/ui/switch';
@@ -53,7 +53,7 @@ const SettingsAndPermission = ({ campaignStatus }: { campaignStatus: string }) =
   const {
     watch,
     setValue,
-    register,
+    control,
     formState: { errors },
   } = useFormContext();
   const { user } = useUser();
@@ -161,11 +161,13 @@ const SettingsAndPermission = ({ campaignStatus }: { campaignStatus: string }) =
   const _overrides = watch('settings.operational_hours.overrides') || [];
 
   const watchBusinessHour = watch('settings.operational_hours');
-  const selectedDays = watch('settings.operational_hours.value');
 
   const startDate = watch('startDate') ? moment(watch('startDate')) : null;
   const endDate = watch('endDate') ? moment(watch('endDate')) : null;
-  const totalSelectedDays = calculateSelectedDays(startDate, endDate, selectedDays);
+  /* Plain calendar span, Start Date through End Date inclusive — not
+     filtered by which Working hours day-groups are active below. */
+  const totalSelectedDays =
+    startDate && endDate ? endDate.diff(startDate, 'days') + 1 : 0;
 
   /* The Mon-Fri / Sat-Sun rows apply one change to every day in the group
      at once, writing into the same per-day shape (`operational_hours.value.
@@ -249,49 +251,67 @@ const SettingsAndPermission = ({ campaignStatus }: { campaignStatus: string }) =
           </div>
           <div className="flex w-full flex-col gap-2 md:flex-row mt-2">
             <div className="flex flex-col gap-1 w-full">
-              <Input
-                disabled={isLocked}
-                label="Start Date"
-                placeholder="Enter start date"
-                type="date"
-                className="acp-compact-field"
-                {...register('startDate', {
+              <Controller
+                control={control}
+                name="startDate"
+                rules={{
                   required: 'Start date is required',
                   validate: (value) =>
                     !_end_date ||
                     moment(value).isBefore(moment(_end_date), 'day') ||
                     'Start date must be before end date',
-                })}
-                error={errors?.startDate?.message}
-                min={today}
-                max={
-                  _end_date ? moment(_end_date).subtract(1, 'day').format('YYYY-MM-DD') : undefined
-                }
+                }}
+                render={({ field }) => (
+                  <CustomDatePicker
+                    disabled={isLocked}
+                    label="Start Date"
+                    placeholder="Enter start date"
+                    className="acp-compact-field"
+                    value={field.value ? moment(field.value, 'YYYY-MM-DD').toDate() : null}
+                    onChange={(date) =>
+                      field.onChange(date ? moment(date).format('YYYY-MM-DD') : '')
+                    }
+                    error={errors?.startDate?.message}
+                    minDate={moment(today, 'YYYY-MM-DD').toDate()}
+                    maxDate={_end_date ? moment(_end_date).subtract(1, 'day').toDate() : undefined}
+                  />
+                )}
               />
             </div>
 
             <div className="flex flex-col gap-1 w-full">
-              <Input
-                label="End Date"
-                disabled={isLocked}
-                placeholder="Enter end date"
-                type="date"
-                className="acp-compact-field"
-                {...register('endDate', {
+              <Controller
+                control={control}
+                name="endDate"
+                rules={{
                   required: 'End date is required',
                   validate: (value) =>
                     !_start_date ||
                     moment(value).isAfter(moment(_start_date), 'day') ||
                     'End date must be after start date',
-                })}
-                error={errors?.endDate?.message}
-                min={_start_date ? moment(_start_date).add(1, 'day').format('YYYY-MM-DD') : today}
+                }}
+                render={({ field }) => (
+                  <CustomDatePicker
+                    label="End Date"
+                    disabled={isLocked}
+                    placeholder="Enter end date"
+                    className="acp-compact-field"
+                    value={field.value ? moment(field.value, 'YYYY-MM-DD').toDate() : null}
+                    onChange={(date) => field.onChange(date ? moment(date).format('YYYY-MM-DD') : '')}
+                    error={errors?.endDate?.message}
+                    minDate={
+                      _start_date
+                        ? moment(_start_date).add(1, 'day').toDate()
+                        : moment(today, 'YYYY-MM-DD').toDate()
+                    }
+                  />
+                )}
               />
             </div>
 
             <div className="flex flex-col gap-1 w-full">
               <Label>Duration</Label>
-              <span className="bg-gray-100 rounded-lg text-gray-700 text-[12.5px] font-medium px-2.5 inline-flex items-center h-[34px]">
+              <span className="bg-gray-100 rounded-lg text-gray-700 text-[12.5px] font-medium px-2.5 flex w-full items-center h-9">
                 {totalSelectedDays} Days
               </span>
             </div>
@@ -368,14 +388,14 @@ const SettingsAndPermission = ({ campaignStatus }: { campaignStatus: string }) =
               <div className="flex w-full flex-col gap-1 md:w-2/4">
                 <Label>Select Holidays</Label>
                 <div className="w-full flex flex-col">
-                  <Input
-                    type="date"
+                  <CustomDatePicker
                     className="acp-compact-field"
                     disabled={isLocked}
-                    onChange={(e) => {
-                      const _val = e.target.value;
-                      const _selectedVal = moment(_val).format('YYYY-MM-DD');
-                      e.target.value = '';
+                    value={null}
+                    placeholder="Pick a date"
+                    onChange={(date) => {
+                      if (!date) return;
+                      const _selectedVal = moment(date).format('YYYY-MM-DD');
                       return setValue(
                         'settings.operational_hours.holidays',
                         _holidays.includes(_selectedVal)
@@ -518,13 +538,19 @@ const SettingsAndPermission = ({ campaignStatus }: { campaignStatus: string }) =
               <div className="rounded-lg border border-gray-200 p-1.5 flex flex-col gap-1.5">
                 <p className="text-[11px] font-semibold text-gray-700">Custom Date Override</p>
                 <div className="flex items-center gap-1 flex-wrap">
-                  <Input
-                    type="date"
+                  <CustomDatePicker
                     className="acp-compact-field min-w-[110px]"
                     disabled={isLocked}
-                    value={overrideDraft.date}
-                    onChange={(e) =>
-                      setOverrideDraft((prev) => ({ ...prev, date: e.target.value }))
+                    value={
+                      overrideDraft.date
+                        ? moment(overrideDraft.date, 'YYYY-MM-DD').toDate()
+                        : null
+                    }
+                    onChange={(date) =>
+                      setOverrideDraft((prev) => ({
+                        ...prev,
+                        date: date ? moment(date).format('YYYY-MM-DD') : '',
+                      }))
                     }
                   />
                   <ClockTimePicker

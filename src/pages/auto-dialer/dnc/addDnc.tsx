@@ -1,5 +1,5 @@
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { FC, Fragment } from 'react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { FC } from 'react';
 import { Button } from '@/components/ui/button';
 
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,8 @@ import { handleAlert } from '@/lib/utils';
 import { addDncCampaign } from '@/services/api';
 import { Label } from '@/components/ui/label';
 import PhoneInput from 'react-phone-input-2';
-import { X } from 'lucide-react';
+import { ChevronRight, Info, X } from 'lucide-react';
+import CustomTooltip from '@/components/custom/custom-tooltip';
 import './dnc-modal.css';
 
 /**
@@ -113,34 +114,33 @@ const AddDncModal: FC<DispositionProps> = ({ modalState, setModalState, editdata
       <DialogContent className="dnc-modal" showCloseButton={false}>
         <form onSubmit={handleSubmit(onSubmit)} className="w-full">
           <div className="dnc-head">
-            <div className="min-w-0">
+            <div className="min-w-0 dnc-title-row">
               <DialogTitle className="dnc-title">
                 {editdata ? 'Update DNC' : 'Add DNC'}
               </DialogTitle>
-              <DialogDescription className="dnc-sub">
-                Add a contact to your personal Do Not Contact list.
-              </DialogDescription>
+              <CustomTooltip
+                side="right"
+                className="bg-red-50 text-black border border-red-100"
+                text="Add a contact to your personal Do Not Contact list."
+              >
+                <span className="dnc-info" aria-label="About this form">
+                  <Info size={15} />
+                </span>
+              </CustomTooltip>
             </div>
             <button type="button" className="dnc-close" aria-label="Close" onClick={closeAndReset}>
               <X size={15} />
             </button>
           </div>
 
-          <div className="dnc-steps" aria-hidden="true">
+          <nav className="dnc-crumbs" aria-hidden="true">
             {STEPS.map((step, index) => (
-              <Fragment key={step.n}>
-                {index > 0 ? (
-                  <span className="dnc-rail">
-                    <i />
-                  </span>
-                ) : null}
-                <span className={`dnc-step${index === 0 ? ' is-on' : ''}`}>
-                  <span className="dnc-step-n">{step.n}</span>
-                  <span className="dnc-step-l">{step.label}</span>
-                </span>
-              </Fragment>
+              <span className={`dnc-crumb-item${index === 0 ? ' is-on' : ''}`} key={step.n}>
+                {index > 0 && <ChevronRight className="dnc-crumb-sep" size={14} />}
+                <span className="dnc-crumb-btn">{step.label}</span>
+              </span>
             ))}
-          </div>
+          </nav>
 
           <div className="dnc-body">
             <div className={phoneError ? 'dnc-invalid' : undefined}>
@@ -164,7 +164,7 @@ const AddDncModal: FC<DispositionProps> = ({ modalState, setModalState, editdata
               {phoneError ? <p className="dnc-err">{phoneError}</p> : null}
             </div>
 
-            <div className={emailError ? 'dnc-invalid' : undefined}>
+            <div className={`dnc-email-field${emailError ? ' dnc-invalid' : ''}`}>
               <Label htmlFor="dnc-email">Email</Label>
               <div className="mt-1.5">
                 <Input

@@ -25,6 +25,12 @@ interface DispositionProps {
   editdata?: any;
 }
 const DispositionModal: FC<DispositionProps> = ({ modalState, setModalState, editdata }) => {
+  /* Same page opens this modal from 3 places (Dispositions list, the
+     Campaign form's Settings step, Call Queue settings) — route-scoping
+     the restyle to just the standalone Dispositions page, same trick
+     already used for the Leads modals, keeps the other two untouched. */
+  const isDispositionsPage =
+    typeof window !== 'undefined' && window.location.pathname.includes('dispositions');
   const queryClient: any = useQueryClient();
   const {
     handleSubmit,
@@ -72,7 +78,11 @@ const DispositionModal: FC<DispositionProps> = ({ modalState, setModalState, edi
   return (
     <Dialog open={modalState} onOpenChange={(val) => setModalState(val)}>
       <DialogContent
-        className="sm:w-1/2  md:w-1/4 w-full p-3 max-h-[99%] overflow-y-auto"
+        className={
+          isDispositionsPage
+            ? 'sm:w-1/2 md:w-1/4 w-full p-3 max-h-[99%] overflow-y-auto bg-white'
+            : 'sm:w-1/2  md:w-1/4 w-full p-3 max-h-[99%] overflow-y-auto'
+        }
         showCloseButton={false}
       >
         <form
@@ -99,6 +109,9 @@ const DispositionModal: FC<DispositionProps> = ({ modalState, setModalState, edi
                 {...register('name')}
                 error={(errors?.name as any)?.message}
                 maxLength={50}
+                className={
+                  isDispositionsPage ? 'focus:border-[#dc2626] hover:border-[#fca5a5]' : ''
+                }
               />
             </div>
             <div className="flex flex-col gap-4 w-full">
@@ -113,12 +126,14 @@ const DispositionModal: FC<DispositionProps> = ({ modalState, setModalState, edi
                 </div>
                 <textarea
                   rows={3}
-                  className={`border rounded-xl text-sm resize-none p-3 
+                  className={`border rounded-xl text-sm resize-none p-3 bg-white
   ${
-    errors?.description?.message
+    errors?.description?.message && !isDispositionsPage
       ? 'border-red-300 hover:border-red-300 focus:border-red-300 focus-visible:border-red-300'
-      : 'border-gray-300 hover:border-primary focus:border-primary focus-visible:border-primary'
-  } 
+      : isDispositionsPage
+        ? 'border-gray-300 hover:border-[#fca5a5] focus:border-[#dc2626] focus-visible:border-[#dc2626]'
+        : 'border-gray-300 hover:border-primary focus:border-primary focus-visible:border-primary'
+  }
   focus-visible:outline-none`}
                   placeholder="Enter description"
                   {...register('description')}
@@ -128,10 +143,24 @@ const DispositionModal: FC<DispositionProps> = ({ modalState, setModalState, edi
             </div>
           </div>
           <div className="justify-end flex gap-2">
-            <Button variant={'transparent'} type="button" onClick={() => setModalState(false)}>
+            <Button
+              variant={isDispositionsPage ? 'secondary' : 'transparent'}
+              type="button"
+              className={
+                isDispositionsPage
+                  ? 'rounded-full bg-white border border-gray-300 text-gray-900 hover:bg-gray-50'
+                  : ''
+              }
+              onClick={() => setModalState(false)}
+            >
               Cancel
             </Button>
-            <Button variant={'primary'} type="submit" disabled={isPendingAddDisposition}>
+            <Button
+              variant={isDispositionsPage ? 'dark' : 'primary'}
+              type="submit"
+              className={isDispositionsPage ? 'rounded-full' : ''}
+              disabled={isPendingAddDisposition}
+            >
               {isPendingAddDisposition ? 'Submitting...' : 'Submit'}
             </Button>
           </div>

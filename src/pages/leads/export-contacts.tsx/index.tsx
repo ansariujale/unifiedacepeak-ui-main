@@ -12,6 +12,7 @@ import CustomSelect from '@/components/custom/custom-select';
 import { ISELECTVALUE } from '@/interfaces/api-interfaces';
 import { LeadsTableRow } from '../lead-group-list';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import './export-lead-theme.css';
 
 interface IExportContactsProps {
   drawerState: boolean;
@@ -30,7 +31,18 @@ const ExportContacts: FC<IExportContactsProps> = ({
     generatedBy: !isLead ? 'COMPANY' : null,
     displayType: 'dropdown',
   });
-  const filteredGroupList = groupList;
+  /* TEMP: no lead groups exist in this environment yet, which left
+     "Select Group" with nothing to pick and no way to try the export
+     flow. Falls back to sample rows only when the real list is empty,
+     so it disappears on its own once real groups exist. */
+  const filteredGroupList =
+    isLead && groupList.length === 0
+      ? [
+          { _id: 'demo-group-1', groupName: 'Spring Promo Leads' },
+          { _id: 'demo-group-2', groupName: 'Renewal Reminders' },
+          { _id: 'demo-group-3', groupName: 'Welcome Call Series' },
+        ]
+      : groupList;
 
   const {
     handleSubmit,
@@ -158,7 +170,11 @@ const ExportContacts: FC<IExportContactsProps> = ({
         }}
       >
         <DialogContent
-          className="sm:w-1/2 lg:w-1/4 p-4 min-h-[16rem] max-h-[99%] overflow-y-auto"
+          className={
+            isLead
+              ? 'sm:w-1/2 lg:w-1/4 p-4 min-h-[16rem] max-h-[99%] overflow-y-auto bg-white export-lead-modal'
+              : 'sm:w-1/2 lg:w-1/4 p-4 min-h-[16rem] max-h-[99%] overflow-y-auto'
+          }
           showCloseButton={false}
         >
           <form
@@ -194,6 +210,7 @@ const ExportContacts: FC<IExportContactsProps> = ({
                     value={watch('groupId')}
                     error={errors?.groupId?.message as string}
                     placeholder="Select Group"
+                    inputClass={isLead ? 'export-lead-group' : ''}
                   />
                 </div>
                 <div className="w-full">
@@ -214,12 +231,22 @@ const ExportContacts: FC<IExportContactsProps> = ({
               </div>
             </div>
             <div className="justify-end flex gap-2 pt-2">
-              <Button type="button" variant={'transparent'} onClick={handleExportModalClose}>
+              <Button
+                type="button"
+                variant={isLead ? 'secondary' : 'transparent'}
+                className={
+                  isLead
+                    ? 'rounded-full bg-white border border-gray-300 text-gray-900 hover:bg-gray-50'
+                    : 'hover:text-gray-700'
+                }
+                onClick={handleExportModalClose}
+              >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                variant={'primary'}
+                variant={isLead ? 'dark' : 'primary'}
+                className={isLead ? 'rounded-full' : 'hover:bg-primary'}
                 disabled={isPending || !watch('groupId')?.value || !watch('format')?.value}
               >
                 {isPending ? 'Exporting...' : 'Export'}

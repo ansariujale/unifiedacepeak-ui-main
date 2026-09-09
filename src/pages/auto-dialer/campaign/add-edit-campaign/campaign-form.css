@@ -104,13 +104,28 @@
   line-height: 1.45;
   color: var(--acp-muted);
 }
+.acp-form .acp-fill-demo {
+  flex: none;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 99px;
+  border: 1px solid var(--acp-edge);
+  background: var(--acp-wash);
+  color: var(--acp-red-deep);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.16s ease;
+}
+.acp-form .acp-fill-demo:hover {
+  background: #fee2e2;
+}
 .acp-form .acp-close {
   display: grid;
   place-items: center;
   width: 30px;
   height: 30px;
   flex: none;
-  margin-left: auto;
   border-radius: 99px;
   background: #ffffff;
   border: 1px solid var(--acp-line);
@@ -393,7 +408,7 @@
 .acp-form [data-slot='input']:focus,
 .acp-form .acp-textarea:focus {
   outline: none;
-  border-color: #fecaca;
+  border-color: #dc2626;
   box-shadow: none;
 }
 .acp-form .acp-textarea {
@@ -786,7 +801,7 @@
   }
   .acp-form .custom-react-select__control--is-focused,
   .acp-form .custom-react-select__control--menu-is-open {
-    border-color: var(--acp-edge) !important;
+    border-color: #dc2626 !important;
     box-shadow: none !important;
   }
   .acp-form .react-select-error .custom-react-select__control {

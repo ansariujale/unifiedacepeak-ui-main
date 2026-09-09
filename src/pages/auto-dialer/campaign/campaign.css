@@ -276,7 +276,7 @@
 }
 .cmp .cmp-search input:focus {
   outline: none;
-  border-color: var(--accent-edge);
+  border-color: #dc2626;
   box-shadow: none;
 }
 .cmp .cmp-search input:focus-visible {
@@ -483,7 +483,6 @@
   gap: 10px;
   flex-wrap: wrap;
   margin-left: auto;
-  padding-right: 10px;
 }
 /* Below this the copy column can no longer hold its 320px basis, so the
    actions take a row of their own rather than being squeezed. */
@@ -1070,7 +1069,7 @@
    ============================================================ */
 .cmp-menu {
   background: #ffffff;
-  border: 1px solid #dc2626;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow:
     0 8px 24px rgba(23, 23, 23, 0.08),
@@ -1100,6 +1099,16 @@
   align-items: center;
   justify-content: center;
   width: 14px;
+  flex: none;
+}
+/* Fixed slot for the "Running" status dot, same idea as the checkmark
+   slot above — reserves the same space whether or not a row has a
+   dot, so every label starts at the same x. */
+.cmp-menu .menu-item-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
   flex: none;
 }
 .cmp-menu [data-slot='dropdown-menu-item']:hover,

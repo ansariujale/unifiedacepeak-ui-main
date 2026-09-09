@@ -1,5 +1,5 @@
 import { Icon } from '@/assets/icons/icon';
-import { RefreshCcw } from 'lucide-react';
+import { RefreshCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { handleAlert, normalizeSearchText } from '@/lib/utils';
 import { deleteContact, deleteLeadGroup } from '@/services/api';
@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FC, useState } from 'react';
 import AlertConfirm from '@/components/custom/alert-confirm.tsx';
 import SideDrawer from '@/components/custom/side-drawer.tsx';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog.tsx';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs.tsx';
 import AllLeadsList from './all-leads-list/index.tsx';
 import LeadsGroupList from './lead-group-list/index.tsx';
@@ -25,6 +26,7 @@ import CreateContactNew from '../new-contact/create-new-contact.tsx';
 import LeadContactLogs from './lead-contact-logs/index.tsx';
 import '@/components/mcm/mcm-page.css';
 import './all-leads-list/leads-table.css';
+import './add-lead-theme.css';
 
 // export interface IContact {
 //   groupId: any;
@@ -354,34 +356,43 @@ const Leads: FC = () => {
         setDrawerState={(val) => setDrawerState((prev) => ({ ...prev, exportContacts: val }))}
       />
       {drawerState?.addContact && (
-        <SideDrawer
-          width="min(500px, 94vw)"
-          isHeader
-          isOpen={drawerState?.addContact}
-          title={
-            drawerState?.selectedContact
-              ? `Update Lead (${drawerState?.selectedContact?.name?.first || ''} ${drawerState?.selectedContact?.name?.last || ''})`
-              : 'Add Lead'
-          }
-          handleClose={() => setDrawerState((prev) => ({ ...prev, addContact: false }))}
-          content={
-            <CreateContactNew
-              contactData={drawerState?.selectedContact}
-              isDisable={false}
-              setIsDisable={() => void 0}
-              setDrawerState={() => void 0}
-              keepFormDataAfterSave
-              isLead={true}
-              handleClose={() => setDrawerState((prev) => ({ ...prev, addContact: false }))}
-            />
-            // <AddContact
-            //   drawerState={drawerState.addContact}
-            //   setDrawerState={(val) => setDrawerState((prev) => ({ ...prev, addContact: val }))}
-            //   // groupId={id}
-            //   contactData={drawerState?.selectedContact}
-            // />
-          }
-        />
+        <Dialog
+          open={drawerState?.addContact}
+          onOpenChange={(open) => {
+            if (!open) setDrawerState((prev) => ({ ...prev, addContact: false }));
+          }}
+        >
+          <DialogContent className="leads-lead-modal" showCloseButton={false}>
+            <div className="leads-add-lead-theme">
+              <div className="lead-modal-head">
+                <div className="min-w-0">
+                  <DialogTitle className="lead-modal-title">
+                    {drawerState?.selectedContact
+                      ? `Update Lead (${drawerState?.selectedContact?.name?.first || ''} ${drawerState?.selectedContact?.name?.last || ''})`
+                      : 'Add Lead'}
+                  </DialogTitle>
+                </div>
+                <button
+                  type="button"
+                  className="lead-modal-close"
+                  aria-label="Close"
+                  onClick={() => setDrawerState((prev) => ({ ...prev, addContact: false }))}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <CreateContactNew
+                contactData={drawerState?.selectedContact}
+                isDisable={false}
+                setIsDisable={() => void 0}
+                setDrawerState={() => void 0}
+                keepFormDataAfterSave
+                isLead={true}
+                handleClose={() => setDrawerState((prev) => ({ ...prev, addContact: false }))}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {!!showDeleteConfirmation && (

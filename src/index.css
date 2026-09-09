@@ -766,23 +766,23 @@
      is what makes that the case. */
   .custom-react-select__option:hover,
   .custom-react-select__option--is-focused {
-    background-color: #fdecec !important;
-    color: #d92b2b !important;
+    background-color: var(--select-option-hover-bg, var(--color-gray-100)) !important;
+    color: var(--select-option-hover-fg, var(--color-black)) !important;
   }
 
-  /* Selected: a neutral grey band, so it reads as "this is the current value"
-     rather than being confused with the light-red hover colour above.
+  /* Selected: a light-pink band, so it reads as "this is the current value"
+     rather than being confused with the grey hover colour above.
 
      Listed AFTER hover and naming the hover/focused combinations explicitly,
      because react-select puts BOTH classes on the row when you mouse over the
      option that is already chosen. At equal specificity the later rule wins,
-     so without this the selected row lost its grey the moment the cursor
+     so without this the selected row lost its pink the moment the cursor
      touched it — the one place the colour carries meaning. */
   .custom-react-select__option--is-selected,
   .custom-react-select__option--is-selected:hover,
   .custom-react-select__option--is-selected.custom-react-select__option--is-focused {
-    background-color: var(--select-option-hover-bg, var(--color-gray-100)) !important;
-    color: var(--select-option-hover-fg, var(--color-black)) !important;
+    background-color: #fdecec !important;
+    color: #171717 !important;
     font-weight: 600 !important;
   }
 

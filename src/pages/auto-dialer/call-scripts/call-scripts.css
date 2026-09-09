@@ -68,7 +68,7 @@
 .cs-search input:focus-visible {
   outline: none;
   border-radius: 99px;
-  border-color: #fca5a5;
+  border-color: #dc2626;
   box-shadow: none;
 }
 .cs-search-ico {
@@ -135,32 +135,88 @@
 }
 .cs-card th,
 .cs-card td {
-  text-align: left;
-}
-.cs-card th:nth-child(1),
-.cs-card td:nth-child(1) {
-  width: 20%;
-}
-.cs-card th:nth-child(2),
-.cs-card td:nth-child(2) {
-  width: 20%;
-}
-.cs-card th:nth-child(3),
-.cs-card td:nth-child(3) {
-  width: 20%;
-}
-.cs-card th:nth-child(4),
-.cs-card td:nth-child(4) {
-  width: 20%;
-}
-.cs-card th:nth-child(5),
-.cs-card td:nth-child(5) {
   width: 20%;
   text-align: center;
+  vertical-align: middle;
 }
 /* The action icons render in a block-level flex span, which
    text-align:center can't budge — switching it to inline-flex lets the
    td's centering actually reach it. */
-.cs-card td:nth-child(5) > span {
+.cs-card td > span,
+.cs-card td > div {
   display: inline-flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* ============================================================
+   Create/Update Call Script — centred modal, same fixed-height/
+   scrollable-body sizing as the Add Campaign/Add Lead modals,
+   instead of the right-side panel this form used to open in.
+   ============================================================ */
+.cs-modal {
+  width: min(560px, calc(100vw - 32px)) !important;
+  max-width: min(560px, calc(100vw - 32px)) !important;
+  height: 76vh;
+  max-height: 76vh;
+  padding: 0;
+  border-radius: 16px;
+  background: #ffffff !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.cs-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 24px 0;
+  flex: none;
+}
+.cs-modal-title {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: #171717;
+}
+.cs-modal-close {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.cs-modal-close:hover {
+  color: #171717;
+}
+.cs-modal-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 24px 24px;
+  overflow-y: auto;
+}
+.cs-modal-body [data-slot='input'] {
+  border-radius: 8px;
+}
+.cs-modal-body [data-slot='input']:focus,
+.cs-modal-body [data-slot='input']:hover {
+  border-color: #dc2626 !important;
+}
+.cs-modal-body .cs-modal-save {
+  border-radius: 999px;
+  background: #171717;
+  border-color: #171717;
+}
+.cs-modal-body .cs-modal-save:hover:not(:disabled) {
+  background: #dc2626;
+  border-color: #dc2626;
 }

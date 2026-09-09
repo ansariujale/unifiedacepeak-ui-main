@@ -4,9 +4,9 @@ import { useRef, useState } from 'react';
 import { Icon } from '@/assets/icons/icon';
 import TableManager from '@/components/custom/table-manager';
 import { deleteCallScript, getCallScript } from '@/services/api';
-import SideDrawer from '@/components/custom/side-drawer';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import ScriptForm from './add-edit-script';
-import { EyeIcon, Plus, RefreshCcw, Search } from 'lucide-react';
+import { EyeIcon, Plus, RefreshCcw, Search, X } from 'lucide-react';
 import { dailMethodsArr } from './constants';
 
 import OverviewScript from './overview-script';
@@ -14,6 +14,43 @@ import { useCompanyFeatures } from '@/hooks/rbac';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import AlertConfirm from '@/components/custom/alert-confirm';
 import './call-scripts.css';
+
+/* TEMP: sample rows for reviewing the table with the account empty.
+   Mimics the real API's response shape (rather than TableManager's
+   `staticData` escape hatch) so the footer's record count and
+   page-number pager still work correctly. Remove this function and go
+   back to `fetcherFn: getCallScript` once real data exists. */
+const fetchDummyCallScripts = () =>
+  Promise.resolve({
+    data: {
+      data: {
+        result: {
+          totalItems: 3,
+          totalPages: 1,
+          rows: [
+            {
+              _id: 'dummy-1',
+              createdAt: '2026-09-05T10:00:00.000Z',
+              name: 'Welcome Greeting',
+              dialMethod: 'PREVIEW',
+            },
+            {
+              _id: 'dummy-2',
+              createdAt: '2026-09-03T10:00:00.000Z',
+              name: 'Renewal Follow-up',
+              dialMethod: 'PREDICTIVE',
+            },
+            {
+              _id: 'dummy-3',
+              createdAt: '2026-09-01T10:00:00.000Z',
+              name: 'Support Queue Intro',
+              dialMethod: 'QUEUE',
+            },
+          ],
+        },
+      },
+    },
+  });
 
 const CallScripts = () => {
   const { features } = useCompanyFeatures();
@@ -162,7 +199,7 @@ const CallScripts = () => {
               tableRef: callScriptTableRef,
               columns,
               fetcherKey: 'getCallScript',
-              fetcherFn: getCallScript,
+              fetcherFn: fetchDummyCallScripts,
               search,
               clientSideSearch: true,
               emptyTablePlaceholder: 'No call scripts found',
@@ -175,23 +212,29 @@ const CallScripts = () => {
       </section>
 
       {drawerState?.isModalOpen && (
-        <SideDrawer
-          width="min(500px, 96vw)"
-          isOpen={drawerState.isModalOpen}
-          title={
-            getObjectLength(drawerState.selectedCampaign)
-              ? `Update Call Script (${drawerState.selectedCampaign?.name || ''})`
-              : 'Create Call Script'
-          }
-          handleClose={() =>
-            setDrawerState({
-              isModalOpen: false,
-              selectedCampaign: null,
-            })
-          }
-          isTab={false}
-          content={
-            <div className="mx-auto h-full w-full max-w-full ">
+        <Dialog
+          open={drawerState.isModalOpen}
+          onOpenChange={(open) => {
+            if (!open) setDrawerState({ isModalOpen: false, selectedCampaign: null });
+          }}
+        >
+          <DialogContent className="cs-modal" showCloseButton={false}>
+            <div className="cs-modal-head">
+              <DialogTitle className="cs-modal-title">
+                {getObjectLength(drawerState.selectedCampaign)
+                  ? `Update Call Script (${drawerState.selectedCampaign?.name || ''})`
+                  : 'Create Call Script'}
+              </DialogTitle>
+              <button
+                type="button"
+                className="cs-modal-close"
+                aria-label="Close"
+                onClick={() => setDrawerState({ isModalOpen: false, selectedCampaign: null })}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="cs-modal-body">
               <ScriptForm
                 isEdit={getObjectLength(drawerState.selectedCampaign)}
                 data={drawerState.selectedCampaign}
@@ -203,8 +246,8 @@ const CallScripts = () => {
                 }
               />
             </div>
-          }
-        />
+          </DialogContent>
+        </Dialog>
       )}
 
       {modalState?.isModalOpen && (

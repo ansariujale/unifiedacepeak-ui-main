@@ -19,6 +19,39 @@
 @layer base {
   .filters .cl-filter.custom-react-select__control {
     border-radius: 999px !important;
+    font-size: 12.5px !important;
+  }
+  /* index.css's app-wide hover/focus rule borders this in the tenant's
+     `--primary` red, which reads as a strong dark red; this page wants
+     the same light red the search box uses instead. */
+  .filters .cl-filter.custom-react-select__control:hover,
+  .filters .cl-filter.custom-react-select__control--is-focused,
+  .filters .cl-filter.custom-react-select__control--menu-is-open {
+    border-color: #fca5a5 !important;
+  }
+  /* Fits the full "Campaign name"/"Campaign type" placeholder without
+     truncating inside the pill's current width. */
+  .filters .cl-filter.custom-react-select__placeholder,
+  .filters .cl-filter.custom-react-select__single-value {
+    font-size: 12.5px !important;
+  }
+  /* index.css's app-wide option rule turns hover pink and selected
+     gray, with red text throughout; this page's filters want it the
+     other way round — light-gray hover, pink selected, black text
+     always — matching the Campaign page's Status/All modes menus.
+     `.cl-filter` lands on the portalled option nodes too, since it's
+     part of the shared classNamePrefix. Selected is declared after
+     hover so it still wins on a row that is both. */
+  .cl-filter.custom-react-select__option:hover,
+  .cl-filter.custom-react-select__option--is-focused {
+    background-color: #f3f4f6 !important;
+    color: #171717 !important;
+  }
+  .cl-filter.custom-react-select__option--is-selected,
+  .cl-filter.custom-react-select__option--is-selected:hover,
+  .cl-filter.custom-react-select__option--is-selected.custom-react-select__option--is-focused {
+    background-color: #fdecec !important;
+    color: #171717 !important;
   }
 }
 .cl-title {
@@ -188,7 +221,7 @@
 .cl-search input:focus-visible {
   outline: none;
   border-radius: 99px;
-  border-color: #fca5a5;
+  border-color: #dc2626;
   box-shadow: none;
 }
 .cl-search-ico {

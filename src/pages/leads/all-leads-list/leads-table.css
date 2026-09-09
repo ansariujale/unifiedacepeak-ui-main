@@ -43,7 +43,10 @@
 .leads-card [data-slot='input']:focus-visible {
   outline: none;
 }
-.leads-card [data-slot='input']:focus,
+.leads-card [data-slot='input']:focus {
+  border-color: #dc2626 !important;
+  box-shadow: none !important;
+}
 .leads-card [data-slot='input']:hover {
   border-color: #fca5a5 !important;
   box-shadow: none !important;
