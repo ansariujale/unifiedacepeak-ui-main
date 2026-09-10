@@ -81,6 +81,25 @@ function getNestedValue(obj: any, path: any) {
 
 const FORWARD_TYPES_ARR = ['EXTENSION', 'DEPARTMENT', 'IVR', 'QUEUE'];
 
+/* A strict canonical-UUID-only regex (8-4-4-4-12 hex, nothing else) missed
+   real ids here: this system's Department/IVR ids apparently aren't
+   always a clean 36-character UUID — some carry a trailing suffix (e.g.
+   "...86ad-3"), which an exact-match pattern rejects outright, silently
+   leaving the full id on screen. Loosened to "long enough and only
+   hex/hyphen characters", which still matches a plain UUID, a UUID with a
+   numeric suffix, and similar ids, while a real name — "Test IVR", "akash"
+   — has letters outside a-f or a space and never matches. */
+const UUID_LIKE_RE = /^[0-9a-f-]{20,}$/i;
+
+/** Shortens a raw id ("badc7c8e-2837-451e-9a02-...") down to
+ * "first6...last6" for display — a real name like "Test IVR" or "akash"
+ * doesn't match the pattern and is returned as-is. Only changes the
+ * `label` shown in the option row; `value` (the actual id used for
+ * selection/submission) is never touched by this. */
+const shortenIfUUID = (value: string) => (
+  value && UUID_LIKE_RE.test(value) ? `${value.slice(0, 6)}...${value.slice(-6)}` : value
+);
+
 const ForwardingActions = ({
   setValue = () => {},
   watch = () => {},
@@ -113,6 +132,11 @@ const ForwardingActions = ({
    * (document.body). Only passed by callers that want their dropdown menus
    * kept inside their own page's scoped styling. */
   menuPortalTarget,
+  /** Off by default — every existing caller keeps showing a Group/IVR's
+   * full name (or, when the API has no name for it, its raw UUID) exactly
+   * as before. Only My Phone opts in, to shorten a raw UUID id down to
+   * "first6...last6" instead of showing the whole thing. */
+  truncateOptionLabels = false,
 }: any) => {
   const { user } = useUser();
   const { user_info } = user || {};
@@ -293,6 +317,7 @@ const ForwardingActions = ({
               }}
               isRefetchable={false}
               menuPortalTarget={menuPortalTarget}
+              selectMenuPortalTarget={menuPortalTarget}
             />
           </div>
         );
@@ -327,19 +352,60 @@ const ForwardingActions = ({
           </div>
         );
 
-      default:
+      default: {
+        const rawOptions = FORWARD_VALUE_OPTIONS[currentType] || [];
+        /* Purely a render-time transform of what CustomSelect is given —
+           the underlying rawOptions (and, below, whatever gets saved) are
+           never touched, so selection/submission still use the real value
+           and full name exactly as before. Only Department/IVR, and only
+           when the caller (My Phone) opts in via truncateOptionLabels. */
+        const shouldTruncate =
+          truncateOptionLabels && (currentType === 'DEPARTMENT' || currentType === 'IVR');
+        /* CustomSelect's own normalizeOption falls back to showing an
+           option's raw `value` whenever `label` is empty — which is
+           exactly how a UUID with no name ends up on screen in the first
+           place. Falling back to opt?.value here too, before shortening,
+           makes sure that fallback text gets shortened as well, not just
+           a `label` that happens to already hold one. */
+        const displayLabel = (opt: any) => shortenIfUUID(opt?.label || opt?.value);
+        /* ExtensionListView (this dropdown's FormatOptionLabel, below) also
+           renders option.value as its own badge next to the label — a
+           feature for the Extension picker, where that value is a short,
+           meaningful extension number. Here it's the same raw UUID this
+           truncation is shortening the label to hide, so it would otherwise
+           still show the full id in that badge. showExtension: false turns
+           the badge off for just these display copies. */
+        const displayOptions = shouldTruncate
+          ? rawOptions.map((opt: any) => ({ ...opt, label: displayLabel(opt), showExtension: false }))
+          : rawOptions;
+        const displayValue =
+          shouldTruncate && resolvedForwardValue
+            ? { ...resolvedForwardValue, label: displayLabel(resolvedForwardValue), showExtension: false }
+            : resolvedForwardValue;
+
         return (
           <CustomSelect
             // label={valueLabel}
             placeholder="Select"
             menuPlacement={menuPlacement}
             menuPortalTarget={menuPortalTarget}
-            options={FORWARD_VALUE_OPTIONS[currentType] || []}
-            handleChange={(val) => setValue(forwardValue, val, { shouldValidate: true })}
-            value={resolvedForwardValue}
+            options={displayOptions}
+            handleChange={(val) => {
+              /* val comes from displayOptions, so its label may be the
+                 shortened display form — look the same id back up in
+                 rawOptions to save its real, full label instead. */
+              const original = rawOptions.find((opt: any) => opt?.value === val?.value);
+              setValue(
+                forwardValue,
+                shouldTruncate && original ? { ...val, label: original?.label } : val,
+                { shouldValidate: true },
+              );
+            }}
+            value={displayValue}
             FormatOptionLabel={ExtensionListView}
           />
         );
+      }
     }
   };
 
@@ -405,8 +471,17 @@ const ForwardingActions = ({
               <Label>{valueLabel}</Label>
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-4">
-            {watchForwardType?.value === 'VOICEMAIL' && (
+          {/* Rendered only for VOICEMAIL — otherwise this div stayed in the
+              flex-col with nothing inside it, and the column's own gap-1.5
+              still applied around that empty box, pushing the value select
+              below it down out of line with the type select beside it
+              (which has no such placeholder above it). The "Another
+              Voicemail" select now lives in this same flex row, right
+              after the radio group, instead of the separate flex-col row
+              below — so it sits beside "Another Voicemail" instead of
+              underneath the whole row. */}
+          {watchForwardType?.value === 'VOICEMAIL' && (
+            <div className="flex flex-wrap items-center gap-4">
               <RadioGroup
                 className={`flex flex-nowrap gap-6 items-center min-h-10 mb-0 ${radioClass}  `}
                 value={String(watchIsPersonalVoicemail)}
@@ -452,37 +527,36 @@ const ForwardingActions = ({
                   </Label>
                 </div>
               </RadioGroup>
-            )}
-          </div>
-          <div className="w-full flex flex-wrap items-start gap-2">
-            {watchForwardType?.value === 'VOICEMAIL'
-              ? !watchIsPersonalVoicemail && (
-                  <div className={`flex gap-1 ${selectTwoWidth}`}>
-                    {renderForwardValueOption()}
-                    {errorResponse && (
-                      <div className={`flex justify-end`}>
-                        <ErrorTooltip
-                          text={errorResponse}
-                          extraClasses="bg-gray-800 text-white mb-1"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )
-              : (
-                  <div className={`flex gap-1 ${selectTwoWidth}`}>
-                    {renderForwardValueOption()}
-                    {watchForwardType?.value !== 'HANGUP' && errorResponse && (
-                      <div className={`flex justify-end`}>
-                        <ErrorTooltip
-                          text={errorResponse}
-                          extraClasses="bg-gray-800 text-white mb-1"
-                        />
-                      </div>
-                    )}
+              {!watchIsPersonalVoicemail && (
+                <div className={`flex gap-1 ${selectTwoWidth}`}>
+                  {renderForwardValueOption()}
+                  {errorResponse && (
+                    <div className={`flex justify-end`}>
+                      <ErrorTooltip
+                        text={errorResponse}
+                        extraClasses="bg-gray-800 text-white mb-1"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          {watchForwardType?.value !== 'VOICEMAIL' && (
+            <div className="w-full flex flex-wrap items-start gap-2">
+              <div className={`flex gap-1 ${selectTwoWidth}`}>
+                {renderForwardValueOption()}
+                {watchForwardType?.value !== 'HANGUP' && errorResponse && (
+                  <div className={`flex justify-end`}>
+                    <ErrorTooltip
+                      text={errorResponse}
+                      extraClasses="bg-gray-800 text-white mb-1"
+                    />
                   </div>
                 )}
-          </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

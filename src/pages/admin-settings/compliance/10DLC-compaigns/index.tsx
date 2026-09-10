@@ -1,22 +1,51 @@
 import TableManager from '@/components/custom/table-manager';
-import { Input } from '@/components/ui/input';
+import TableSearchHeader from '@/components/custom/table-search-header';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { SearchLine } from '@/assets/icons';
+import { Link } from 'react-router-dom';
+import { Info } from 'lucide-react';
 import { Icon, IconName } from '@/assets/icons/icon';
 import CustomTooltip from '@/components/custom/custom-tooltip';
-import CustomSelect from '@/components/custom/custom-select';
-import SideDrawer from '@/components/custom/side-drawer';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import Create10DLCCampaign from './create-10DLC-campaign';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { campaign10DLCList, campaignDelete } from '@/services/api';
 import { convertDateFormateApis, handleAlert } from '@/lib/utils';
 import AlertConfirm from '@/components/custom/alert-confirm';
+import { DEMO_CAMPAIGNS } from './demo-campaigns';
+
+/* TCR's use-case codes are SCREAMING_SNAKE (ACCOUNT_NOTIFICATION). Split
+   and title-case them, keeping the acronyms that are acronyms. */
+const prettyEnum = (value: unknown) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .replace(/\b(2fa|Sms|Mms|Otp|Ucaas|Uc)\b/gi, (m) => m.toUpperCase());
+
+const TCR_STATUS_TONE: Record<string, string> = {
+  ACTIVE: 'connected',
+  PENDING: 'setup',
+  REJECTED: 'danger',
+};
+
+const StatusPill = ({ value }: { value: unknown }) => {
+  const raw = String(value || '');
+  if (!raw) return <span className="text-gray-400">--</span>;
+  return (
+    <span className={`mcm-intstatus ${TCR_STATUS_TONE[raw] || ''}`}>
+      <i />
+      {prettyEnum(raw)}
+    </span>
+  );
+};
 
 const DLCCampaigns = () => {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'PENDING' | 'EXPIRED'>(
+    'all',
+  );
   const [drawerState, setDrawerState] = useState({
     create10DLCCamapign: false,
   });
@@ -24,7 +53,7 @@ const DLCCampaigns = () => {
   const [open, setOpen] = useState(false);
   const [rowData, setRowData] = useState<any>({});
 
-  const { mutate: mutateBrandDelete, isPending } = useMutation({
+  const { mutate: mutateCampaignDelete, isPending } = useMutation({
     mutationKey: ['campaignDelete'],
     mutationFn: campaignDelete,
     onSuccess: ({ data }) => {
@@ -37,64 +66,85 @@ const DLCCampaigns = () => {
     },
   });
 
+  /* Filter on TCR status -- whether the campaign can send yet -- the same
+     question the Brands page filter answers. */
+  const countBy = (key: string) => DEMO_CAMPAIGNS.filter((c) => c.tcrStatus === key).length;
+  const filterTabs = [
+    { key: 'all' as const, label: 'All', count: DEMO_CAMPAIGNS.length },
+    { key: 'ACTIVE' as const, label: 'Active', count: countBy('ACTIVE') },
+    { key: 'PENDING' as const, label: 'Pending', count: countBy('PENDING') },
+    { key: 'EXPIRED' as const, label: 'Expired', count: countBy('EXPIRED') },
+  ];
+  const visibleCampaigns =
+    statusFilter === 'all'
+      ? DEMO_CAMPAIGNS
+      : DEMO_CAMPAIGNS.filter((c) => c.tcrStatus === statusFilter);
+
   const columns = [
     {
       header: 'Campaign ID',
       accessorKey: 'campaignId',
-      // cell: (props: any) => {
-      //   const data = props?.row?.original;
-      //   return (
-      //     <span className="text-primary cursor-pointer">{`${data?.name} ${data?.is_default === '1' ? `(Main Site)` : ''}`}</span>
-      //   );
-      // },
+      cell: ({ getValue }: any) => (
+        <span className="font-mono text-[12.5px] text-gray-900">{String(getValue() || '--')}</span>
+      ),
     },
     {
-      header: 'BRAND ID',
-      accessorKey: 'brandId',
-    },
-    {
-      header: 'BRAND NAME',
+      header: 'Brand',
       accessorKey: 'brandName',
       cell: ({ row }: any) => {
         const data = row?.original;
-        return <div>{data?.brandName || '--'}</div>;
+        if (!data?.brandName && !data?.brandId) return <span className="text-gray-400">--</span>;
+        /* Name and ID together: the ID alone meant a trip to the Brands page
+           to learn which brand a campaign belonged to. */
+        return (
+          <div className="flex flex-col leading-tight">
+            <span className="font-semibold text-gray-900">{data?.brandName || '--'}</span>
+            <span className="font-mono text-[11.5px] text-gray-500">{data?.brandId || ''}</span>
+          </div>
+        );
       },
     },
     {
-      header: 'USE-CASE',
+      header: 'Use case',
       accessorKey: 'usecase',
+      cell: ({ getValue }: any) => {
+        const value = getValue();
+        if (!value) return <span className="text-gray-400">--</span>;
+        return <span className="mcm-wh-type">{prettyEnum(value)}</span>;
+      },
     },
     {
-      header: 'REGISTERED ON',
+      header: 'Registered on',
       accessorKey: 'createdAt',
-      cell: ({ row }: any) => {
-        const data = row?.original;
-        return <div>{convertDateFormateApis(data?.createdAt, 'MMM D, YYYY')}</div>;
-      },
+      cell: ({ row }: any) => (
+        <span className="whitespace-nowrap">
+          {convertDateFormateApis(row?.original?.createdAt, 'MMM D, YYYY')}
+        </span>
+      ),
     },
     {
-      header: 'UPSTREAM CNP',
+      header: 'Upstream CNP',
       accessorKey: 'upstreamCnpName',
-      cell: ({ row }: any) => {
-        const data = row?.original;
-        return <div>{data?.upstreamCnpName || '--'}</div>;
-      },
+      cell: ({ getValue }: any) => (
+        <span className="text-gray-700">{String(getValue() || '--')}</span>
+      ),
     },
     {
-      header: 'RESELLER NAME',
+      header: 'Reseller',
       accessorKey: 'resellerName',
-      cell: ({ row }: any) => {
-        const data = row?.original;
-        return <div>{data?.resellerName || '--'}</div>;
+      cell: ({ getValue }: any) => {
+        const value = getValue();
+        return value ? (
+          <span className="text-gray-700">{String(value)}</span>
+        ) : (
+          <span className="text-gray-400">--</span>
+        );
       },
     },
     {
-      header: 'TCR STATUS',
+      header: 'TCR status',
       accessorKey: 'tcrStatus',
-      cell: ({ row }: any) => {
-        const data = row?.original;
-        return <div>{data?.tcrStatus || 'Active'}</div>;
-      },
+      cell: ({ getValue }: any) => <StatusPill value={getValue()} />,
     },
     {
       header: 'Action',
@@ -102,38 +152,21 @@ const DLCCampaigns = () => {
       cell: (props: any) => {
         const data = props?.row?.original;
         const isDefault = data?.is_default === '1';
-        const actions = [
-          {
-            icon: 'TrashBin',
-            onClick: () => {
-              setOpen(true);
-              setRowData(data);
-            },
-            className: 'bg-red-100 text-red-500 hover:bg-red-500 hover:text-white',
-            tooltipText: 'Delete',
-          },
-        ].filter(Boolean);
-
-        if (!actions?.length) return '---';
-
         return (
-          <div className="flex items-center gap-2">
-            {actions?.map((action, index) => (
-              <CustomTooltip text={action.tooltipText} side="top">
-                <div
-                  key={index}
-                  className={`${isDefault ? 'cursor-not-allowed bg-gray-100 text-gray-900/80' : `cursor-pointer ${action.className}`} flex items-center justify-center rounded-full w-8 h-8   `}
-                  onClick={() => {
-                    action.onClick();
-                  }}
-                >
-                  <Icon
-                    name={action.icon as IconName}
-                    className={`w-5 h-5 ${isDefault ? 'text-gray-400' : ''}`}
-                  />
-                </div>
-              </CustomTooltip>
-            ))}
+          <div className="mcm-wh-actions">
+            <CustomTooltip text="Delete" side="top">
+              <button
+                type="button"
+                disabled={isDefault}
+                aria-label="Delete campaign"
+                onClick={() => {
+                  setOpen(true);
+                  setRowData(data);
+                }}
+              >
+                <Icon name={'TrashBin' as IconName} className="h-4 w-4" />
+              </button>
+            </CustomTooltip>
           </div>
         );
       },
@@ -142,78 +175,128 @@ const DLCCampaigns = () => {
 
   return (
     <>
-      <section className="w-full overflow-x-auto overflow-y-hidden">
-        <div className="w-full  flex flex-col gap-3">
-          <div className="flex flex-col sm:flex-row items-center justify-between p-3 border-b border-gray-200 min-h-[65px] bg-white">
-            <div>
-              <p className="text-gray-900 font-semibold text-lg">10DLC Campaigns</p>
-              <p className="text-gray-500 text-xs">
-                What each registered brand is allowed to text about, and the numbers attached to it.
-              </p>
+      <div className="mcm-intpage w-full min-w-0 bg-gray-200/15 flex flex-col overflow-hidden">
+        <div className="mcm-intpage-head">
+          <div className="mcm-intpage-eyebrow">10DLC Compliance</div>
+          {/* Title over column 1, filter centred on column 2, actions over
+              column 3 -- the same three-column head as Brands. The search
+              lives in the table card below. */}
+          <div className="mcm-intpage-headrow">
+            <div className="mcm-intpage-headleft">
+              <div className="flex min-w-0 items-center gap-2">
+                <h1>SMS Campaigns</h1>
+                <CustomTooltip
+                  side="bottom"
+                  sideOffset={10}
+                  className="mcm-tooltip-info"
+                  text="What each registered brand is allowed to text about, and the numbers attached to it."
+                >
+                  <Info className="mcm-intpage-info" />
+                </CustomTooltip>
+              </div>
+
+              <div
+                className="mcm-segmented"
+                role="group"
+                aria-label="Filter campaigns by TCR status"
+              >
+                {filterTabs.map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    aria-pressed={statusFilter === tab.key}
+                    className={statusFilter === tab.key ? 'is-active' : ''}
+                    onClick={() => setStatusFilter(tab.key)}
+                  >
+                    {tab.label}
+                    <em>{tab.count}</em>
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-2 filters">
-              <Input
-                placeholder="Search"
-                className="pl-10 min-h-9 rounded-lg"
-                IconPosition="left-0 pl-2 inset-y-0"
-                value={search}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value.startsWith(' ')) return;
-                  setSearch(e.target.value);
-                }}
-                Icon={<SearchLine className=" text-gray-700" />}
-              />
-              <CustomSelect />
-              <Button
-                className="min-h-9"
-                variant={'outline'}
+
+            <div className="flex items-center gap-2 justify-self-end">
+              {/* A campaign hangs off a brand; that page is the other half
+                  of this one. */}
+              <Link to="/admin-settings/compliance/brands" className="btn">
+                <Icon name="BoxBrandsIcon" className="h-3.5 w-3.5" />
+                Brands
+              </Link>
+              <button
+                type="button"
+                className="btn primary"
                 onClick={() => setDrawerState((prev) => ({ ...prev, create10DLCCamapign: true }))}
               >
-                Create 10DLC Campaign
-              </Button>
+                <Icon name="PlusIcon" className="w-3 h-3" />
+                Create campaign
+              </button>
             </div>
           </div>
-          <div className="px-3 w-full flex flex-col gap-2">
+        </div>
+
+        <div className="mcm-intbody w-full p-3 flex flex-col gap-2 overflow-y-auto">
+          {/* One card around toolbar, table and pager -- TableManager renders
+              them as three bordered siblings otherwise. */}
+          <div className="mcm-tablecard mcm-tablecard--tm">
             <TableManager
+              perPageSelectClass="mcm-select"
+              recordNoun="campaign"
               {...{
+                customHeader: (
+                  <TableSearchHeader
+                    value={search}
+                    onChange={setSearch}
+                    onRefresh={() =>
+                      queryClient.invalidateQueries({ queryKey: ['campaign10DLCList'] })
+                    }
+                    placeholder="Search campaigns"
+                  />
+                ),
+                hideFooterRefresh: true,
                 fetcherKey: 'campaign10DLCList',
                 fetcherFn: campaign10DLCList,
                 columns,
                 search,
-                emptyTablePlaceholder: 'No campaigns found',
-                descriptionEmptyTable: 'Create campaign to see data here',
+                clientSideSearch: true,
+                isHeightSet: false,
+                emptyTablePlaceholder: 'No campaigns yet',
+                descriptionEmptyTable:
+                  'Register a campaign against a brand to start sending A2P messages.',
+                /* This workspace has no campaigns yet -- design preview only,
+                   remove once there is real data to look at. */
+                staticData: visibleCampaigns,
               }}
             />
           </div>
         </div>
-      </section>
-      {drawerState?.create10DLCCamapign && (
-        <SideDrawer
-          width="min(1040px, 84vw)"
-          isOpen={drawerState?.create10DLCCamapign}
-          isTab={false}
-          enableResponsive
-          responsiveWidth="96vw"
-          responsiveBreakpoint={1024}
-          title={'Create 10DLC Campaign'}
-          handleClose={() => setDrawerState((prev) => ({ ...prev, create10DLCCamapign: false }))}
-          content={
+      </div>
+
+      {/* A centred dialog, the same shell as the Create brand wizard, rather
+          than a full-height panel sliding in from the right. Padding is zero:
+          the form inside paints its own head/body/foot bands. */}
+      <Dialog
+        open={drawerState?.create10DLCCamapign}
+        onOpenChange={(open) =>
+          setDrawerState((prev) => ({ ...prev, create10DLCCamapign: open }))
+        }
+      >
+        <DialogContent className="w-[calc(100vw_-_2rem)] max-w-5xl p-0" showCloseButton={false}>
+          {drawerState?.create10DLCCamapign && (
             <Create10DLCCampaign
               drawerState={drawerState?.create10DLCCamapign}
               setDrawerState={() =>
                 setDrawerState((prev) => ({ ...prev, create10DLCCamapign: false }))
               }
             />
-          }
-        />
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertConfirm
         {...{
           apiLoading: isPending,
           onConfirm: () => {
-            mutateBrandDelete({
+            mutateCampaignDelete({
               campaignId: rowData?.campaignId || '',
             });
           },

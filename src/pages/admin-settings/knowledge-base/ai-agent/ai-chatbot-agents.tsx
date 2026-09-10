@@ -1,4 +1,6 @@
 import AlertConfirm from '@/components/custom/alert-confirm';
+// DUMMY DATA - remove this import together with DUMMY_DATA.ts
+import { DUMMY_CHAT_AGENTS, DUMMY_FLAG, SHOW_DUMMY_DATA } from '../DUMMY_DATA';
 import CustomAvatar from '@/components/custom/custom-avatar';
 import CustomTooltip from '@/components/custom/custom-tooltip';
 import TableManager from '@/components/custom/table-manager';
@@ -364,6 +366,19 @@ function AiChatbotAgents() {
     select: (response: any) => response?.data?.data?.result || {},
   });
 
+  // DUMMY DATA - local status flips for the preview rows.
+  const [dummyStatusOverrides, setDummyStatusOverrides] = useState<Record<string, string>>(
+    {},
+  );
+  const dummyChatAgents = useMemo(
+    () =>
+      DUMMY_CHAT_AGENTS.map((agent) => {
+        const override = dummyStatusOverrides[agent.agentId];
+        return override ? { ...agent, status: override, agentStatus: override } : agent;
+      }),
+    [dummyStatusOverrides],
+  );
+
   const allAgents = useMemo(
     () => (Array.isArray(agentResult?.rows) ? agentResult.rows : []),
     [agentResult?.rows],
@@ -385,22 +400,37 @@ function AiChatbotAgents() {
     () => getMetricsByAgentId(agentMetricsResult?.rows || []),
     [agentMetricsResult?.rows],
   );
-  const agentsWithMetrics = useMemo(
-    () => allAgents.map((agent: any) => mergeAgentMetrics(agent, agentMetricsById)),
-    [allAgents, agentMetricsById],
-  );
+  const agentsWithMetrics = useMemo(() => {
+    const merged = allAgents.map((agent: any) => mergeAgentMetrics(agent, agentMetricsById));
+    // DUMMY DATA - so the overview KPIs count the preview rows too.
+    return SHOW_DUMMY_DATA ? [...merged, ...dummyChatAgents] : merged;
+  }, [allAgents, agentMetricsById, dummyChatAgents]);
+
+  // DUMMY DATA - the counts come from server aggregates, so the preview rows
+  // are added on here too.
+  const dummyAgentCounts = useMemo(() => {
+    const rows = SHOW_DUMMY_DATA ? dummyChatAgents : [];
+    return {
+      count: rows.length,
+      live: rows.filter((agent: any) =>
+        ['active', 'live'].includes(String(agent?.status || '').toLowerCase()),
+      ).length,
+    };
+  }, [dummyChatAgents]);
 
   const totalAgentsCount = useMemo(
     () =>
-      pickNumber(agentResult, ['counts.all', 'totalItems', 'total', 'totalRecords', 'count']) ??
-      allAgents.length,
-    [agentResult, allAgents],
+      (pickNumber(agentResult, ['counts.all', 'totalItems', 'total', 'totalRecords', 'count']) ??
+        allAgents.length) + dummyAgentCounts.count,
+    [agentResult, allAgents, dummyAgentCounts.count],
   );
 
   const liveAgents = useMemo(() => allAgents.filter(isLiveAgent), [allAgents]);
   const liveAgentsCount = useMemo(
-    () => pickNumber(agentResult, ['counts.active', 'active', 'activeCount']) ?? liveAgents.length,
-    [agentResult, liveAgents.length],
+    () =>
+      (pickNumber(agentResult, ['counts.active', 'active', 'activeCount']) ?? liveAgents.length) +
+      dummyAgentCounts.live,
+    [agentResult, liveAgents.length, dummyAgentCounts.live],
   );
 
   const tableFilters = useMemo(
@@ -411,10 +441,14 @@ function AiChatbotAgents() {
   const selectTableAgents = useCallback(
     (response: any) => {
       const rows = response?.data?.data?.result?.rows || [];
-      const rowsWithMetrics = rows.map((agent: any) => mergeAgentMetrics(agent, agentMetricsById));
+      const mergedRows = rows.map((agent: any) => mergeAgentMetrics(agent, agentMetricsById));
+      // DUMMY DATA - appended after the metric merge so their own figures survive.
+      const rowsWithMetrics = SHOW_DUMMY_DATA
+        ? [...mergedRows, ...dummyChatAgents]
+        : mergedRows;
       return statusFilter === 'live' ? rowsWithMetrics.filter(isLiveAgent) : rowsWithMetrics;
     },
-    [agentMetricsById, statusFilter],
+    [agentMetricsById, statusFilter, dummyChatAgents],
   );
 
   const stats = useMemo(() => {
@@ -427,24 +461,26 @@ function AiChatbotAgents() {
     const confidence: Array<number | null> = agentsWithMetrics.map((agent: any) =>
       pickNumber(agent, metricPaths.confidence),
     );
-    const averageResolution =
-      pickNumber(agentMetricsResult, ['resolution_rate', 'analytics.resolution_rate']) ??
-      average(resolution);
-    const averageConfidence =
-      pickNumber(agentMetricsResult, [
-        'avg_confidence',
-        'analytics.avg_confidence',
-        'confidence',
-      ]) ?? average(confidence);
-    const totalConversations =
-      pickNumber(agentMetricsResult, [
-        'conversations',
-        'conversation_count',
-        'analytics.conversations',
-      ]) ??
-      (conversations.some((value) => value !== null)
-        ? conversations.reduce<number>((sum, value) => sum + (value ?? 0), 0)
-        : null);
+    // DUMMY DATA - the preview rows carry their own figures, so averaging over
+    // every row (server + preview) keeps the KPI strip in step with the table.
+    const averageResolution = SHOW_DUMMY_DATA
+      ? average(resolution)
+      : (pickNumber(agentMetricsResult, ['resolution_rate', 'analytics.resolution_rate']) ??
+        average(resolution));
+    const averageConfidence = SHOW_DUMMY_DATA
+      ? average(confidence)
+      : (pickNumber(agentMetricsResult, [
+          'avg_confidence',
+          'analytics.avg_confidence',
+          'confidence',
+        ]) ?? average(confidence));
+    const totalConversations = conversations.some((value) => value !== null)
+      ? conversations.reduce<number>((sum, value) => sum + (value ?? 0), 0)
+      : (pickNumber(agentMetricsResult, [
+          'conversations',
+          'conversation_count',
+          'analytics.conversations',
+        ]) ?? null);
     const resultSentimentCalls = pickNumber(agentMetricsResult, ['sentiment_calls']);
     const resultSentimentScore = pickNumber(agentMetricsResult, ['avg_sentiment']);
     const rowSentiment = agentsWithMetrics
@@ -458,11 +494,14 @@ function AiChatbotAgents() {
       0,
     );
     const sentimentCalls =
-      resultSentimentCalls !== null && resultSentimentCalls > 0
-        ? resultSentimentCalls
-        : rowSentimentCalls;
+      SHOW_DUMMY_DATA || resultSentimentCalls === null || resultSentimentCalls <= 0
+        ? rowSentimentCalls
+        : resultSentimentCalls;
     const averageSentiment =
-      resultSentimentCalls !== null && resultSentimentCalls > 0 && resultSentimentScore !== null
+      !SHOW_DUMMY_DATA &&
+      resultSentimentCalls !== null &&
+      resultSentimentCalls > 0 &&
+      resultSentimentScore !== null
         ? resultSentimentScore
         : rowSentimentCalls
           ? rowSentiment.reduce((sum: number, agent: any) => sum + agent.score * agent.calls, 0) /
@@ -728,7 +767,7 @@ function AiChatbotAgents() {
       {
         header: 'Status',
         accessorKey: 'status',
-        meta: { textAlign: 'center' },
+        meta: { textAlign: 'left' },
         cell: ({ row }: any) => {
           const agent = row?.original;
           const live = isLiveAgent(agent);
@@ -747,16 +786,25 @@ function AiChatbotAgents() {
           const handleStatusChange = (newStatus: string) => {
             const currentStatus = live ? 'live' : 'inactive';
             if (newStatus === currentStatus) return;
+            // DUMMY DATA - preview rows have no server record, so flip them locally.
+            if (agent?.[DUMMY_FLAG]) {
+              setDummyStatusOverrides((prev) => ({
+                ...prev,
+                [String(agent.agentId || agent.agent_uuid)]:
+                  newStatus === 'live' ? 'active' : 'inactive',
+              }));
+              return;
+            }
             handleStatusUpdate(agent, newStatus);
           };
 
           return (
-            <div className="flex justify-center">
+            <div className="flex justify-start">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className={`inline-flex h-6 min-w-[64px] items-center justify-center gap-1 rounded-full border! px-1.5 text-[11px] font-extrabold cursor-pointer outline-none transition-colors duration-200 ${
+                  className={`inline-flex h-6 min-w-[76px] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border! px-2.5 text-[11px] font-extrabold cursor-pointer outline-none transition-colors duration-200 ${
                     live
                       ? 'border-green-200! bg-green-100! text-green-800! hover:bg-green-100/80!'
                       : draft
@@ -765,10 +813,10 @@ function AiChatbotAgents() {
                   }`}
                 >
                   <span
-                    className={`h-2 w-2 rounded-full ${live ? 'bg-green-500' : draft ? 'bg-amber-500' : 'bg-slate-400'}`}
+                    className={`h-2 w-2 shrink-0 rounded-full ${live ? 'bg-green-500' : draft ? 'bg-amber-500' : 'bg-slate-400'}`}
                   />
-                  <span>{live ? 'Live' : draft ? 'Draft' : 'Paused'}</span>
-                  <ChevronDown className="h-3 w-3 opacity-60" />
+                  <span className="leading-none">{live ? 'Live' : draft ? 'Draft' : 'Paused'}</span>
+                  <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -1002,7 +1050,7 @@ function AiChatbotAgents() {
 
   return (
     <>
-      <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#eef1f8] text-neutral-900">
+      <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#efefef] text-neutral-900">
         <div className="flex min-h-[92px] items-center justify-between border-b border-neutral-200 bg-white px-7">
           <div className="flex items-center gap-3">
             <div>
@@ -1035,10 +1083,6 @@ function AiChatbotAgents() {
               >
                 Chat Agents
               </div>
-              <p className="-mt-1 text-xs font-normal text-neutral-400">
-                Agents that answer chats on your behalf, the knowledge they draw on, and how each
-                one is performing.
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -1065,7 +1109,7 @@ function AiChatbotAgents() {
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-auto bg-[#eef1f8] px-7 py-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-auto bg-[#efefef] px-7 py-6">
           <div>
             <div className="mb-3 flex items-center gap-2.5">
               <h2 className="text-[12.5px] font-semibold uppercase tracking-[0.05em] text-red-600">

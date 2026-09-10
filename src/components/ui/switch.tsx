@@ -1,25 +1,59 @@
 import * as React from 'react';
-import * as SwitchPrimitive from '@radix-ui/react-switch';
 
 import { cn } from '@/lib/utils';
 
-function Switch({ className, ...props }: React.ComponentProps<typeof SwitchPrimitive.Root>) {
+/* A plain button, not Radix's SwitchPrimitive: Radix's data-state attribute
+   selectors were not reliably driving the track colour or the thumb's
+   slide-over, so a toggle sat flat and un-animated instead of reading as a
+   switch. This mirrors the toggle already proven working elsewhere in the
+   app (new-ai-receptionist.tsx's ToggleSwitch) — same sizing, same
+   checked/unchecked classes, driven directly off the `checked` prop instead
+   of a DOM attribute. */
+interface SwitchProps extends Omit<React.ComponentPropsWithoutRef<'button'>, 'onChange'> {
+  checked?: boolean;
+  defaultChecked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+}
+
+function Switch({
+  className,
+  checked,
+  defaultChecked = false,
+  onCheckedChange,
+  disabled,
+  ...props
+}: SwitchProps) {
+  const [uncontrolled, setUncontrolled] = React.useState(defaultChecked);
+  const isChecked = checked ?? uncontrolled;
+
   return (
-    <SwitchPrimitive.Root
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isChecked}
       data-slot="switch"
+      data-state={isChecked ? 'checked' : 'unchecked'}
+      disabled={disabled}
+      onClick={() => {
+        const next = !isChecked;
+        if (checked === undefined) setUncontrolled(next);
+        onCheckedChange?.(next);
+      }}
       className={cn(
-        "cursor-pointer peer relative after:absolute after:-inset-2 after:content-[''] data-[state=checked]:bg-primary data-[state=unchecked]:bg-white data-[state=unchecked]:border-gray-300 focus-visible:border-ring focus-visible:ring-ring/50 dark:data-[state=unchecked]:bg-input/80 inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-transparent shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 disabled:[state=unchecked]:border-gray-300 touch-manipulation",
+        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full outline-none! transition-colors disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation',
+        isChecked ? 'bg-primary!' : 'bg-gray-300!',
         className,
       )}
       {...props}
     >
-      <SwitchPrimitive.Thumb
+      <span
         data-slot="switch-thumb"
         className={cn(
-          'bg-background dark:data-[state=unchecked]:bg-gray-100 data-[state=unchecked]:bg-gray-200 dark:data-[state=checked]:bg-primary-foreground pointer-events-none block size-5 rounded-full ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0.5',
+          'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+          isChecked ? 'translate-x-[22px]' : 'translate-x-0.5',
         )}
       />
-    </SwitchPrimitive.Root>
+    </button>
   );
 }
 

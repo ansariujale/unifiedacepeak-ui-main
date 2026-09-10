@@ -696,34 +696,6 @@ function Playground() {
         `}</style>
       )}
 
-      {/* Breadcrumb */}
-      <div
-        className="flex min-h-[56px] shrink-0 items-center justify-between border-b bg-white px-5"
-        style={{ borderColor: BORDER }}
-      >
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <button
-            type="button"
-            onClick={() => navigate('/admin-settings/knowledge/ai-agent')}
-            className="cursor-pointer bg-transparent transition-colors"
-            style={{ color: MUTED }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = RED_HOVER)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = MUTED)}
-          >
-            AI Agents
-          </button>
-          <span style={{ color: '#D1D5DB' }}>/</span>
-          <span
-            className="transition-colors"
-            style={{ color: INK }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = RED_HOVER)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = INK)}
-          >
-            Playground
-          </span>
-        </div>
-      </div>
-
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-4 pt-1 sm:overflow-hidden sm:px-5 sm:pb-5">
         {/* Summary banner */}
         <div

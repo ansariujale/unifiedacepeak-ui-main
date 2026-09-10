@@ -610,6 +610,7 @@ const ListItem = ({
 const SidebarContent = ({
   activeTab,
   setActiveTab,
+  chatType,
   setChatType,
   setselectedChannelType,
   isAgentChat = false,
@@ -617,6 +618,7 @@ const SidebarContent = ({
 }: {
   activeTab: ChatTab;
   setActiveTab: (tab: ChatTab) => void;
+  chatType?: any;
   setChatType: (type: any) => void;
   setselectedChannelType: (type: any) => void;
   isAgentChat?: boolean;
@@ -1090,7 +1092,7 @@ const SidebarContent = ({
 
   return (
     <div className="w-full h-full min-h-0 bg-white flex flex-col">
-      <div className="mcm-chat-head flex items-center justify-between border-b border-[var(--mcm-line)]">
+      <div className="mcm-chat-head flex items-center justify-between px-3.5 py-3">
         <div className="flex gap-3 w-full">
           <div className="flex items-center justify-between gap-2 w-full">
             <div
@@ -1146,7 +1148,7 @@ const SidebarContent = ({
                       <DropdownMenuContent>
                         {chatAccess?.access?.DIRECT_MESSAGE && (
                           <DropdownMenuItem
-                            className="cursor-pointer"
+                            className="cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary"
                             onClick={() => {
                               setShowCreateChatModal('direct');
                             }}
@@ -1156,7 +1158,7 @@ const SidebarContent = ({
                         )}
                         {chatAccess?.access?.TEAM_MESSAGE && (
                           <DropdownMenuItem
-                            className="cursor-pointer"
+                            className="cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary"
                             onClick={() => {
                               setShowCreateChatModal('team');
                             }}
@@ -1176,16 +1178,19 @@ const SidebarContent = ({
                     </button>
                   )}
                   <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <div className="mcm-chat-iconbtn">
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" className="mcm-chat-iconbtn" aria-label="Filter">
                         <FilterIcon className="w-[15px] h-[15px]" />
-                      </div>
+                      </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       {ChatChannels?.map((item: any, index: number) => {
                         return (
                           <DropdownMenuItem
                             key={index}
+                            className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
+                              chatType === item.value ? 'bg-gray-100' : ''
+                            }`}
                             onClick={() => {
                               setChatType(item.value);
                               setselectedChannelType(item);
@@ -1199,6 +1204,9 @@ const SidebarContent = ({
                         ? allowedOmniChannels.map((item: any, index: number) => (
                             <DropdownMenuItem
                               key={index}
+                              className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
+                                chatType === item.type ? 'bg-gray-100' : ''
+                              }`}
                               onClick={() => {
                                 setChatType(item.type);
                                 setselectedChannelType(item);
@@ -1221,10 +1229,12 @@ const SidebarContent = ({
       {/* Same element carries the rule and the scroll, so a tab's -mb-px
           underline lands on it — as .panel-tabs does on the phone console. */}
       {!isAgentChat ? (
-        <div className="mcm-chat-tabs flex shrink-0 gap-0 overflow-x-auto border-b border-[var(--mcm-line)]">
+        <div className="mcm-chat-tabs flex shrink-0 overflow-x-auto border-b border-[var(--mcm-line)]">
           {tabOptions.map((tab) => (
             <button
               key={tab.value}
+              role="tab"
+              aria-selected={activeTab === tab.value}
               className={activeTab === tab.value ? 'on' : ''}
               onClick={() => {
                 setActiveTab(tab.value);
@@ -1481,6 +1491,7 @@ const Messenger = ({ mode = 'messenger' }: { mode?: MessengerMode }) => {
               <SidebarContent
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
+                chatType={chatType}
                 setChatType={setChatType}
                 setselectedChannelType={setselectedChannelType}
                 isAgentChat={isAgentChat}

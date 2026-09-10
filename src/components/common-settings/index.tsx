@@ -106,6 +106,17 @@ const CommonSettingPermission: FC<any> = ({
      department, a phone menu and a queue, and "may this person call abroad"
      is a question only a person can answer. */
   isShowInternationalCalling = false,
+  /** Runs the caller's own full-form save — undefined for every caller
+   * except the Preferences page, where it's the page's `handleSubmit(onSubmit)`.
+   * Only DisplayNumberModal's anchored panel uses it (its "Save changes"
+   * checkbox in place of a Submit button); every other caller/mode is
+   * unaffected. */
+  onDisplayNumberSave,
+  /** Undefined by default, in which case CustomSelect falls back to its own
+   * default (document.body). Only the Preferences page passes a real node,
+   * to keep its dropdown menu inside its own page-scoped styling instead of
+   * portaled out to the app root. */
+  selectMenuPortalTarget,
 }) => {
   /* Company rules govern a person editing their own phone, and nothing else. The
      other screens using this editor are an admin configuring a number, department,
@@ -148,19 +159,6 @@ const CommonSettingPermission: FC<any> = ({
       typeof current === 'object' && current !== null ? { ...current, enabled: checked } : checked,
     );
   };
-
-  const shownPolicyFields: PolicyField[] = [
-    'regional',
-    'recording',
-    'transcription',
-    'ai_call_monitoring',
-    'display_number',
-    ...(isShowVoicemail ? (['voicemail'] as PolicyField[]) : []),
-    /* Business hours is a governed field like the rest; it was simply missing here,
-       so a company that locked it got no notice and no greyed-out control. */
-    ...(isBussinessHours ? (['business_hours'] as PolicyField[]) : []),
-  ];
-  const hasCompanyLockedFields = shownPolicyFields.some((field) => !canEditField(field));
 
   const isUpdatingAdmin =
     ['ADMIN'].includes(data?.role_data?.name) || ['ADMIN'].includes(data?.role);
@@ -252,15 +250,6 @@ const CommonSettingPermission: FC<any> = ({
   return (
     <>
       <div className={`flex flex-col gap-4 ${customClass}  pr-1`}>
-        {/* A greyed-out control with no reason given reads as broken. This says who
-            locked it and where it is changed, so the answer is on the page rather
-            than in a support ticket. Shown only when something is actually locked. */}
-        {isOwnSettingsPage && companyPolicy.isActive && hasCompanyLockedFields && (
-          <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
-            Some settings below are greyed out because they are set for everyone by your company. An
-            administrator can change them under <strong>Phone System → Preferences</strong>.
-          </div>
-        )}
         <div className="grid grid-cols-1 gap-3">
           {/* {IS_ADMIN ? ( */}
           {isShowRole && (
@@ -481,6 +470,7 @@ const CommonSettingPermission: FC<any> = ({
                   <CompanyLockNote show={isCompanyLocked('transcription')} />
                 </div>
                 <Switch
+                  className={isOwnSettingsPage ? 'accounts-switch-compact' : undefined}
                   checked={readToggle('settings.transcription')}
                   disabled={!canEditField('transcription')}
                   onCheckedChange={(checked) => {
@@ -509,6 +499,7 @@ const CommonSettingPermission: FC<any> = ({
                   <CompanyLockNote show={isCompanyLocked('ai_call_monitoring')} />
                 </div>
                 <Switch
+                  className={isOwnSettingsPage ? 'accounts-switch-compact' : undefined}
                   checked={readToggle('settings.ai_call_monitoring')}
                   disabled={!canEditField('ai_call_monitoring')}
                   onCheckedChange={(checked) => {
@@ -594,6 +585,7 @@ const CommonSettingPermission: FC<any> = ({
                     handleChange={(option: any) =>
                       setInternationalChoice((option?.value || 'inherit') as InternationalChoice)
                     }
+                    menuPortalTarget={selectMenuPortalTarget}
                   />
                 </div>
               }
@@ -687,6 +679,8 @@ const CommonSettingPermission: FC<any> = ({
              caller (admin per-user forwarding, campaigns, IVR, queues)
              leaves this unset and keeps the original centered dialog. */
           anchorRight={isOwnSettingsPage}
+          onQuickSave={isOwnSettingsPage ? onDisplayNumberSave : undefined}
+          selectMenuPortalTarget={isOwnSettingsPage ? selectMenuPortalTarget : undefined}
         />
       )}
     </>

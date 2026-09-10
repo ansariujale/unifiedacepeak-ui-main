@@ -1,4 +1,6 @@
 import { Button } from '@/components/ui/button';
+// DUMMY DATA - remove this import together with DUMMY_DATA.ts
+import { DUMMY_FLAG, DUMMY_RECEPTIONISTS, SHOW_DUMMY_DATA } from '../DUMMY_DATA';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,7 +116,6 @@ import {
   UserRound,
   X,
   ChevronDown,
-  ChevronRight,
   Info,
   Clock3,
   Bot,
@@ -1295,6 +1296,51 @@ const PICK_PAGE_FALLBACK_ICONS = [Folder, Bot, PhoneCall, Gauge, RefreshCcw];
 const getPickPageCategoryIcon = (categoryId: string, fallbackIndex: number) =>
   PICK_PAGE_CATEGORY_ICON_MAP[categoryId] ||
   PICK_PAGE_FALLBACK_ICONS[fallbackIndex % PICK_PAGE_FALLBACK_ICONS.length];
+/* The dialog's built-in close button is styled per-dialog rather than globally:
+   a grey tint circle on hover, and no focus ring, since the ring read as a
+   stray grey border the moment the button was clicked. */
+const MANAGER_SELECT_STYLE = `
+/* index.css declares these in @layer base with !important, and a layered
+   !important outranks an unlayered one no matter how specific - so these
+   overrides have to join the same layer to land. */
+@layer base {
+    .ai-manager-select.custom-react-select__control,
+    .ai-manager-select.custom-react-select__control:hover,
+    .ai-manager-select.custom-react-select__control--is-focused,
+    .ai-manager-select.custom-react-select__control--menu-is-open {
+      border-color: var(--color-neutral-300) !important;
+      box-shadow: none !important;
+    }
+    .ai-manager-select.custom-react-select__control:hover,
+    .ai-manager-select.custom-react-select__control--is-focused,
+    .ai-manager-select.custom-react-select__control--menu-is-open {
+      border-color: var(--color-neutral-400) !important;
+    }
+    .ai-manager-select.custom-react-select__menu {
+      border-color: var(--color-neutral-200) !important;
+      border-radius: 0.75rem !important;
+      padding: 0.375rem !important;
+    }
+    .ai-manager-select.custom-react-select__option {
+      border-radius: 0.5rem !important;
+      font-weight: 500 !important;
+    }
+    .ai-manager-select.custom-react-select__option:hover,
+    .ai-manager-select.custom-react-select__option--is-focused {
+      background-color: #f3f4f6 !important;
+      color: var(--color-neutral-900) !important;
+    }
+    .ai-manager-select.custom-react-select__option--is-selected {
+      background-color: var(--color-red-50) !important;
+      color: var(--color-neutral-900) !important;
+      font-weight: 600 !important;
+    }
+}
+`;
+
+const DIALOG_CLOSE_BUTTON_CLASS =
+  '[&_[data-slot=dialog-close]]:flex [&_[data-slot=dialog-close]]:h-8 [&_[data-slot=dialog-close]]:w-8 [&_[data-slot=dialog-close]]:items-center [&_[data-slot=dialog-close]]:justify-center [&_[data-slot=dialog-close]]:rounded-full [&_[data-slot=dialog-close]]:outline-none! [&_[data-slot=dialog-close]]:ring-0! [&_[data-slot=dialog-close]]:ring-offset-0! [&_[data-slot=dialog-close]]:transition-colors [&_[data-slot=dialog-close]]:hover:bg-neutral-200/70';
+
 const CALL_EMBED_SCRIPT_ID = 'ai-receptionist-call-widget-script';
 const unloadAi360CallWidget = () => {
   const existing = document.getElementById(CALL_EMBED_SCRIPT_ID);
@@ -2159,7 +2205,7 @@ function ForwardTypeCell({ data, onUpdate, optionsData, userExtension }: any) {
           if (!open) reset();
         }}
       >
-        <DialogContent className="max-w-[520px]">
+        <DialogContent className={cx('max-w-[520px] bg-white!', DIALOG_CLOSE_BUTTON_CLASS)}>
           <DialogHeader>
             <DialogTitle>Edit Forwarding Destination</DialogTitle>
           </DialogHeader>
@@ -2255,6 +2301,19 @@ function NewAiReceptionistPage() {
   });
   console.log(receptionistData, 'receptionistData');
 
+  // DUMMY DATA - local status flips for the preview rows.
+  const [dummyStatusOverrides, setDummyStatusOverrides] = useState<Record<string, string>>(
+    {},
+  );
+  const dummyReceptionists = useMemo(
+    () =>
+      DUMMY_RECEPTIONISTS.map((agent) => {
+        const override = dummyStatusOverrides[agent.agentId];
+        return override ? { ...agent, status: override, agentStatus: override } : agent;
+      }),
+    [dummyStatusOverrides],
+  );
+
   const receptionistRows = useMemo(
     () => (Array.isArray(receptionistData?.rows) ? receptionistData.rows : []),
     [receptionistData?.rows],
@@ -2284,19 +2343,59 @@ function NewAiReceptionistPage() {
     () => getReceptionistMetricsById(receptionistMetricsData?.rows || []),
     [receptionistMetricsData?.rows],
   );
-  const receptionistsWithMetrics = useMemo(
-    () =>
-      receptionistRows.map((agent: any) =>
-        mergeReceptionistMetrics(agent, receptionistMetricsById),
+  const receptionistsWithMetrics = useMemo(() => {
+    const merged = receptionistRows.map((agent: any) =>
+      mergeReceptionistMetrics(agent, receptionistMetricsById),
+    );
+    // DUMMY DATA - so the overview KPIs count the preview rows too.
+    return SHOW_DUMMY_DATA ? [...merged, ...dummyReceptionists] : merged;
+  }, [receptionistRows, receptionistMetricsById, dummyReceptionists]);
+  // DUMMY DATA - the KPI strip and the All/Live counts come from server
+  // aggregates, so the preview rows are folded in here as well.
+  const dummyReceptionistStats = useMemo(() => {
+    const rows = SHOW_DUMMY_DATA ? dummyReceptionists : [];
+    const weight = (row: any) => Number(row?.calls_handled || 0);
+    return {
+      count: rows.length,
+      live: rows.filter((row: any) =>
+        ['active', 'live'].includes(String(row?.status || '').toLowerCase()),
+      ).length,
+      calls7d: rows.reduce((sum, row: any) => sum + Number(row?.calls_handled_7d || 0), 0),
+      calls: rows.reduce((sum, row: any) => sum + weight(row), 0),
+      durationTotal: rows.reduce(
+        (sum, row: any) => sum + Number(row?.average_call_duration || 0) * weight(row),
+        0,
       ),
-    [receptionistRows, receptionistMetricsById],
-  );
-  const callsHandled = pickNumber(
+      resolutionTotal: rows.reduce(
+        (sum, row: any) => sum + Number(row?.resolution_rate || 0) * weight(row),
+        0,
+      ),
+      sentimentCalls: rows.reduce((sum, row: any) => sum + Number(row?.sentiment_calls || 0), 0),
+      sentimentTotal: rows.reduce(
+        (sum, row: any) => sum + Number(row?.avg_sentiment || 0) * Number(row?.sentiment_calls || 0),
+        0,
+      ),
+    };
+  }, [dummyReceptionists]);
+
+  const serverCallsHandled = pickNumber(
     receptionistMetricsData,
     ['calls_handled', 'calls_handled_7d'],
     0,
   );
-  const averageCallDuration = pickNumber(receptionistMetricsData, ['average_call_duration'], 0);
+  const serverAverageCallDuration = pickNumber(
+    receptionistMetricsData,
+    ['average_call_duration'],
+    0,
+  );
+  const callsHandled = serverCallsHandled + dummyReceptionistStats.calls7d;
+  const averageCallDuration =
+    dummyReceptionistStats.calls > 0
+      ? Math.round(
+          (serverAverageCallDuration * serverCallsHandled + dummyReceptionistStats.durationTotal) /
+            (serverCallsHandled + dummyReceptionistStats.calls),
+        )
+      : serverAverageCallDuration;
   const { data: extensionList = [] } = useGetExtensions({
     page: 1,
     limit: 1000,
@@ -2357,9 +2456,13 @@ function NewAiReceptionistPage() {
   const tableSelect = useMemo(
     () => (data: any) => {
       const rows = data?.data?.data?.result?.rows || [];
-      const rowsWithMetrics = rows.map((agent: any) =>
+      const mergedRows = rows.map((agent: any) =>
         mergeReceptionistMetrics(agent, receptionistMetricsById),
       );
+      // DUMMY DATA - appended after the metric merge so their own figures survive.
+      const rowsWithMetrics = SHOW_DUMMY_DATA
+        ? [...mergedRows, ...dummyReceptionists]
+        : mergedRows;
       if (statusFilter === 'all') return rowsWithMetrics;
       return rowsWithMetrics.filter((row: any) => {
         if (row?.deletedAt || row?.deleted_at) return false;
@@ -2367,7 +2470,7 @@ function NewAiReceptionistPage() {
         return status === 'active' || status === 'live';
       });
     },
-    [receptionistMetricsById, statusFilter],
+    [receptionistMetricsById, statusFilter, dummyReceptionists],
   );
   const liveReceptionists = useMemo(
     () =>
@@ -2384,8 +2487,8 @@ function NewAiReceptionistPage() {
         receptionistData,
         ['counts.all', 'totalItems', 'total', 'totalRecords', 'count'],
         receptionistRows.length,
-      ),
-    [receptionistData, receptionistRows.length],
+      ) + dummyReceptionistStats.count,
+    [receptionistData, receptionistRows.length, dummyReceptionistStats.count],
   );
   const liveReceptionistsCount = useMemo(
     () =>
@@ -2393,8 +2496,8 @@ function NewAiReceptionistPage() {
         receptionistData,
         ['counts.active', 'active', 'activeCount'],
         liveReceptionists.length,
-      ),
-    [receptionistData, liveReceptionists.length],
+      ) + dummyReceptionistStats.live,
+    [receptionistData, liveReceptionists.length, dummyReceptionistStats.live],
   );
   const tableFilters = useMemo(
     () => (statusFilter === 'live' ? [{ key: 'status', value: 'active' }] : []),
@@ -2403,7 +2506,14 @@ function NewAiReceptionistPage() {
 
   const listStats = useMemo(() => {
     const totalCalls = callsHandled;
-    const resolutionRate = pickNumber(receptionistMetricsData, ['resolution_rate'], 0);
+    const serverResolution = pickNumber(receptionistMetricsData, ['resolution_rate'], 0);
+    const resolutionRate =
+      dummyReceptionistStats.calls > 0
+        ? Math.round(
+            (serverResolution * serverCallsHandled + dummyReceptionistStats.resolutionTotal) /
+              (serverCallsHandled + dummyReceptionistStats.calls),
+          )
+        : serverResolution;
     const avgDuration = averageCallDuration;
     const sentimentRows = receptionistsWithMetrics
       .map((row: any) => ({
@@ -2412,12 +2522,22 @@ function NewAiReceptionistPage() {
       }))
       .filter((row: any) => row.calls > 0 && Number.isFinite(row.score));
     const resultSentimentCalls = pickNumber(receptionistMetricsData, ['sentiment_calls'], 0);
-    const sentimentCalls =
-      resultSentimentCalls || sentimentRows.reduce((sum: number, row: any) => sum + row.calls, 0);
-    const avgSentiment = sentimentCalls
+    const serverSentimentCalls =
+      resultSentimentCalls ||
+      sentimentRows
+        .filter((row: any) => !dummyReceptionistStats.count || row.calls > 0)
+        .reduce((sum: number, row: any) => sum + row.calls, 0) -
+        dummyReceptionistStats.sentimentCalls;
+    const baseSentimentCalls = Math.max(0, serverSentimentCalls);
+    const serverAvgSentiment = baseSentimentCalls
       ? pickNumber(receptionistMetricsData, ['avg_sentiment'], 0) ||
         sentimentRows.reduce((sum: number, row: any) => sum + row.score * row.calls, 0) /
-          sentimentCalls
+          Math.max(1, sentimentRows.reduce((sum: number, row: any) => sum + row.calls, 0))
+      : 0;
+    const sentimentCalls = baseSentimentCalls + dummyReceptionistStats.sentimentCalls;
+    const avgSentiment = sentimentCalls
+      ? (serverAvgSentiment * baseSentimentCalls + dummyReceptionistStats.sentimentTotal) /
+        sentimentCalls
       : 0;
     // Below-target metrics borrow the same red the rest of the screen reserves for
     // things that need attention — matching the Performance/Queues KPI strip, where
@@ -2701,16 +2821,26 @@ function NewAiReceptionistPage() {
           const handleStatusChange = (newStatus: string) => {
             const currentStatus = isLive ? 'live' : 'inactive';
             if (newStatus === currentStatus) return;
+            // DUMMY DATA - preview rows have no server record, so flip them locally.
+            if (data?.[DUMMY_FLAG]) {
+              setDummyStatusOverrides((prev) => ({
+                ...prev,
+                [String(data.agentId || data.agent_uuid)]:
+                  newStatus === 'live' ? 'active' : 'inactive',
+              }));
+              return;
+            }
             handleStatusUpdate(data, newStatus);
           };
 
           return (
+            <div className="flex justify-start">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
                   className={cx(
-                    'inline-flex h-6 min-w-[64px] items-center justify-center gap-1 rounded-full border! px-1.5 text-[11px] font-extrabold cursor-pointer outline-none transition-colors duration-200',
+                    'inline-flex h-6 min-w-[76px] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border! px-2.5 text-[11px] font-extrabold cursor-pointer outline-none transition-colors duration-200',
                     isLive
                       ? 'border-green-200! bg-green-100! text-green-800! hover:bg-green-100/80!'
                       : 'border-slate-200! bg-slate-100! text-slate-600! hover:bg-slate-100/80!',
@@ -2718,12 +2848,12 @@ function NewAiReceptionistPage() {
                 >
                   <span
                     className={cx(
-                      'h-2 w-2 rounded-full',
+                      'h-2 w-2 shrink-0 rounded-full',
                       isLive ? 'bg-green-500' : 'bg-slate-400',
                     )}
                   />
-                  <span>{isLive ? 'Live' : 'Paused'}</span>
-                  <ChevronDown className="h-3 w-3 opacity-60" />
+                  <span className="leading-none">{isLive ? 'Live' : 'Paused'}</span>
+                  <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -2746,9 +2876,10 @@ function NewAiReceptionistPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           );
         },
-        meta: { textAlign: 'center' },
+        meta: { textAlign: 'left' },
       },
       {
         header: 'Caller Id',
@@ -2983,7 +3114,7 @@ function NewAiReceptionistPage() {
   }
 
   return (
-    <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#eef1f8] text-neutral-900">
+    <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#efefef] text-neutral-900">
       <div className="flex min-h-[92px] items-center justify-between border-b border-neutral-200 bg-white px-7">
         <div className="flex items-center gap-3">
           <div>
@@ -3016,9 +3147,6 @@ function NewAiReceptionistPage() {
             >
               AI Receptionists
             </div>
-            <p className="-mt-1 text-xs font-normal text-neutral-400">
-              Voice assistants · 24/7 call handling &amp; routing
-            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -3045,7 +3173,7 @@ function NewAiReceptionistPage() {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-auto bg-[#eef1f8] px-7 py-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-auto bg-[#efefef] px-7 py-6">
         <div>
           <div className="mb-3 flex items-center gap-2.5">
             <h2 className="text-[12.5px] font-semibold uppercase tracking-[0.05em] text-red-600">
@@ -3196,7 +3324,7 @@ function NewAiReceptionistPage() {
                   </div>
                 </div>
               }
-              customClass="!rounded-none !border-0 !shadow-none [&_table]:table-fixed [&_table]:border-separate [&_table]:border-spacing-0 [&_thead]:bg-neutral-50! [&_th]:bg-transparent! [&_th]:px-[18px]! [&_th]:py-[13px]! [&_th]:text-[12px]! [&_th]:font-bold! [&_th]:uppercase! [&_th]:tracking-[0.04em]! [&_th]:text-neutral-500! [&_td]:bg-transparent! [&_td]:h-auto! [&_td]:min-h-0! [&_td]:px-[18px]! [&_td]:py-2! [&_td]:align-middle [&_th:first-child]:w-[260px] [&_td:first-child]:w-[260px] [&_th:nth-child(2)]:w-[160px] [&_td:nth-child(2)]:w-[160px] [&_th:nth-child(2)]:text-center! [&_td:nth-child(2)]:text-center! [&_th:nth-child(3)]:w-[160px] [&_td:nth-child(3)]:w-[160px] [&_th:nth-child(3)]:text-center! [&_td:nth-child(3)]:text-center! [&_th:nth-child(4)]:w-[160px] [&_td:nth-child(4)]:w-[160px] [&_th:nth-child(4)]:text-center! [&_td:nth-child(4)]:text-center! [&_th:nth-child(5)]:w-[160px] [&_td:nth-child(5)]:w-[160px] [&_th:nth-child(5)]:text-center! [&_td:nth-child(5)]:text-center! [&_th:last-child]:w-[160px] [&_td:last-child]:w-[160px] [&_th:last-child]:text-center!"
+              customClass="!rounded-none !border-0 !shadow-none [&_table]:table-fixed [&_table]:border-separate [&_table]:border-spacing-0 [&_thead]:bg-neutral-50! [&_th]:bg-transparent! [&_th]:px-[18px]! [&_th]:py-[13px]! [&_th]:text-[12px]! [&_th]:font-bold! [&_th]:uppercase! [&_th]:tracking-[0.04em]! [&_th]:text-neutral-500! [&_td]:bg-transparent! [&_td]:h-auto! [&_td]:min-h-0! [&_td]:px-[18px]! [&_td]:py-2! [&_td]:align-middle [&_th:first-child]:w-[260px] [&_td:first-child]:w-[260px] [&_th:nth-child(2)]:w-[160px] [&_td:nth-child(2)]:w-[160px] [&_th:nth-child(2)]:text-left! [&_td:nth-child(2)]:text-left! [&_th:nth-child(3)]:w-[160px] [&_td:nth-child(3)]:w-[160px] [&_th:nth-child(3)]:text-center! [&_td:nth-child(3)]:text-center! [&_th:nth-child(4)]:w-[160px] [&_td:nth-child(4)]:w-[160px] [&_th:nth-child(4)]:text-center! [&_td:nth-child(4)]:text-center! [&_th:nth-child(5)]:w-[160px] [&_td:nth-child(5)]:w-[160px] [&_th:nth-child(5)]:text-center! [&_td:nth-child(5)]:text-center! [&_th:last-child]:w-[160px] [&_td:last-child]:w-[160px] [&_th:last-child]:text-center!"
               loaderTableClass="min-h-[320px]"
               getRowClassName={() => 'bg-white! transition-colors hover:bg-neutral-50!'}
               emptyTablePlaceholder="No receptionists found"
@@ -6091,20 +6219,20 @@ function NewAiReceptionistBuilder({
   const renderFooter = () => {
     if (isReadOnly) return null;
 
+    // The same two buttons the knowledge steps render, so padding and width
+    // stay identical wherever the wizard puts a footer.
     return (
       <div className="mt-5 flex items-center justify-between">
-        <Button
-          variant="outline"
-          className="rounded-full! border-2! border-neutral-200! bg-white! text-neutral-950! shadow-none! hover:border-neutral-300! hover:bg-neutral-50!"
+        <SecondaryButton
+          tone="dark"
           disabled={isKnowledgeSummaryNavigationLocked}
           onClick={activeStep === 1 ? requestWizardLeave : handleBack}
         >
           <ArrowLeft className="h-4 w-4" />
           {activeStep === 1 ? 'Cancel' : 'Back'}
-        </Button>
-        <Button
-          variant="primary"
-          className="rounded-full! border-neutral-900! bg-neutral-900! text-white! shadow-[0_2px_10px_rgba(0,0,0,.2)]! hover:bg-neutral-800!"
+        </SecondaryButton>
+        <PrimaryButton
+          tone="dark"
           disabled={
             isSubmitting ||
             isPendingToken ||
@@ -6124,7 +6252,7 @@ function NewAiReceptionistBuilder({
                   : 'Create Receptionist'
             : 'Continue'}
           <ArrowRight className="h-4 w-4" />
-        </Button>
+        </PrimaryButton>
       </div>
     );
   };
@@ -6217,7 +6345,7 @@ function NewAiReceptionistBuilder({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
+              className="flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
             >
               {useCaseTemplateOptions.map((option) => {
                 const isSelected = option.name === roleUseCase;
@@ -6237,8 +6365,10 @@ function NewAiReceptionistBuilder({
                       setStepErrors((prev) => ({ ...prev, systemPrompt: '' }));
                     }}
                     className={cx(
-                      'flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-red-50! focus:bg-red-50!',
-                      isSelected ? 'bg-red-50! text-red-600! font-semibold' : 'text-neutral-900',
+                      'flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm font-medium',
+                      isSelected
+                        ? 'bg-red-50! text-neutral-900! font-semibold'
+                        : 'text-neutral-900 hover:bg-[#f3f4f6]! focus:bg-[#f3f4f6]!',
                     )}
                   >
                     <span className="truncate">{option.name}</span>
@@ -6316,7 +6446,7 @@ function NewAiReceptionistBuilder({
             <CustomTooltip
               side="top"
               text="Pick the voice and personality that answers every call. Every voice auto-detects the caller's language, so there's nothing extra to configure."
-              className="w-max max-w-[340px] border-none! bg-[#e3e3e3]! text-black! shadow-[0_6px_20px_rgba(17,17,17,0.18)]! [&_svg]:fill-[#fdf7f5]"
+              className="w-max max-w-[340px] border-none! bg-[#fdf7f5]! text-black! shadow-[0_6px_20px_rgba(17,17,17,0.18)]! [&_svg]:fill-[#fdf7f5]"
             >
               <Info className="h-4 w-4 cursor-help text-neutral-400" />
             </CustomTooltip>
@@ -6382,7 +6512,7 @@ function NewAiReceptionistBuilder({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="w-[200px] max-h-[280px] overflow-y-auto bg-white border! border-neutral-200! shadow-lg rounded-xl! p-1 z-50 animate-none"
+                className="flex w-[200px] max-h-[280px] flex-col gap-1 overflow-y-auto bg-white border! border-neutral-200! shadow-lg rounded-xl! p-1.5 z-50 animate-none"
               >
                 {GENDER_FILTER_OPTIONS.map((opt) => {
                   const isSelected = opt.key === genderFilter;
@@ -6391,8 +6521,10 @@ function NewAiReceptionistBuilder({
                       key={opt.key}
                       onClick={() => setGenderFilter(opt.key)}
                       className={cx(
-                        'flex cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs font-medium hover:bg-red-50! focus:bg-red-50!',
-                        isSelected ? 'bg-red-50! text-red-600! font-semibold' : 'text-neutral-900',
+                        'flex cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs font-medium',
+                        isSelected
+                        ? 'bg-red-50! text-neutral-900! font-semibold'
+                        : 'text-neutral-900 hover:bg-[#f3f4f6]! focus:bg-[#f3f4f6]!',
                       )}
                     >
                       <span className="truncate">{opt.label}</span>
@@ -6416,7 +6548,7 @@ function NewAiReceptionistBuilder({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="w-[200px] max-h-[280px] overflow-y-auto bg-white border! border-neutral-200! shadow-lg rounded-xl! p-1 z-50 animate-none"
+                className="flex w-[200px] max-h-[280px] flex-col gap-1 overflow-y-auto bg-white border! border-neutral-200! shadow-lg rounded-xl! p-1.5 z-50 animate-none"
               >
                 {LOCALE_FILTER_OPTIONS.map((opt) => {
                   const isSelected = opt.key === localeFilter;
@@ -6425,8 +6557,10 @@ function NewAiReceptionistBuilder({
                       key={opt.key}
                       onClick={() => setLocaleFilter(opt.key)}
                       className={cx(
-                        'flex cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs font-medium hover:bg-red-50! focus:bg-red-50!',
-                        isSelected ? 'bg-red-50! text-red-600! font-semibold' : 'text-neutral-900',
+                        'flex cursor-pointer items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs font-medium',
+                        isSelected
+                        ? 'bg-red-50! text-neutral-900! font-semibold'
+                        : 'text-neutral-900 hover:bg-[#f3f4f6]! focus:bg-[#f3f4f6]!',
                       )}
                     >
                       <span className="truncate">{opt.label}</span>
@@ -6726,7 +6860,7 @@ function NewAiReceptionistBuilder({
           <CustomTooltip
             side="top"
             text="After hours are handled automatically. Outside the hours you set, your receptionist tells callers you're closed and offers to schedule a callback with the assigned manager."
-            className="w-max max-w-[340px] border-none! bg-[#e3e3e3]! text-black! shadow-[0_6px_20px_rgba(17,17,17,0.18)]! [&_svg]:fill-[#fdf7f5]"
+            className="w-max max-w-[340px] border-none! bg-[#fdf7f5]! text-black! shadow-[0_6px_20px_rgba(17,17,17,0.18)]! [&_svg]:fill-[#fdf7f5]"
           >
             <Info className="h-4 w-4 cursor-help text-neutral-400" />
           </CustomTooltip>
@@ -6929,8 +7063,14 @@ function NewAiReceptionistBuilder({
             <UserRound className="h-3.5 w-3.5" />
             Manager who owns callbacks & escalations
           </span>
+          {/* react-select portals its menu to <body>, so a wrapper class never
+              reaches the menu or its options - the theme's primary colour shows
+              through as a coloured border. inputClass stamps this class onto
+              every sub-component, portal included, so the rules below can land. */}
+          <style>{MANAGER_SELECT_STYLE}</style>
           <CustomSelect
             className="neutral-focus-select"
+            inputClass="ai-manager-select"
             isDisabled={!enableCallbackScheduling || isReadOnly}
             value={selectedManagerOption}
             handleChange={(option: any) => {
@@ -7450,7 +7590,7 @@ function NewAiReceptionistBuilder({
                 <CustomTooltip
                   side="top"
                   text="Write it in plain language — the AI turns it into searchable knowledge. Leave a blank line between topics to keep things organized, with one topic per paragraph. Include exact numbers, dates, and policies so the receptionist answers precisely instead of guessing."
-                  className="w-max max-w-[340px] border-none! bg-[#e3e3e3]! text-black! shadow-[0_6px_20px_rgba(17,17,17,0.18)]! [&_svg]:fill-[#fdf7f5]"
+                  className="w-max max-w-[340px] border-none! bg-[#fdf7f5]! text-black! shadow-[0_6px_20px_rgba(17,17,17,0.18)]! [&_svg]:fill-[#fdf7f5]"
                 >
                   <Info className="h-4 w-4 cursor-help text-neutral-400" />
                 </CustomTooltip>
@@ -8076,7 +8216,17 @@ function NewAiReceptionistBuilder({
         </div>
 
         <div className="mb-0.5 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex w-fit shrink-0 rounded-full bg-neutral-100 p-1">
+          <div className="relative grid w-fit shrink-0 grid-cols-2 rounded-full bg-neutral-200 p-1">
+            {/* One pill that slides between the two tabs, rather than two that
+                pop on and off - the movement shows which way the selection went. */}
+            <span
+              aria-hidden="true"
+              className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-white shadow-sm transition-transform duration-200 ease-out"
+              style={{
+                transform:
+                  reviewKnowledgeTab === 'faqs' ? 'translateX(100%)' : 'translateX(0)',
+              }}
+            />
             {[
               {
                 key: 'documents' as const,
@@ -8101,10 +8251,10 @@ function NewAiReceptionistBuilder({
                     setReviewKnowledgeSearch('');
                   }}
                   className={cx(
-                    'flex cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 px-3.5 py-1.5 text-xs font-semibold transition-all',
+                    'relative z-10 flex cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3.5 py-1.5 text-xs font-semibold transition-colors',
                     isSelected
-                      ? 'bg-white text-neutral-950 shadow-sm'
-                      : 'bg-transparent text-neutral-500 hover:text-neutral-800',
+                      ? 'text-neutral-950'
+                      : 'text-neutral-500 hover:text-neutral-800',
                   )}
                 >
                   {tab.icon}
@@ -8112,7 +8262,7 @@ function NewAiReceptionistBuilder({
                   <span
                     className={cx(
                       'ml-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none',
-                      isSelected ? 'bg-neutral-100 text-neutral-950' : 'bg-neutral-200/80 text-neutral-600',
+                      isSelected ? 'bg-neutral-100 text-neutral-950' : 'bg-neutral-300/70 text-neutral-600',
                     )}
                   >
                     {tab.count}
@@ -8577,7 +8727,19 @@ function NewAiReceptionistBuilder({
                       Always Collected
                     </span>
                   ) : (
-                    <div className="inline-flex shrink-0 gap-[2px] rounded-full bg-neutral-100 p-0.5">
+                    <div className="relative grid w-[288px] shrink-0 grid-cols-3 rounded-full bg-neutral-100 p-0.5">
+                      {/* One pill that slides between the three options, rather than
+                          three that pop on and off — the movement shows which way the
+                          setting travelled. */}
+                      <span
+                        aria-hidden="true"
+                        className="absolute top-0.5 bottom-0.5 w-[calc((100%-4px)/3)] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.08)] transition-all duration-200 ease-out"
+                        style={{
+                          left: `calc(2px + ${['disabled', 'optional', 'mandatory'].indexOf(
+                            fieldState,
+                          )} * ((100% - 4px) / 3))`,
+                        }}
+                      />
                       {(['disabled', 'optional', 'mandatory'] as const).map((state) => (
                         <button
                           key={state}
@@ -8592,11 +8754,11 @@ function NewAiReceptionistBuilder({
                             setDetailsMandatory((prev) => ({ ...prev, [key]: state }));
                           }}
                           className={cx(
-                            'rounded-full px-2.5 py-1 text-[11px] font-bold capitalize transition-colors',
+                            'relative z-10 rounded-full px-2.5 py-1 text-[11px] font-bold capitalize transition-colors',
                             fieldState === state
                               ? state === 'mandatory'
-                                ? 'bg-neutral-900! text-white!'
-                                : 'bg-white! text-neutral-900! shadow-[0_1px_3px_rgba(0,0,0,.08)]'
+                                ? 'text-red-600!'
+                                : 'text-neutral-900!'
                               : 'text-neutral-400 hover:text-neutral-700',
                           )}
                         >
@@ -8658,7 +8820,7 @@ function NewAiReceptionistBuilder({
 
   return (
     <FormProvider {...formInstance}>
-      <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#eef1f8] text-neutral-900">
+      <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#efefef] text-neutral-900">
         {!useEditWorkspace && (
           <div className="border-b border-neutral-200 bg-white">
             {useWizardEdit ? (
@@ -8779,7 +8941,7 @@ function NewAiReceptionistBuilder({
               handleCancelForwardDestinationEdit();
             }}
           >
-            <DialogContent className="max-w-[620px]">
+            <DialogContent className={cx('max-w-[620px] bg-white!', DIALOG_CLOSE_BUTTON_CLASS)}>
               <DialogHeader>
                 <DialogTitle>Edit Forwarding Destination</DialogTitle>
               </DialogHeader>
@@ -9001,19 +9163,18 @@ function ReceptionistStepper({
 
   return (
     <div className="px-6 pt-1 pb-3.5">
-      <div className="mx-auto flex max-w-[1200px] items-center">
+      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-x-4 gap-y-1">
         {steps.map((step, index) => {
           const isActive = step.id === currentStepId;
+          // Steps already walked through stay black so the trail behind you is
+          // readable; the ones still ahead sit back in grey.
+          const isVisited = step.id < currentStepId;
 
           return (
             <Fragment key={step.id}>
               {index > 0 && (
-                <span className="flex flex-1 items-center px-1">
-                  <span className="h-px w-full min-w-[24px] bg-neutral-200" />
-                  <ChevronRight
-                    className="-ml-1 h-4 w-4 shrink-0 text-neutral-200"
-                    strokeWidth={2.5}
-                  />
+                <span aria-hidden="true" className="shrink-0 select-none text-sm! font-medium! text-neutral-400!">
+                  &gt;
                 </span>
               )}
               <button
@@ -9023,11 +9184,16 @@ function ReceptionistStepper({
                 }
                 disabled={disabled}
                 className={cx(
-                  'shrink-0 text-sm transition-colors focus:outline-none',
+                  // The bang suffixes are load-bearing: a global button rule
+                  // outranks these utilities otherwise, and the greys silently
+                  // render as near-black.
+                  'shrink-0 text-sm! transition-colors focus:outline-none',
                   disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
                   isActive
-                    ? 'font-semibold text-red-600!'
-                    : 'font-medium text-neutral-400 hover:text-neutral-600',
+                    ? 'font-semibold! text-red-600!'
+                    : isVisited
+                      ? 'font-medium! text-neutral-900!'
+                      : 'font-medium! text-neutral-400!',
                 )}
               >
                 {step.label}

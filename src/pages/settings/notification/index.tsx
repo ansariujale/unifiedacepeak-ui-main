@@ -38,7 +38,7 @@ const SectionInfo = ({ text }: { text: string }) => (
         <Info className="h-3.5 w-3.5" />
       </button>
     </TooltipTrigger>
-    <TooltipContent className="acepeak-tooltip-content" side="right" align="center">
+    <TooltipContent className="acepeak-tooltip-content" side="right" align="center" textWrap="pretty">
       {text}
     </TooltipContent>
   </Tooltip>
@@ -436,6 +436,20 @@ const SettingsNotification = () => {
           --accent-edge: #FCA5A5;
           --sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
         }
+        .acepeak-notifications [data-slot='button'] {
+          border-radius: 9999px !important;
+        }
+        /* Matches the Numbers page's own coral eyebrow (mcm-page.css's
+           .ident-coral-theme .mcm-adminpage-eyebrow) without pulling in
+           that whole theme class — reusing mcm-adminpage-eyebrow for its
+           family/case/tracking, only the 4 properties that variant
+           changes are restated here, scoped to this page. */
+        .acepeak-notifications .mcm-adminpage-eyebrow {
+          font-size: 12px;
+          font-weight: 800;
+          line-height: 18px;
+          color: #DC2626;
+        }
         .acepeak-notifications .acepeak-heading,
         .acepeak-notifications .mcm-fsec-t {
           color: #000;
@@ -458,9 +472,9 @@ const SettingsNotification = () => {
           background: #fdf7f5 !important;
           color: #000 !important;
           border: none !important;
-          width: max-content !important;
-          max-width: 340px !important;
+          width: 395px !important;
           white-space: normal !important;
+          text-wrap: normal !important;
           line-height: 1.5 !important;
           box-shadow: 0 6px 20px rgba(17, 17, 17, 0.18) !important;
         }
@@ -483,18 +497,6 @@ const SettingsNotification = () => {
         }
         .acepeak-notifications .acepeak-info-trigger:hover {
           color: var(--ap-primary);
-        }
-        /* .mcm-notsaved (index.css) carries its own dark-mode variant —
-           a near-black background with cream text — that kicks in purely
-           off the OS/browser's prefers-color-scheme, regardless of this
-           app's own light theme. Pinned back to its intended warm-yellow
-           warning colours here so this banner reads as a warning on this
-           page no matter the system setting. */
-        .acepeak-notifications .mcm-notsaved {
-          border-color: #f0c088 !important;
-          border-left-color: #c2670a !important;
-          background: #fdf5e9 !important;
-          color: #7a4406 !important;
         }
         /* The SMS row's number popover — portaled outside .acepeak-notifications
            like the tooltip above, so it needs its own class rather than
@@ -613,7 +615,7 @@ const SettingsNotification = () => {
           gap: 6px;
           padding: 8px 13px;
           border: 1px solid #E5E7EB;
-          border-radius: 9px;
+          border-radius: 9999px;
           background: #fff;
           color: #111827;
           font-size: 13px;
@@ -631,7 +633,7 @@ const SettingsNotification = () => {
           gap: 6px;
           padding: 8px 13px;
           border: 1px solid #FCA5A5;
-          border-radius: 9px;
+          border-radius: 9999px;
           background: var(--ap-soft-bg);
           color: var(--ap-primary);
           font-size: 13px;
@@ -774,10 +776,64 @@ const SettingsNotification = () => {
           padding-top: 14px;
           margin-top: 4px;
         }
+        /* Accounts-only compact toggle (38x22, red, white knob, no
+           overflow). Opt-in via .accounts-switch-compact on the Switch's
+           own className — the shared Switch component and every other
+           caller of it are untouched, so a future main-branch change to
+           the default Switch has nothing here to collide with. !important is
+           enough to win: the component's own classes (and mcm-page.css's
+           [data-slot='switch'] rules) are plain, non-!important utilities,
+           so this beats them regardless of source order. */
+        .acepeak-notifications .accounts-switch-compact {
+          position: relative !important;
+          display: inline-block !important;
+          width: 38px !important;
+          height: 22px !important;
+          min-width: 38px !important;
+          border-width: 0 !important;
+          border-radius: 9999px !important;
+          overflow: hidden !important;
+          padding: 0 !important;
+        }
+        .acepeak-notifications .accounts-switch-compact[data-state='checked'] {
+          background-color: #dc2626 !important;
+        }
+        .acepeak-notifications .accounts-switch-compact[data-state='unchecked'] {
+          background-color: #d1d5db !important;
+        }
+        .acepeak-notifications .accounts-switch-compact:disabled {
+          opacity: 0.5 !important;
+          cursor: not-allowed !important;
+        }
+        .acepeak-notifications .accounts-switch-compact [data-slot='switch-thumb'] {
+          position: absolute !important;
+          top: 50% !important;
+          left: 2px !important;
+          width: 18px !important;
+          height: 18px !important;
+          border-radius: 50% !important;
+          transform: translateY(-50%) !important;
+          translate: none !important;
+          background-color: #fff !important;
+          box-shadow: 0 1px 2px rgba(13, 21, 38, 0.25) !important;
+          transition: left 0.15s ease !important;
+        }
+        .acepeak-notifications .accounts-switch-compact[data-state='checked'] [data-slot='switch-thumb'] {
+          /* Anchored from the right edge with the same 2px inset the
+             unchecked state uses from the left, so both states are inset
+             by construction — no track/thumb arithmetic to keep in sync
+             if either size ever changes. */
+          left: auto !important;
+          right: 2px !important;
+          transform: translateY(-50%) !important;
+          translate: none !important;
+        }
       `}</style>
       <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-1.5">
-          <p className="acepeak-page-title text-gray-900 font-semibold text-lg">Notifications</p>
+        <div>
+          <p className="mcm-adminpage-eyebrow">My Account</p>
+          <div className="flex items-center gap-1.5">
+            <p className="acepeak-page-title text-gray-900 font-semibold text-lg">Notifications</p>
           <Tooltip open={showHeaderHint || undefined}>
             <TooltipTrigger asChild>
               <button
@@ -788,10 +844,11 @@ const SettingsNotification = () => {
                 <Info className="h-3.5 w-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent className="acepeak-tooltip-content" side="right" align="center">
+            <TooltipContent className="acepeak-tooltip-content" side="right" align="center" textWrap="pretty">
               What you get alerted about, and whether it arrives in the browser, by email or both.
             </TooltipContent>
           </Tooltip>
+          </div>
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -818,12 +875,12 @@ const SettingsNotification = () => {
                 `security_alert`. The missed-call script on the switch is worse
                 than unwired: it is referenced by no dialplan, it posts to a
                 placeholder address, and it uses `!=`, which is not valid Lua.
-                Remove this notice in the same change that makes the three real —
-                not before. */}
-            <div className="mcm-notsaved mb-3" role="status">
-              <strong>Voicemail and missed-call alerts have stopped.</strong>
-              <span> Saved here, but not sent since Aug 24 — SMS alerts have never gone out.</span>
-            </div>
+                This used to be a standalone banner here saying so; the same
+                text now lives in each section's own info tooltip instead
+                (NOTIFICATION_TYPES_LIST in ../constant.ts) — still visible,
+                just one hover away rather than permanently on screen. Keep
+                that description in sync with the real state of the backend
+                the same way this banner would have needed to be. */}
             <div className="flex flex-col">
               {NOTIFICATION_TYPES_LIST.map((item) => {
                 /* Every channel off means this event reaches the person
@@ -876,11 +933,13 @@ const SettingsNotification = () => {
                                     onEnableSms={() => {
                                       setValue(`${item?.value}.sms`, true);
                                       setSmsPromptFor(null);
+                                      handleAlert({ text: `${label} enabled`, type: 'success' });
                                     }}
                                     onDeleteNumber={() => {
                                       setValue(`${item?.value}.phone`, '');
                                       setValue(`${item?.value}.sms`, false);
                                       setSmsPromptFor(null);
+                                      handleAlert({ text: `${label} disabled`, type: 'success' });
                                     }}
                                   />
                                 )}
@@ -888,7 +947,7 @@ const SettingsNotification = () => {
                               <p className="acepeak-channel-desc">{hint}</p>
                               <Switch
                                 disabled={item?.id === 3 && value === 'sms'}
-                                className="acepeak-channel-toggle cursor-pointer"
+                                className="acepeak-channel-toggle accounts-switch-compact cursor-pointer"
                                 onCheckedChange={(nextChecked) => {
                                   if (value === 'sms') {
                                     if (nextChecked) {
@@ -903,10 +962,15 @@ const SettingsNotification = () => {
                                       setSmsPromptFor(item.value);
                                     } else {
                                       setValue(`${item?.value}.sms`, false);
+                                      handleAlert({ text: `${label} disabled`, type: 'success' });
                                     }
                                     return;
                                   }
                                   setValue(`${item?.value}.${value}`, nextChecked);
+                                  handleAlert({
+                                    text: `${label} ${nextChecked ? 'enabled' : 'disabled'}`,
+                                    type: 'success',
+                                  });
                                 }}
                                 checked={checked}
                               />

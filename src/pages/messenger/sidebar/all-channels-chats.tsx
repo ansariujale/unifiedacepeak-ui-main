@@ -1,12 +1,24 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import moment from 'moment';
 import { Globe } from 'lucide-react';
+import { FilterIcon } from '@/assets/icons';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useSocketEvents } from '@/hooks/use-socket-events';
 import { useUser } from '@/hooks/use-user';
-import CustomAvatar from '@/components/custom/custom-avatar';
+import { capitalizeFirstLetter } from '@/lib/utils';
+import { CHANNELS_ICON, ChatChannels } from '../constants';
+import ChatPageHeader from '../shared/chat-page-header';
+import ChatListRow from '../shared/chat-list-row';
+import { demoAllChannelsChats } from '../demo-data';
 
 const CAPTAIN_API_BASE = '/captain-api/api/captain';
+
+type ChannelType = keyof typeof CHANNELS_ICON;
 
 // Best-effort preview text — internal chat messages are Slate documents,
 // Captain messages are already plain strings.
@@ -16,7 +28,9 @@ function extractPreviewText(value: any): string {
   if (Array.isArray(value)) {
     try {
       return value
-        .map((node: any) => (Array.isArray(node?.children) ? node.children.map((c: any) => c.text || '').join('') : ''))
+        .map((node: any) =>
+          Array.isArray(node?.children) ? node.children.map((c: any) => c.text || '').join('') : '',
+        )
         .join(' ')
         .trim();
     } catch {
@@ -36,16 +50,28 @@ type MergedRow = {
   raw: any;
 };
 
+/**
+ * "All Channels" tab — same header and list-row treatment as the Chat tab
+ * (see `ChatPageHeader` / `ChatListRow`), merging internal chats and Captain
+ * (website) conversations into one list.
+ */
 const AllChannelsChats = ({
   setSelectedChat,
   selectedChat,
+  handleChatType,
+  setselectedChannelType,
+  allowedOmniChannels = [],
 }: {
   setSelectedChat: (chat: any) => void;
   selectedChat?: any;
   isCompactLayout?: boolean;
+  handleChatType?: (type: any) => void;
+  setselectedChannelType?: (type: any) => void;
+  allowedOmniChannels?: any[];
 }) => {
   const { user } = useUser();
   const { allChats = [] } = useSocketEvents();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data: captainConversations = [] } = useQuery({
     queryKey: ['captainConversations', user?.uuid],
@@ -94,40 +120,117 @@ const AllChannelsChats = ({
     return [...internalRows, ...captainRows].sort((a, b) => b.timestamp - a.timestamp);
   }, [allChats, captainConversations, user?.uuid]);
 
-  if (!merged.length) {
-    return <div className="flex h-full items-center justify-center p-6 text-sm text-gray-400">No conversations yet</div>;
-  }
+  const isDemo = merged.length === 0;
+  const demoRows: MergedRow[] = isDemo
+    ? demoAllChannelsChats.map((d) => ({
+        key: d.id,
+        kind: d.kind,
+        name: d.name,
+        preview: d.preview,
+        timestamp: new Date(d.timestamp).getTime(),
+        raw: { id: d.id, chatId: d.id, isDemo: true },
+      }))
+    : [];
+
+  const rows = isDemo ? demoRows : merged;
+
+  const filteredRows = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => r.name.toLowerCase().includes(q));
+  }, [rows, searchQuery]);
+
+  const filterMenu = handleChatType ? (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="mcm-chat-iconbtn" aria-label="Filter">
+          <FilterIcon className="h-3.75 w-3.75" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {ChatChannels?.map((item: any, index: number) => (
+          <DropdownMenuItem
+            key={index}
+            className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
+              item.value === 'all_channels' ? 'bg-gray-100' : ''
+            }`}
+            onClick={() => {
+              handleChatType(item.value);
+              setselectedChannelType?.(item);
+            }}
+          >
+            {item.icon()} {item.label}
+          </DropdownMenuItem>
+        ))}
+        {allowedOmniChannels.map((item: any, index: number) => (
+          <DropdownMenuItem
+            key={index}
+            className="cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary"
+            onClick={() => {
+              handleChatType(item.type);
+              setselectedChannelType?.(item);
+            }}
+          >
+            {CHANNELS_ICON[item?.type as ChannelType]} {capitalizeFirstLetter(item.type)}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ) : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto">
-      {merged.map((row) => {
-        const isActive =
-          row.kind === 'internal' ? selectedChat?.chatId === row.raw.chatId : selectedChat?.id === row.raw.id;
-        return (
-          <button
-            key={row.key}
-            type="button"
-            onClick={() => setSelectedChat({ ...row.raw, __channelKind: row.kind })}
-            className={`flex items-center gap-3 border-b border-gray-100 p-3 text-left hover:bg-gray-50 ${isActive ? 'bg-indigo-50' : ''}`}
-          >
-            <div className="relative shrink-0">
-              <CustomAvatar name={row.name} size="36" showPresence={false} />
-              {row.kind === 'captain' && (
-                <span className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-white ring-2 ring-white">
-                  <Globe className="size-2.5" />
-                </span>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <p className="truncate text-sm font-medium text-gray-900">{row.name}</p>
-                <span className="shrink-0 text-[11px] text-gray-400">{row.timestamp ? moment(row.timestamp).fromNow() : ''}</span>
-              </div>
-              <p className="truncate text-xs text-gray-500">{row.preview}</p>
-            </div>
-          </button>
-        );
-      })}
+    <div className="flex h-full min-h-0 w-full flex-col bg-white">
+      <ChatPageHeader
+        title="All Channels"
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search conversations…"
+        actions={filterMenu}
+      />
+
+      {isDemo ? (
+        <div className="flex items-center gap-2 px-3.5 pb-1 pt-2">
+          <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-amber-700">
+            Demo data
+          </span>
+          <span className="text-[11px] font-medium text-gray-400">
+            no conversations yet — showing samples
+          </span>
+        </div>
+      ) : null}
+
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto">
+        {filteredRows.length ? (
+          filteredRows.map((row) => {
+            const isActive =
+              row.kind === 'internal'
+                ? selectedChat?.chatId === row.raw.chatId
+                : selectedChat?.id === row.raw.id;
+            return (
+              <ChatListRow
+                key={row.key}
+                name={row.name}
+                preview={row.preview}
+                timestamp={row.timestamp}
+                isActive={isActive}
+                onClick={() => setSelectedChat({ ...row.raw, __channelKind: row.kind })}
+                badge={
+                  row.kind === 'captain' ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                      <Globe className="h-2.5 w-2.5" />
+                      Website
+                    </span>
+                  ) : null
+                }
+              />
+            );
+          })
+        ) : (
+          <div className="flex h-full items-center justify-center p-6 text-center text-sm text-gray-400">
+            No conversations found
+          </div>
+        )}
+      </div>
     </div>
   );
 };

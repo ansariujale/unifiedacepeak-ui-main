@@ -5,12 +5,13 @@ import * as yup from 'yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { City, Country, State } from 'country-state-city';
 import { postcodeValidator, postcodeValidatorExistsForCountry } from 'postcode-validator';
-import { AlertTriangle, MapPinIcon, PhoneCall } from 'lucide-react';
+import { AlertTriangle, Info, MapPinIcon, PhoneCall } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import CustomSelect from '@/components/custom/custom-select';
 import Loader from '@/components/custom/loader';
 import { handleAlert } from '@/lib/utils';
@@ -356,50 +357,42 @@ const CompanyEmergencyAddress = () => {
   }
 
   return (
-    <section className="flex w-full flex-col gap-4">
-      <div className="flex items-start gap-3">
-        <MapPinIcon className="mt-0.5 h-4.5 w-4.5 text-primary" />
-        <div className="flex flex-col gap-0.5">
-          <h5 className="text-base font-semibold tracking-wide text-gray-900">
-            Emergency address (E911)
-          </h5>
-          <p className="text-xs font-medium text-gray-700">
+    <section className="flex w-full flex-col gap-4 pt-3">
+      <div className="flex items-center gap-1.5">
+        <MapPinIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
+        <h5 className="text-lg font-semibold tracking-wide text-gray-900">
+          Emergency address (E911)
+        </h5>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+            style={{
+              background: '#fdf7f5',
+              border: 'none',
+              color: '#000',
+              boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+            }}
+          >
             The street address emergency responders would be sent to, and the number they would
             call back on.
-          </p>
-        </div>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* The whole point of this panel: say plainly that nothing routes on it. */}
       <div
         role="alert"
-        className="rounded-xl border-2 border-red-300 bg-red-50 p-4 text-red-900 shadow-sm"
+        className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-800"
       >
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-bold uppercase tracking-wide text-red-700">
-              This address is written down. It is not used to route emergency calls.
-            </p>
-            <p className="text-sm font-medium">
-              If someone dials 911 or another emergency number from a desk phone or from this app,
-              the call is <span className="font-bold">not</span> sent using this address, and this
-              address is <span className="font-bold">not</span> passed to the responders. The part
-              of the system that connects the call does not read this field at all. Building that
-              needs work with our phone carrier and our call switch, and it has not been done yet.
-            </p>
-            <p className="text-sm font-medium">
-              Until that work is finished, keep a normal phone line or a mobile phone available for
-              emergencies, and tell everyone at this address not to rely on this system to call for
-              help.
-            </p>
-            <p className="text-sm font-medium">
-              In the US, Kari&apos;s Law and the RAY BAUM&apos;S Act require emergency calls to
-              work and to carry a usable address. Saving this form does{' '}
-              <span className="font-bold">not</span> make the account compliant with either law.
-            </p>
-          </div>
-        </div>
+        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" />
+        <p className="text-xs font-medium">
+          Stored only — <span className="font-semibold">not</span> used to route 911 calls. Keep a
+          working phone available for emergencies until carrier routing is set up.
+        </p>
       </div>
 
       {isLoading ? (
@@ -550,7 +543,29 @@ const CompanyEmergencyAddress = () => {
           <div className="flex w-full flex-col gap-4 md:flex-row">
             <div className="relative flex w-full gap-1 md:w-1/2">
               <Input
-                label="Emergency callback number"
+                label={
+                  <span className="flex items-center gap-1.5">
+                    Emergency callback number
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="right"
+                        className="w-max max-w-[260px] [text-wrap:pretty] text-black"
+                        style={{
+                          background: '#fdf7f5',
+                          border: 'none',
+                          color: '#000',
+                          boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                        }}
+                      >
+                        The number responders ring back if the call drops. Not dialed
+                        automatically today — stored for your records.
+                      </TooltipContent>
+                    </Tooltip>
+                  </span>
+                }
                 placeholder="e.g. +14155550123"
                 maxLength={16}
                 disabled={!canEdit}
@@ -559,20 +574,11 @@ const CompanyEmergencyAddress = () => {
                 {...register('callback_number')}
               />
             </div>
-            <div className="flex w-full items-end md:w-1/2">
-              <p className="text-xs text-gray-500">
-                The number responders would ring if the emergency call drops. Today nothing dials
-                it automatically - it is stored for your records and for whoever you hand this
-                address to.
-              </p>
-            </div>
           </div>
 
-          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
             <p className="text-xs font-medium text-amber-900">
-              A PO box will be rejected. Emergency responders need a street address they can drive
-              to, so a mailbox is not accepted here - this matches what Dialpad and other providers
-              require.
+              No PO boxes — responders need a street address they can drive to.
             </p>
           </div>
 
@@ -582,7 +588,7 @@ const CompanyEmergencyAddress = () => {
               checked={acknowledged}
               disabled={!canEdit}
               onCheckedChange={(checked) => setAcknowledged(checked === true)}
-              className="mt-0.5"
+              className="mt-0.5 h-4 w-4 shrink-0 border-2! border-gray-600! bg-white!"
             />
             <Label
               htmlFor="emergency-address-acknowledgement"
@@ -598,6 +604,7 @@ const CompanyEmergencyAddress = () => {
               <Button
                 type="button"
                 variant="secondary"
+                className="rounded-full"
                 disabled={isSaving || !isDirty}
                 onClick={() => {
                   reset();
@@ -606,7 +613,12 @@ const CompanyEmergencyAddress = () => {
               >
                 Reset
               </Button>
-              <Button type="submit" variant="primary" disabled={isSaving || !acknowledged}>
+              <Button
+                type="submit"
+                variant="dark"
+                className="rounded-full"
+                disabled={isSaving || !acknowledged}
+              >
                 {isSaving ? <Loader variant="white" size="xs" /> : null}
                 Save emergency address
               </Button>

@@ -454,9 +454,9 @@ const IdentitiesAndAddressesPageLayout = () => {
           <CustomTooltip
             text={PAGE_DESCRIPTION}
             side="right"
-            className="w-[300px] whitespace-normal text-balance border-0 bg-[#fdf7f5] text-black shadow-[0_6px_20px_rgba(17,17,17,0.18)] [&_svg]:fill-[#fdf7f5]"
+            className="w-fit max-w-[300px] whitespace-normal [text-wrap:wrap]! border-0 bg-[#fdf7f5] text-black shadow-[0_6px_20px_rgba(17,17,17,0.18)] [&_svg]:fill-[#fdf7f5]"
           >
-            <Info className="h-5 w-5 text-gray-500 transition-colors hover:text-red-600 active:text-red-600 data-[state=delayed-open]:text-red-600 data-[state=instant-open]:text-red-600" />
+            <Info className="h-4 w-4 text-gray-500! transition-colors hover:text-red-600! active:text-red-600! data-[state=delayed-open]:text-red-600! data-[state=instant-open]:text-red-600!" />
           </CustomTooltip>
         }
         headerTabs={
@@ -529,7 +529,7 @@ const IdentitiesAndAddressesPageLayout = () => {
                 aria-label="Close"
                 className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-full text-gray-500 hover:bg-red-50 hover:text-black"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-4" />
               </button>
             </DialogHeader>
             <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
@@ -576,7 +576,7 @@ const IdentitiesAndAddressesPageLayout = () => {
                 aria-label="Close"
                 className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-full text-gray-500 hover:bg-red-50 hover:text-black"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-4" />
               </button>
             </DialogHeader>
             <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">

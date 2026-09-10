@@ -50,6 +50,12 @@ interface CallRulesProps {
    * dropdown menus inside its own page-scoped styling instead of portaled
    * out to the app root. */
   selectMenuPortalTarget?: HTMLElement | null;
+  /** Undefined by default, in which case ForwardingActions falls back to
+   * its own default ('top') — only My Phone overrides this to 'bottom',
+   * since 'top' was opening these dropdowns upward into its own header
+   * bar; the admin per-user forwarding screen keeps its current 'top'
+   * placement. */
+  menuPlacement?: string;
 }
 
 const CallRules: FC<CallRulesProps> = ({
@@ -58,6 +64,7 @@ const CallRules: FC<CallRulesProps> = ({
   customClass = 'h-[calc(100vh_-_17rem)]',
   compactDescriptions = false,
   selectMenuPortalTarget,
+  menuPlacement,
 }) => {
   const [collapse, setCollapse] = useState(collapseInitialState);
   const [isOpenModal, setIsOpenModal] = useState(false);
@@ -288,12 +295,15 @@ const CallRules: FC<CallRulesProps> = ({
             is registered, with no rule evaluation at all - so the order below
             describes an intention, not what happens to a caller today. Saying
             "checked first" without this reads as a working precedence order.
-            Delete this in the same change that makes the rules real. */}
-        <p className={`mcm-setrow-note is-info ${compactDescriptions ? 'mb-2' : 'mb-3'}`}>
-          {compactDescriptions
-            ? 'Coming soon — saved, but not yet applied to calls.'
-            : 'Coming soon — these rules are saved, but calls are not routed by them yet. The order below is how they will apply once they are switched on.'}
-        </p>
+            Delete this in the same change that makes the rules real.
+            My Phone (compactDescriptions) drops this notice per its own page's
+            request; the admin per-user forwarding screen keeps it as-is. */}
+        {!compactDescriptions && (
+          <p className="mcm-setrow-note is-info mb-3">
+            Coming soon — these rules are saved, but calls are not routed by them yet. The order
+            below is how they will apply once they are switched on.
+          </p>
+        )}
         <div className="mcm-rule">
           <span className="block">
             <div className="mcm-rule-h">
@@ -313,7 +323,11 @@ const CallRules: FC<CallRulesProps> = ({
               <div className="flex shrink-0 items-center gap-3">
                 <Switch
                   id="forwardCall"
-                  className="cursor-pointer"
+                  className={
+                    compactDescriptions
+                      ? 'accounts-switch-compact cursor-pointer'
+                      : 'cursor-pointer'
+                  }
                   onCheckedChange={(checked) => {
                     setValue(
                       'callRules.forwardCall',
@@ -339,6 +353,8 @@ const CallRules: FC<CallRulesProps> = ({
                 errors={errors}
                 forwardState="callRules.forwardCall"
                 menuPortalTarget={selectMenuPortalTarget}
+                menuPlacement={menuPlacement}
+                truncateOptionLabels={compactDescriptions}
                 description={
                   compactDescriptions
                     ? 'Every call goes here immediately — devices do not ring.'
@@ -571,7 +587,11 @@ const CallRules: FC<CallRulesProps> = ({
                                 }
                               >
                                 <Switch
-                                  className="cursor-pointer"
+                                  className={
+                                    compactDescriptions
+                                      ? 'accounts-switch-compact cursor-pointer'
+                                      : 'cursor-pointer'
+                                  }
                                   onCheckedChange={(checked: boolean) => {
                                     setValue(
                                       `callRules.incomingCall.deviceOptions.${objKey}.status`,
@@ -692,6 +712,8 @@ const CallRules: FC<CallRulesProps> = ({
                       errors={errors}
                       forwardState="callRules.failureAction"
                       menuPortalTarget={selectMenuPortalTarget}
+                      menuPlacement={menuPlacement}
+                      truncateOptionLabels={compactDescriptions}
                       label="If Busy / Unanswered / Unreachable"
                       description={
                         compactDescriptions

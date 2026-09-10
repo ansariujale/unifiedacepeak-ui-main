@@ -25,11 +25,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, CalendarDays, Info, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { AlertTriangle, CalendarDays, Info, Pencil, Plus, Route, Trash2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import CustomSelect from '@/components/custom/custom-select';
 import { CustomDatePicker } from '@/components/custom/custom-datepicker';
 import { handleAlert } from '@/lib/utils';
@@ -565,27 +566,41 @@ const CompanyHolidays = () => {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
             <CalendarDays className="h-5 w-5" />
           </div>
-          <div className="min-w-0">
-            <p className="text-base font-semibold text-gray-900">Company holidays</p>
-            <p className="mt-0.5 text-xs text-gray-600">
-              One list of the days your company is closed, kept in one place instead of typed
-              again into every IVR, queue and user.
-            </p>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <p className="text-lg font-semibold text-gray-900">Company holidays</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                style={{
+                  background: '#fdf7f5',
+                  border: 'none',
+                  color: '#000',
+                  boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                }}
+              >
+                All your closed days, kept in one place instead of retyped into every IVR, queue
+                and user.
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={openAdd} disabled={isAdding}>
+          <Button type="button" variant="dark" size="sm" onClick={openAdd} disabled={isAdding}>
             <Plus className="h-3.5 w-3.5" />
             Add holiday
           </Button>
           <Button
             type="button"
-            variant="primary"
+            variant="dark"
             size="sm"
             onClick={() => save()}
             disabled={!dirty || isPending || isLoading}
@@ -604,33 +619,47 @@ const CompanyHolidays = () => {
             This list is recorded, but it does not close your lines yet
           </p>
           <p className="mt-0.5 text-xs text-gray-700">
-            Calls are still routed from each object&apos;s own holiday list, set inside its
-            business-hours dialog. Adding Christmas here does not make your IVR, queues or users
-            close on Christmas — you still have to enter it on each of them. This page is the
-            company&apos;s record of the dates; connecting it to routing is a separate piece of
-            work that has not been done.
+            Routing still reads each IVR, queue or user&apos;s own holiday list, set in its
+            business-hours dialog — adding a date here doesn&apos;t close anything for you.
           </p>
         </div>
       </div>
 
-      <div className="mt-3 flex items-start gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
-        <p className="text-xs text-gray-700">
-          <span className="font-semibold text-gray-900">What a holiday means.</span> On a holiday
-          the normal open-hours routing is skipped for the whole day and the closed-hours action
-          applies instead — whatever each object is set to do outside business hours, usually
-          voicemail, a forward, or a closed greeting. A holiday does not have its own separate
-          action; it borrows the closed-hours one.
+      <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
+          <Route className="h-3.5 w-3.5 shrink-0 text-gray-500" />
+          Holiday routing logic
         </p>
+        <ul className="mt-1.5 grid list-disc gap-x-6 gap-y-1 pl-4 text-xs text-gray-700 sm:grid-cols-2">
+          <li>Open-hours routing is suspended for the whole day.</li>
+          <li>The closed-hours action applies instead — voicemail, a forward, a closed greeting.</li>
+          <li>Each object uses whatever closed-hours action it already has.</li>
+          <li>A holiday borrows that behaviour; it has no action of its own.</li>
+        </ul>
       </div>
 
       {/* Presets. The point of the panel: a year of holidays in one click rather
           than twelve rows typed by hand. */}
-      <div className="mt-3 rounded-lg border border-ucass-primary-200 bg-ucass-primary-200/40 p-3">
-        <p className="text-xs font-semibold text-gray-900">Add a country&apos;s public holidays</p>
-        <p className="mt-0.5 text-xs text-gray-600">
-          Pick a country and a year, and the public holidays are added to the list below. You can
-          edit or remove any of them afterwards.
+      <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
+          Add a country&apos;s public holidays
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+            </TooltipTrigger>
+            <TooltipContent
+              side="right"
+              className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+              style={{
+                background: '#fdf7f5',
+                border: 'none',
+                color: '#000',
+                boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+              }}
+            >
+              Adds that country's public holidays to the list below — editable afterwards.
+            </TooltipContent>
+          </Tooltip>
         </p>
 
         <div className="mt-2 flex flex-wrap items-end gap-2">
@@ -657,7 +686,7 @@ const CompanyHolidays = () => {
           </div>
           <Button
             type="button"
-            variant="outline"
+            variant="dark"
             onClick={addPreset}
             disabled={!selectedPreset || presetNewCount === 0}
           >
@@ -723,13 +752,13 @@ const CompanyHolidays = () => {
                       checked={item.repeats_yearly}
                       onCheckedChange={() => toggleRepeat(item.id)}
                     />
-                    <span className="text-xs text-gray-600">
+                    <span className="w-[88px] text-xs text-gray-600">
                       {item.repeats_yearly ? 'Every year' : 'This year only'}
                     </span>
                   </label>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="dark"
                     size="sm"
                     onClick={() => openEdit(item)}
                     aria-label={`Edit ${item.title}`}
@@ -813,7 +842,7 @@ const CompanyHolidays = () => {
               />
               <span className="text-xs text-gray-600">Repeats every year</span>
             </label>
-            <Button type="button" variant="primary" onClick={commitDraft}>
+            <Button type="button" variant="dark" onClick={commitDraft}>
               {draft.id ? 'Update' : 'Add'}
             </Button>
           </div>

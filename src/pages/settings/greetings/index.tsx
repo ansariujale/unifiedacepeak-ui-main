@@ -196,13 +196,43 @@ const Greetings = () => {
             line-height: 41px;
             color: #171717;
           }
+          .acepeak-greetings [data-slot='button'] {
+            border-radius: 9999px !important;
+          }
+          /* index.css's own .custom-react-select__option--is-selected rule
+             is itself !important inside @layer base — an unlayered
+             !important here (this page's usual technique) would still lose
+             to it regardless of specificity, since a layered !important
+             always outranks an unlayered one. Joining the same layer name
+             puts this back on normal specificity terms, where the page
+             scope here wins. Only the text colour changes; the pink
+             background/weight that mark a selected row stay as they are
+             everywhere else. */
+          @layer base {
+            .acepeak-greetings .custom-react-select__option--is-selected,
+            .acepeak-greetings .custom-react-select__option--is-selected:hover,
+            .acepeak-greetings .custom-react-select__option--is-selected.custom-react-select__option--is-focused {
+              color: #171717 !important;
+            }
+          }
+          /* Matches the Numbers page's own coral eyebrow (mcm-page.css's
+             .ident-coral-theme .mcm-adminpage-eyebrow) without pulling in
+             that whole theme class — reusing mcm-adminpage-eyebrow for its
+             family/case/tracking, only the 4 properties that variant
+             changes are restated here, scoped to this page. */
+          .acepeak-greetings .mcm-adminpage-eyebrow {
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 18px;
+            color: #DC2626;
+          }
           .acepeak-tooltip-content {
             background: #fdf7f5 !important;
             color: #000 !important;
             border: none !important;
-            width: max-content !important;
-            max-width: 340px !important;
+            width: 395px !important;
             white-space: normal !important;
+            text-wrap: normal !important;
             line-height: 1.5 !important;
             box-shadow: 0 6px 20px rgba(17, 17, 17, 0.18) !important;
           }
@@ -295,7 +325,7 @@ const Greetings = () => {
           .acepeak-greetings .template-greeting-control [data-slot='button'] {
             background: #fff !important;
             border: 1px solid #E5E7EB !important;
-            border-radius: 9px !important;
+            border-radius: 9999px !important;
             color: #374151 !important;
           }
           .acepeak-greetings .template-greeting-control [data-slot='button']:hover {
@@ -350,6 +380,30 @@ const Greetings = () => {
             padding-bottom: 12px !important;
             margin-bottom: 2px !important;
           }
+          /* SideDrawer's own content wrapper drops to overflow: hidden at
+             the md breakpoint — correct for its original full-height,
+             right-edge panel, but this page turns it into a small,
+             height-capped centered modal instead, where the Text to
+             Speech tab's fields can be taller than that cap. Overriding
+             just overflow-y still leaves overflow-x hidden from that same
+             rule, which clips a sliver off any field's border sitting
+             flush against that edge (e.g. the textarea's left/right focus
+             border). visible here computes to auto in practice (the spec
+             upgrades "visible" to "auto" on this axis once the other axis
+             actually scrolls), so nothing gets an unwanted horizontal
+             scrollbar. */
+          .acepeak-greetings #drawer-example > .overflow-auto {
+            overflow-y: auto !important;
+            overflow-x: visible !important;
+          }
+          /* The Text to Speech textarea stretches to fill this row
+             exactly, so its own border sits flush against the row's edge
+             with no room to render fully. A few px narrower leaves the
+             border itself space to sit fully inside. */
+          .acepeak-greetings #drawer-example textarea {
+            width: calc(100% - 6px) !important;
+            margin: 0 auto !important;
+          }
           .acepeak-greetings #drawer-example #drawer-label {
             font-size: 17px !important;
             font-weight: 700 !important;
@@ -391,18 +445,25 @@ const Greetings = () => {
              solid black primary Upload, matching this page's own Submit
              button treatment above. */
           .acepeak-greetings #drawer-example .justify-end.pt-4.mt-auto [data-slot='button'] {
-            border-radius: 9px !important;
+            border-radius: 9999px !important;
           }
           .acepeak-greetings #drawer-example .justify-end.pt-4.mt-auto [data-slot='button']:first-child {
             background: #fff !important;
-            border: 1px solid #E5E7EB !important;
+            border: 1px solid #6B7280 !important;
             color: #171717 !important;
           }
           .acepeak-greetings #drawer-example .justify-end.pt-4.mt-auto [data-slot='button']:first-child:hover {
             background: #F9FAFB !important;
-            border-color: #D1D5DB !important;
+            border-color: #4B5563 !important;
           }
+          /* Upload's own disabled state (opacity-50 from the shared Button
+             component) was reading as "broken/grey", not "not ready yet" —
+             forced back to full black/white regardless of disabled state,
+             per this page's own request. Still genuinely disabled/inert
+             when the underlying condition isn't met (click does nothing),
+             just no longer faded. */
           .acepeak-greetings #drawer-example .justify-end.pt-4.mt-auto [data-slot='button']:last-child {
+            opacity: 1 !important;
             background: #171717 !important;
             border-color: #171717 !important;
             color: #fff !important;
@@ -411,9 +472,67 @@ const Greetings = () => {
             background: #1a1a1a !important;
             border-color: #1a1a1a !important;
           }
+          /* Accounts-only compact toggle (38x22, red, white knob, no
+             overflow). Opt-in via .accounts-switch-compact, passed down
+             from common-greetings/index.tsx only when acepeakTheme is true
+             (i.e. only on this page) — the shared Switch component and
+             every other caller of CommonGreetingNotification (campaigns,
+             call queues, IVR menus, admin per-user forwarding) are
+             untouched, so a future main-branch change to the default
+             Switch has nothing here to collide with. !important is enough
+             to win: the component's own classes (and mcm-page.css's
+             [data-slot='switch'] rules) are plain, non-!important
+             utilities, so this beats them regardless of source order.
+             Kept identical to the same rule on Notifications/Preferences/
+             My Phone on purpose so all four read as one system. */
+          .acepeak-greetings .accounts-switch-compact {
+            position: relative !important;
+            display: inline-block !important;
+            width: 38px !important;
+            height: 22px !important;
+            min-width: 38px !important;
+            border-width: 0 !important;
+            border-radius: 9999px !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+          }
+          .acepeak-greetings .accounts-switch-compact[data-state='checked'] {
+            background-color: #dc2626 !important;
+          }
+          .acepeak-greetings .accounts-switch-compact[data-state='unchecked'] {
+            background-color: #d1d5db !important;
+          }
+          .acepeak-greetings .accounts-switch-compact:disabled {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+          }
+          .acepeak-greetings .accounts-switch-compact [data-slot='switch-thumb'] {
+            position: absolute !important;
+            top: 50% !important;
+            left: 2px !important;
+            width: 18px !important;
+            height: 18px !important;
+            border-radius: 50% !important;
+            transform: translateY(-50%) !important;
+            translate: none !important;
+            background-color: #fff !important;
+            box-shadow: 0 1px 2px rgba(13, 21, 38, 0.25) !important;
+            transition: left 0.15s ease !important;
+          }
+          .acepeak-greetings .accounts-switch-compact[data-state='checked'] [data-slot='switch-thumb'] {
+            /* Anchored from the right edge with the same 2px inset the
+               unchecked state uses from the left, so both states are
+               inset by construction — no track/thumb arithmetic to keep
+               in sync if either size ever changes. */
+            left: auto !important;
+            right: 2px !important;
+            transform: translateY(-50%) !important;
+            translate: none !important;
+          }
         `}</style>
         <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 bg-white">
           <div className="flex flex-col gap-0.5">
+            <p className="mcm-adminpage-eyebrow">My Account</p>
             <div className="flex items-center gap-1.5">
               <p className="acepeak-page-title text-gray-900 font-semibold text-lg">Greetings</p>
               <Tooltip open={showHeaderHint || undefined}>
@@ -426,7 +545,7 @@ const Greetings = () => {
                     <Info className="h-3.5 w-3.5" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="acepeak-tooltip-content" side="right" align="center">
+                <TooltipContent className="acepeak-tooltip-content" side="right" align="center" textWrap="pretty">
                   The recordings callers hear on your extension — welcome message, hold music and
                   voicemail.
                 </TooltipContent>

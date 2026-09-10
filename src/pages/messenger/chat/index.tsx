@@ -3438,7 +3438,7 @@ export const ChatFooter = ({
           <EmojiPicker
             className={fromMeetChat ? 'meeting-chat-emoji-picker' : undefined}
             width="100%"
-            height={fromMeetChat ? 'clamp(280px, 42vh, 330px)' : undefined}
+            height={fromMeetChat ? 'clamp(280px, 42vh, 330px)' : 300}
             lazyLoadEmojis
             searchDisabled={false}
             previewConfig={{ showPreview: false }}

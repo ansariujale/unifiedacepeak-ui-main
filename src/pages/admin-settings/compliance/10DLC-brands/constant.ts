@@ -179,7 +179,13 @@ export const brandDetailsSchema = yup.object({
     .when('entityType', {
       is: (v: any) => v?.value !== 'SOLE_PROPRIETOR',
       then: (schema) =>
-        schema.required('EIN is required').min(9).max(21, 'EIN must be less than 21 characters'),
+        schema
+          /* `.min(9)` carried no message, so yup fell back to its own
+             "ein must be at least 9 characters" -- the raw schema key, shown
+             to someone who knows the field as "Tax number / EIN". */
+          .required('EIN is required')
+          .min(9, 'A US EIN is 9 digits, written 12-3456789')
+          .max(21, 'EIN must be less than 21 characters'),
       otherwise: (schema) => schema.nullable(),
     }),
 
@@ -229,10 +235,21 @@ export const brandDetailsSchema = yup.object({
     })
     .nullable()
     .required('State is required'),
+  /* Format, not just length. The API rejects anything that is not #####
+     or #####-#### -- but it only says so on submit, which is the last step
+     of three, about a field on the first. Checked here, it is caught on the
+     step that owns the field. Conditional on country so adding a
+     non-US option later does not start rejecting valid foreign codes. */
   postalCode: yup
     .string()
     .required('Postal code required')
-    .max(10, 'Postal code must be less than 10 characters'),
+    .max(10, 'Postal code must be less than 10 characters')
+    .when('country', {
+      is: (v: any) => !v?.value || v?.value === 'US',
+      then: (schema) =>
+        schema.matches(/^\d{5}(-\d{4})?$/, 'Use a 5-digit ZIP, or ZIP+4 as 12345-6789'),
+      otherwise: (schema) => schema,
+    }),
 
   // website - Required for PUBLIC_PROFIT, Optional for others
   website: yup

@@ -24,7 +24,11 @@
      - @keyframes are prefixed `mcmp-`.
    ============================================================ */
 
-.mcm-page {
+/* Dialogs portal to <body>, outside .mcm-page, so the token set is declared
+   on the modal root too -- otherwise every var() inside one falls back to
+   nothing: lines vanish, backgrounds go transparent, greys turn to Tailwind's. */
+.mcm-page,
+.mcm-modal {
   /* Hover edge for the portrait stat cards (Performance). */
   --stat-hover-line: #e9adc3;
   --ground: #efefef;
@@ -74,7 +78,8 @@
     'Plus Jakarta Sans', 'Twemoji Country Flags', ui-sans-serif, system-ui, -apple-system,
     'Segoe UI', sans-serif;
 }
-.dark .mcm-page {
+.dark .mcm-page,
+.dark .mcm-modal {
   --stat-hover-line: #6b3a4a;
   --ground: #0a0a0a;
   --surface: #171717;
@@ -133,16 +138,16 @@
   min-height: 0;
   overflow: hidden;
 }
-/* Excludes Radix's Switch root, which also renders as a <button>: its own
-   authored classes give it a real border and background (a track pill whose
-   colour is the whole point of a toggle), sized so the thumb's checked-state
-   translate lands exactly at the inner edge of that border. This reset's
-   border:0/background:none stripped both, which left the border-dependent
-   thumb math translating 1px further than the now-borderless track actually
-   had room for — reading as the knob sitting outside the track once switched
-   on. Every other button (icon buttons, chevrons, dropdown triggers, ...)
-   still gets the reset. */
-.mcm-page button:not([data-slot='switch']) {
+/* Excludes the Switch (its own classes give it the track's border/background
+   — see switch.tsx) and the shared Button component: [data-slot='button']
+   always carries its own variant styling (bg-black, bg-primary, ...) via
+   Tailwind, and those utilities live in Tailwind's layered stylesheet, which
+   loses to this un-layered reset regardless of specificity. Without the
+   exclusion every Button rendered under this shell — Save, Manage, New
+   location, every "dark"/"primary"/"outline" variant — kept its classes but
+   showed no background or border at all. Plain, unstyled `<button>`s (icon
+   buttons, chevrons, dropdown triggers, ...) still get the reset. */
+.mcm-page button:not([data-slot='switch']):not([data-slot='button']) {
   font: inherit;
   color: inherit;
   border: 0;
@@ -2791,44 +2796,18 @@
   margin-right: auto;
 }
 
-/* 2. Toggles. The stock switch paints a WHITE track when off, sitting on a
-      white card, so only the grey thumb was visible — it read as a stray
-      dot rather than a control. Off = filled track + white thumb, which is
-      the convention every major console follows. The on state is left to
-      the tenant's brand colour. */
+/* 2. Toggles. This used to resize the thumb to 16x16 and re-centre it
+   vertically with `translate: 2px -50%` — a hack that only makes sense if
+   the thumb is absolutely positioned inside the track. The current Switch
+   (src/components/ui/switch.tsx) is a plain button whose track centres the
+   thumb with flexbox already, so that extra -50% shoved the thumb half out
+   through the top of the pill instead of centring it — the "bite" shape.
+   The component's own classes now own sizing, colour and travel entirely;
+   this just clears the border/shadow the plain <button> reset would
+   otherwise leave off. */
 .mcm-page [data-slot='switch'] {
-  width: 38px;
-  height: 22px;
   border: none;
   box-shadow: none;
-}
-.mcm-page [data-slot='switch'][data-state='unchecked'] {
-  background: var(--ink-4);
-}
-/* On = the console accent. Left to itself this used `--primary`, which
-   defaults to near-black, so an enabled toggle read as dark rather than
-   active. Scoped to `.mcm-page` so every console switch agrees. */
-.mcm-page [data-slot='switch'][data-state='checked'] {
-  background: var(--accent);
-  border-color: transparent;
-}
-/* An 18px thumb in a 38x22 track left no room on either side: it sat flush
-   against the rim and, once on, looked like it was bulging out of the
-   track. 16px with a 3px inset on both ends travels cleanly instead —
-   38 - 2(border) - 2(3px inset) - 16 = 15px of travel. */
-.mcm-page [data-slot='switch'] [data-slot='switch-thumb'] {
-  width: 16px;
-  height: 16px;
-  margin-left: 3px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(13 21 38 / 0.25);
-  translate: 2px -50%;
-}
-/* Override `translate`, not `transform`: Tailwind v4's translate-x-* sets the
-   standalone `translate` property, so a transform here stacked on top of it
-   and pushed the thumb clean out of the track. */
-.mcm-page [data-slot='switch'][data-state='checked'] [data-slot='switch-thumb'] {
-  translate: 16px 0;
 }
 
 /* 3. Radio dots were a hairline ring that all but vanished against the
@@ -3996,17 +3975,30 @@
   border-bottom: 1px solid var(--line-2);
 }
 
-/* Location management only: the filter bar sat flush against the header,
-   sharing its background and separated by just a 1px line, so the two read
-   as one fused block. Pulling it into its own bordered strip below the
-   header — same pattern the header itself uses to separate from the table
-   below — makes it read as a distinct control row instead. */
-.mcm-admin .location-management-page .mcm-adminpage-bar {
-  margin: 14px 22px 0;
+/* Location management only: the filter row used to be pinned above the
+   table as a separate, non-scrolling bar — but that made it a sibling of
+   the table's own scroll area rather than a part of it, so the two always
+   risked drifting a scrollbar's-width apart at the right edge no matter how
+   the widths were padded to match. It now renders as the first thing inside
+   the same scrolling column as the table (see the JSX), so it shares the
+   exact same box and can't misalign — only the page title/Export header
+   above stays fixed while this and the table scroll together. */
+.mcm-admin .location-management-page .location-management-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   padding: 12px 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   background: var(--surface);
+}
+.mcm-admin .location-management-page .loc-filter-select__control {
+  border-radius: 9999px !important;
+}
+.mcm-admin .location-management-bar > * {
+  max-width: 280px;
+  width: 100%;
 }
 
 .mcm-admin .mcm-adminpage-body {
@@ -4033,63 +4025,71 @@
   background: var(--surface-2);
 }
 
-/* Location management only: match the roomier header row used on the
-   Performance table (13.5px, 17px/16px padding) instead of the denser
-   default admin-list header. Scoped by the extra class on this page's root
-   section so no other `.mcm-adminpage` table is affected. */
-.mcm-admin .mcm-adminpage.location-management-page table th {
-  text-align: left;
-  font-size: 13.5px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ink) !important;
-  padding: 17px 16px;
-  border-bottom: 1px solid var(--line);
-  white-space: nowrap;
-}
-
 .mcm-admin .mcm-adminpage table td {
   padding: 10px 12px;
   font-size: 13px;
   vertical-align: middle;
 }
 
-/* Integration pages carry their own header (`.mcm-intpage-head`) instead of
-   the shared AdminPage shell, so `.mcm-adminpage table` above never matches
-   them. Any table under an integration page gets the same reference
-   treatment directly. */
-/* Table header matching the Performance screen's (`.mcm-page th`): 9.5px /
-   800 / 0.09em tracking, uppercase, 9px 12px padding on a hairline. This
-   block previously followed a 13.5px written spec instead, which left an
-   Integration table's header noticeably heavier than the same header on
-   Performance — the console's tables should read as one system, so the
-   header that actually ships is the one to match. */
-/* `text-align: left` here is unlayered, so it BEATS Tailwind's `text-right`
-   utility (which lives in @layer utilities). A th marked text-right stayed
-   left-aligned while its td obeyed, so every right-aligned column had its
-   heading hanging off the wrong end. The utility is honoured explicitly
-   below rather than by removing this default. */
-.mcm-admin .mcm-intpage table th {
-  text-align: left;
-  /* 13.5px / 800 / 0.09em / 17px 16px — the `.mcm-page th` reference panel
-     the user pointed at on the Performance screen. Dark ink: the pale
-     --ink-4 in that panel is struck through in its own inspector; the
-     rendered header takes Tailwind's text-gray-900/80. */
-  font-size: 13.5px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  padding: 17px 16px;
-  border-bottom: 1px solid var(--line);
-  white-space: nowrap;
-  background: transparent;
+/* Location management only: match the AI Tools shared table design (Chat
+   Agents, AI Receptionists, Sessions) supplied as aitoolstable.css — same
+   header band, row height, cell padding and name/subtitle weight, applied
+   onto this page's existing table markup rather than renaming every class,
+   since the visual spec is what was asked for, not the BEM names themselves. */
+.mcm-admin .mcm-adminpage.location-management-page table {
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
 }
-.mcm-admin .mcm-intpage table td {
-  padding: 11px 12px;
-  font-size: 13px;
-  vertical-align: middle;
+.mcm-admin .mcm-adminpage.location-management-page .overflow-x-auto {
+  border-radius: var(--r);
+  box-shadow:
+    0 1px 3px rgba(17, 17, 17, 0.08),
+    0 4px 12px rgba(17, 17, 17, 0.06);
+}
+.mcm-admin .mcm-adminpage.location-management-page table thead tr {
+  background: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
+}
+.mcm-admin .mcm-adminpage.location-management-page table th {
+  padding: 13px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #737373;
+  background: transparent;
+  white-space: nowrap;
+}
+.mcm-admin .mcm-adminpage.location-management-page table th:first-child {
+  padding-left: 18px;
+}
+.mcm-admin .mcm-adminpage.location-management-page table tbody tr {
+  background: #ffffff;
+  height: 52.67px;
+  transition: background-color 0.15s ease;
+}
+.mcm-admin .mcm-adminpage.location-management-page table tbody tr:hover {
+  background: #fafafa;
+}
+.mcm-admin .mcm-adminpage.location-management-page table tbody td {
+  padding: 8px 18px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: top;
+}
+/* The Location column's header sits at the same 10px the rest of the header
+   row uses, but its body cells inherited the 18px given to the checkbox
+   column next to it — pulling every name a few pixels to the right of its
+   own column heading. Matching it back to 10px lines the two up. */
+.mcm-admin .mcm-adminpage.location-management-page table tbody td:nth-child(2) {
+  padding-left: 10px;
+}
+.mcm-admin .mcm-adminpage.location-management-page .list-row-name {
+  font-weight: 400;
+  color: #020617;
+}
+.mcm-admin .mcm-adminpage.location-management-page .list-row-sub {
+  font-size: 11px;
+  color: #737373;
 }
 
 /* Search should not stretch the full width of a 1900px screen. */
@@ -6066,19 +6066,13 @@
 .mcm-setcard-h {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   padding: 13px 16px 11px;
   border-bottom: 1px solid var(--line);
 }
 .mcm-setcard-ht {
   min-width: 0;
-  /* Without this, .mcm-setcard-h's `justify-content: space-between` treats
-     the icon and this block as the only two flex children whenever a card
-     passes no `aside` — pushing the title/description to the far right
-     instead of leaving it next to the icon. Growing to fill the row makes
-     the icon+title read as one left-aligned group either way, and still
-     leaves an aside (when one is passed) pushed to the true right edge. */
   flex: 1;
 }
 .mcm-setcard-h h3 {
@@ -6278,6 +6272,18 @@
     0 6px 18px rgba(17, 17, 17, 0.1),
     0 1px 4px rgba(17, 17, 17, 0.06);
 }
+.company-ring-time-page .mcm-setcard {
+  border: none;
+  box-shadow:
+    0 6px 18px rgba(17, 17, 17, 0.1),
+    0 1px 4px rgba(17, 17, 17, 0.06);
+}
+.company-voicemail-page .mcm-setcard {
+  border: none;
+  box-shadow:
+    0 6px 18px rgba(17, 17, 17, 0.1),
+    0 1px 4px rgba(17, 17, 17, 0.06);
+}
 .location-management-page .mcm-setcard-h {
   justify-content: flex-start;
   gap: 8px;
@@ -6301,20 +6307,24 @@
   color: #111111;
 }
 
-/* "Coming soon" badges (the unmodified base badge — `.is-on`/`.is-app`/`.is-off`
-   already carry their own colour and are excluded here) read amber by default.
-   This page's brand accent is red, so its badges follow suit instead of
-   clashing. The note text stays black — a tinted background is enough to mark
-   it out, and red-on-pink was harder to read than plain ink. */
-.company-rules-page .mcm-setcard-badge:not(.is-on):not(.is-app):not(.is-off) {
-  background: #fdecec;
-  color: #d92b2b;
+/* "Coming soon" reads as a warning on a page a customer is actively using
+   right now, not as a helpful status — so the whole Company section hides
+   that badge outright rather than re-colouring it. `.is-on`/`.is-app`/
+   `.is-off` are genuinely informative (what's active, what's app-only,
+   what's switched off) and stay visible; only the unmodified base badge,
+   which is exclusively 'coming soon' (see `STATUS_CLASS` in
+   setting-card.tsx), is hidden here. Scoped to `.mcm-company-theme` — the
+   shared ancestor of every Company page, not just the ones that also carry
+   `.company-rules-page` — so it reaches Messaging, Profile fields, Bulk
+   settings and the rest too. */
+.mcm-company-theme .mcm-setcard-badge:not(.is-on):not(.is-app):not(.is-off) {
+  display: none;
 }
 .company-rules-page .mcm-setcard-note:not(.is-on):not(.is-app):not(.is-plain) {
   background: #fdecec;
   color: #111111;
 }
-.company-rules-page .mcm-setcard-h h3 {
+.mcm-company-theme .mcm-setcard-h h3 {
   font-size: 16px;
 }
 .company-rules-page .mcm-setcard {
@@ -6326,7 +6336,7 @@
 /* Only the header strip — title, description, the Change button — takes the
    grey; the rows below stay white so the two read as separate zones. */
 .company-rules-page .mcm-setcard-h {
-  background: #eef0f2;
+  background: #f5f6f7;
   border-radius: var(--r) var(--r) 0 0;
 }
 
@@ -6343,6 +6353,9 @@
   flex: none;
   min-height: 0;
   overflow: visible;
+}
+.company-rules-page .user-settings-template-settings-name-wrap label {
+  font-size: 14px;
 }
 
 /* The form itself carries `.mcm-page` — a class meant for a top-level route
@@ -6983,6 +6996,16 @@
 .mcm-admin .mcm-intstatus.setup i {
   background: #d97706;
 }
+/* Failed / rejected states (a TCR brand or campaign that carriers turned
+   down), the same red as the rest of the console rather than a new hex. */
+.mcm-admin .mcm-intstatus.danger {
+  border-color: var(--accent-edge);
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.mcm-admin .mcm-intstatus.danger i {
+  background: var(--accent);
+}
 .mcm-admin .mcm-intcard-sync {
   font-size: 11.5px;
   color: var(--ink-4);
@@ -7442,9 +7465,19 @@
    vanished into the track. */
 .mcm-admin .mcm-chcard-switch [data-slot='switch'][data-state='checked'] {
   background-color: #dc2626 !important;
+  border-color: transparent !important;
 }
+/* Off is a filled grey track, not the component's default white-on-white:
+   the thumb below is forced white for the red track, so against a white
+   track it disappeared and the control read as an empty grey outline. */
+.mcm-admin .mcm-chcard-switch [data-slot='switch'][data-state='unchecked'] {
+  background-color: #d1d5db !important;
+  border-color: transparent !important;
+}
+/* Must target the thumb only — the track carries data-state too. */
 .mcm-admin .mcm-chcard-switch [data-slot='switch-thumb'] {
   background-color: #fff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2);
 }
 /* Just the switch now: the status text to its left already reads
    Active/Paused, so the On/Off label was the same word twice and the pill
@@ -7455,63 +7488,40 @@
   background: none;
 }
 
-/* ── Channel card states ──────────────────────────────────────────────────
-   The paused state and the loading skeleton (see channel-card.tsx). */
-
-/* Paused: still connected, but nothing is arriving. One word in the footer
-   said so and the card otherwise looked identical to a live one, so which
-   channels were actually running took reading rather than glancing. */
-.mcm-admin .mcm-chcard.is-paused {
-  background: var(--surface-2);
-}
-.mcm-admin .mcm-chcard.is-paused .mcm-chcard-logo,
-.mcm-admin .mcm-chcard.is-paused .mcm-chcard-account {
-  opacity: 0.55;
-}
-.mcm-admin .mcm-chcard.is-paused .mcm-chcard-head h4 {
-  color: var(--ink-3);
+/* SettingCard's own icon slot (Messaging, Security, Policies, Voicemail...)
+   carries a separate muted-ink colour rather than `bg-ucass-primary-200`, so
+   the tile fix above never reached it. Scoped to company pages only, same as
+   the tile fix, so SettingCard icons elsewhere (user-settings templates,
+   roles) keep their own muted colour. */
+.mcm-company-theme .mcm-setcard-icon {
+  color: var(--primary);
 }
 
-/* Loading skeleton — same skeleton as the card it replaces, so nothing
-   moves when the channel list lands. */
-.mcm-admin .mcm-chcard.is-skeleton .mcm-chcard-logo {
-  background: var(--surface-2);
+/* Tooltip info icons ("i" glyphs, cursor-help) go red on hover, so the
+   hint reads as reachable rather than just decorative grey. */
+.mcm-company-theme .cursor-help:hover {
+  color: var(--primary);
 }
-.mcm-admin .mcm-skel {
-  display: block;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #eef1f6 25%, #e3e8f0 37%, #eef1f6 63%);
-  background-size: 400% 100%;
-  animation: mcm-skel-shimmer 1.3s ease infinite;
+
+/* More breathing room between a row's label and the sentence explaining it —
+   the shared 4px gap read as cramped once these description sentences grew
+   to two lines. */
+.mcm-company-theme .mcm-setrow-desc {
+  margin-top: 8px;
 }
-.mcm-admin .mcm-skel-title {
-  width: 55%;
-  height: 14px;
+
+/* The shared 4px vertical padding left every card's body sitting almost flush
+   against its header and footnote — cramped once a card held more than one
+   row. More room top and bottom; sides left alone since they already line up
+   with the header. */
+.mcm-company-theme .mcm-setcard-body {
+  padding: 14px 16px 16px;
 }
-.mcm-admin .mcm-skel-line {
-  width: 100%;
-  height: 11px;
-}
-.mcm-admin .mcm-skel-line.is-short {
-  width: 70%;
-}
-.mcm-admin .mcm-skel-pill {
-  width: 84px;
-  height: 22px;
-  border-radius: 999px;
-}
-@keyframes mcm-skel-shimmer {
-  0% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0 50%;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .mcm-admin .mcm-skel {
-    animation: none;
-  }
+
+/* Icon-to-title gap in a card header: 16px read as a gap between two
+   unrelated things rather than an icon labelling the title next to it. */
+.mcm-company-theme .mcm-setcard-h {
+  gap: 8px;
 }
 
 /* Brand-coloured logo tiles. The channel marks are currentColor line icons,
@@ -7880,17 +7890,87 @@
 
 /* Dialog copy: the one line that says what the dialog does, and the hint
    under a field that needs a format explaining. */
+/* ── Add / edit webhook dialog ────────────────────────────────────────────
+   Header, fields and actions as three bands with their own padding. The
+   dialog carried 12px all round, so the lede and the hint ran to within a few
+   pixels of the edge and the whole thing read as one cramped block. */
+/* The dialog's own 12px padding is dropped and each band pays for its own,
+   so the header rule and the footer rule can run the full width. Pulling the
+   form out with a negative margin instead made it wider than the dialog and
+   overflowed the page sideways. */
+[role='dialog']:has(> .mcm-modal),
+[role='dialog']:has(> div > .mcm-modal) {
+  padding: 0;
+  overflow: hidden;
+}
+.mcm-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.mcm-modal-head {
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--line-2);
+}
+.mcm-modal-titlerow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mcm-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.mcm-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-right: -6px;
+  border-radius: 999px;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.mcm-modal-close:hover {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+.mcm-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 22px 22px;
+  background: #fff;
+}
+.mcm-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid var(--line-2);
+}
 .mcm-modal-lede {
-  margin: 0;
+  margin: 6px 0 0;
   font-size: 12.5px;
   line-height: 1.5;
   color: #6b7891;
 }
 .mcm-modal-hint {
-  margin: 6px 0 0;
+  margin: 7px 0 0;
   font-size: 11.5px;
   line-height: 1.45;
   color: #93a0b8;
+}
+/* Both actions are pills, like the console's other buttons. */
+.mcm-modal-foot button {
+  border-radius: 999px;
 }
 
 /* ── Destinations ─────────────────────────────────────────────────────────
@@ -8123,7 +8203,12 @@
   border-color: #fde68a;
   color: #d97706;
 }
-.mcm-admin .mcm-intpage .mcm-intstatus:not(.connected):not(.setup) {
+.mcm-admin .mcm-intpage .mcm-intstatus.danger {
+  background: var(--accent-wash);
+  border-color: var(--accent-edge);
+  color: var(--accent);
+}
+.mcm-admin .mcm-intpage .mcm-intstatus:not(.connected):not(.setup):not(.danger) {
   background: #f5f5f5;
   border-color: #e5e5e5;
   color: #737373;
@@ -8238,6 +8323,10 @@
 .mcm-admin .ident-coral-theme.call-coverage-page .tag {
   border-radius: 9999px;
   padding: 3px 10px;
+  /* "Just a tone" (two words) was wrapping onto its own second line
+     inside the Greeting column's narrow width, making the pill twice as
+     tall as every other pill on the page. */
+  white-space: nowrap;
 }
 /* "Generate all missing" — the base `.btn` gives it its 11px radius and
    black fill; rounded further to a full pill and given the same shadow/
@@ -8470,13 +8559,9 @@
 .mcm-admin .ident-coral-theme .bg-primary\/5 {
   background-color: var(--accent-wash) !important;
 }
-.mcm-admin .ident-coral-theme .border-primary,
-.mcm-admin .ident-coral-theme .border-primary\/30 {
-  border-color: var(--accent) !important;
-}
-.mcm-admin .ident-coral-theme .hover\:bg-primary:hover {
-  background-color: var(--accent) !important;
-  color: #fff !important;
+.mcm-company-theme .company-tabs-nav > a {
+  padding: 6px 9px;
+  font-size: 11.5px;
 }
 
 /* TableManager's table otherwise inherits the console's default header tint
@@ -8539,26 +8624,13 @@
 .mcm-admin .ident-coral-theme .table-scroll {
   border-color: var(--line) !important;
 }
-/* An empty table (Unused/In use/Released numbers with nothing to show, or a
-   Call coverage tab with no gaps) has only header cells to size itself from,
-   and auto table layout was letting the whole card shrink to that header's
-   content width instead of filling the page — the "not found" placeholder
-   then sat centered in a half-width column with the rest of the page reading
-   as dead grey space. Every layer between the body and the table is forced
-   to the page's full breadth so an empty result reads exactly as wide as a
-   full one. */
-.mcm-admin .ident-coral-theme,
-.mcm-admin .ident-coral-theme .mcm-adminpage,
-.mcm-admin .ident-coral-theme .mcm-adminpage-head,
-.mcm-admin .ident-coral-theme .mcm-adminpage-body,
-.mcm-admin .ident-coral-theme .panel-card,
-.mcm-admin .ident-coral-theme .tbl-wrap,
-.mcm-admin .ident-coral-theme .ident-table-card,
-.mcm-admin .ident-coral-theme .table-scroll,
-.mcm-admin .ident-coral-theme .table-scroll [data-slot='table-container'],
-.mcm-admin .ident-coral-theme table {
-  width: 100% !important;
-  min-width: 100% !important;
+
+/* Pill badges — "Main Location", "Locked" — carry the rule and nothing else.
+   The tint is meant for the icon tiles, where it sits behind a glyph; behind a
+   word it competes with the ink for the same small area. `rounded-sm` is what
+   separates a badge from a tile in this codebase. */
+.mcm-company-theme .rounded-sm.bg-ucass-primary-200:not([data-slot='button']) {
+  background-color: transparent;
 }
 /* .mcm-adminpage-bar is deliberately NOT in the list above: it insets
    itself with margin: 16px 22px (see its own rule below), and a block
@@ -8594,6 +8666,151 @@
    far from the text column despite being left-aligned within it. */
 .mcm-admin .ident-coral-theme.call-coverage-page table {
   table-layout: fixed;
+  /* table-layout: fixed sizes the table itself off its own natural
+     width unless told otherwise — the columns' own percentage widths
+     only govern how that width is split between them, not whether the
+     table fills its container. Without this, the table (and its header
+     row's own background/border) fell short of the container's right
+     edge instead of touching it. */
+  width: 100%;
+}
+/* All numbers' own table only — not the shared --plain spec other Numbers
+   pages (Identities/Addresses/Verification/In use/Unused/Released) also
+   use. table-layout: fixed with no explicit column widths divides the
+   table evenly across however many columns that view renders (7 without
+   Features, 8 with), instead of each column sizing to its own content. */
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table {
+  table-layout: fixed;
+  width: 100%;
+}
+/* All numbers dropped its Features column (always empty — no icons ever
+   rendered for the dummy rows — and it threw off this table's spacing
+   next to In use/Unused). It's down to the same 7 columns as those views
+   now (Number, Label, Assigned to, Forwarded to, Type, Site, Action), so
+   it gets the exact same widths for the exact same look. */
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table th:nth-child(1),
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table td:nth-child(1) {
+  width: 14%;
+}
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table th:nth-child(2),
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table td:nth-child(2) {
+  width: 13%;
+}
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table th:nth-child(3),
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table td:nth-child(3) {
+  width: 18%;
+}
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table th:nth-child(4),
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table td:nth-child(4) {
+  width: 18%;
+}
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table th:nth-child(5),
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table td:nth-child(5) {
+  width: 10%;
+}
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table th:nth-child(6),
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table td:nth-child(6) {
+  width: 13%;
+}
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table th:nth-child(7),
+.mcm-admin .ident-coral-theme .ident-table--all-numbers table td:nth-child(7) {
+  width: 14%;
+}
+/* In use / Unused: same table as All numbers minus the Features column
+   (7 columns — Number, Label, Assigned to, Forwarded to, Type, Site,
+   Action), so it gets its own class and widths rather than reusing
+   --all-numbers' 8-column nth-child indexes. */
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table {
+  table-layout: fixed;
+  width: 100%;
+}
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table thead th:first-child {
+  padding-left: 6px;
+}
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--numbers-list table thead th,
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--numbers-list table tbody td {
+  text-align: center;
+}
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table th:nth-child(1),
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table td:nth-child(1) {
+  width: 14%;
+}
+/* Same cascade loss as the 2nd column below: the table-wide centering
+   rule above loses to the Numbers list's own first-child left-align rule
+   elsewhere in the file. This more specific selector wins outright. */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--numbers-list th:first-child,
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--numbers-list td:first-child {
+  text-align: center;
+}
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table th:nth-child(2),
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table td:nth-child(2) {
+  width: 13%;
+}
+/* The table-wide centering rule above loses the cascade to the Numbers
+   list's own "2nd column left-align" rule elsewhere in the file (same
+   specificity, that one comes later in the file) — this more specific
+   selector (class match directly on th/td, no intervening table/thead)
+   wins outright and actually centers Label over its value. */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--numbers-list th:nth-child(2),
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--numbers-list td:nth-child(2) {
+  text-align: center;
+}
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table th:nth-child(3),
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table td:nth-child(3) {
+  width: 18%;
+}
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table th:nth-child(4),
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table td:nth-child(4) {
+  width: 18%;
+}
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table th:nth-child(5),
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table td:nth-child(5) {
+  width: 10%;
+}
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table th:nth-child(6),
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table td:nth-child(6) {
+  width: 13%;
+}
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table th:nth-child(7),
+.mcm-admin .ident-coral-theme .ident-table--numbers-list table td:nth-child(7) {
+  width: 14%;
+}
+/* Identities / Addresses / Verification: each already carries its own
+   `ident-table--*` class on the table's wrapper (see Identities/index.tsx,
+   addresses/index.tsx, verification/index.tsx). table-layout: fixed with
+   no explicit column widths divides each evenly across however many
+   columns it has (6/7/5 respectively), same treatment as the Numbers
+   tables above — scoped to just these three. */
+.mcm-admin .ident-coral-theme .ident-table--identities table,
+.mcm-admin .ident-coral-theme .ident-table--addresses table,
+.mcm-admin .ident-coral-theme .ident-table--verifications table {
+  table-layout: fixed;
+  width: 100%;
+}
+/* Centered headers for these three only, overriding the shared --plain
+   first-child/2nd-column left-align rules above that were written for the
+   Numbers list's own Number/Label columns. Combined with `.ident-table-card--plain`
+   on the same selector (both classes sit on the same wrapper div) so this
+   matches — and wins the cascade over — those first-child/nth-child(2)
+   rules instead of losing to them on specificity. */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities table thead th,
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses table thead th,
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications table thead th {
+  text-align: center;
+}
+/* Row data follows: centered under its now-centered header instead of the
+   first two columns staying pinned left while the rest sit centered. */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities table tbody td,
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses table tbody td,
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications table tbody td {
+  text-align: center;
+}
+/* Released numbers' own table only — same even-column treatment as All
+   numbers above, kept as its own rule since it's a different view with a
+   different column count (its own `archiveColumns`, no Action/Features). */
+.mcm-admin .ident-coral-theme .ident-table--released table {
+  table-layout: fixed;
+  width: 100%;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain table thead th,
 .mcm-admin .ident-coral-theme.call-coverage-page table thead th,
@@ -8607,17 +8824,78 @@
   letter-spacing: 0.04em;
   padding-top: 13px;
   padding-bottom: 13px;
-  /* Pulled in from the console's default px-2/xl:px-4 (8-16px) so the label
-     sits closer to the column's left edge, matching the tighter left
-     alignment of the shared table spec. */
   padding-left: 6px;
   padding-right: 6px;
-  text-align: left;
+  text-align: center;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain table thead th:first-child,
 .mcm-admin .ident-coral-theme.call-coverage-page table thead th:first-child,
 .mcm-admin .ident-coral-theme .ident-line-table thead th:first-child {
   padding-left: 14px;
+  text-align: left;
+}
+.mcm-admin .ident-coral-theme .ident-table-card--plain table tbody td:first-child,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td:first-child,
+.mcm-admin .ident-coral-theme .ident-line-table tbody td:first-child {
+  text-align: left;
+}
+.mcm-admin .ident-coral-theme .ident-table-card--plain table thead th:nth-child(2),
+.mcm-admin .ident-coral-theme .ident-table-card--plain table tbody td:nth-child(2) {
+  text-align: left;
+}
+/* All numbers' own table only, overriding the left-align above that the
+   other Numbers views (In use/Unused/Released) still keep on their first
+   two headers — this table's column names read as a header row, centered
+   like every other column here, not singled out. */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--all-numbers table thead th {
+  text-align: center;
+}
+/* The shared first-child rule's extra 14px left padding (meant for a
+   left-aligned header) skews a centered "Number" heading off to one side
+   instead of sitting over the middle of the flag+digits below it. */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--all-numbers table thead th:first-child {
+  padding-left: 6px;
+}
+/* Row cells follow: centered under their now-centered header instead of
+   the first two columns staying pinned left while the rest sit centered. */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--all-numbers table tbody td {
+  text-align: center;
+}
+/* Released numbers' own table: same header/row centering as All numbers
+   above, kept separate since it's a different view (`ident-table--released`)
+   with its own column set. */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--released table thead th,
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--released table tbody td {
+  text-align: center;
+}
+/* Numbers by line's own table only: its Phone number column is the one
+   left holding the shared --plain/--line first-child left-align above —
+   every other column here (Label/Type/Texting) was already centered, this
+   just brings the first one in line with them. Column widths are already
+   split evenly via the existing `.ident-line-table th, td { width: 20% }`
+   rule below. */
+.mcm-admin .ident-coral-theme .ident-line-table thead th:first-child,
+.mcm-admin .ident-coral-theme .ident-line-table tbody td:first-child {
+  text-align: center;
+}
+/* Call coverage's own table only: its Number/Extension/Person column is
+   the one left holding the shared --plain first-child left-align above —
+   every other column here (Assigned to, Coverage, What a caller gets) was
+   already centered. Column widths are already split evenly by the inline
+   `style={{ width: '20%' }}` on each <th> in call-coverage/index.tsx. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th:first-child,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td:first-child {
+  text-align: center;
+}
+/* Call coverage's tables also carry the shared `--plain` wrapper class, so
+   the Numbers-list-only "Label column" left-align two rules up was
+   silently leaking into this page's own 2nd column (Name/Assigned to/
+   Extension) too, leaving it hugging the left edge while Coverage next to
+   it sat centered — read as a gap between them rather than a misalignment.
+   Restoring the center this page already uses everywhere else. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th:nth-child(2),
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td:nth-child(2) {
+  text-align: center;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain table tbody tr,
 .mcm-admin .ident-coral-theme.call-coverage-page table tbody tr,
@@ -8645,6 +8923,7 @@
   font-size: 13px;
   font-weight: 500;
   border-bottom: 1px solid #f0f0f0;
+  text-align: center;
 }
 /* The last row's own border-bottom sat directly above the pagination
    footer below it (now a plain borderless white bar, see .table-scroll ~
@@ -8688,25 +8967,9 @@
 .mcm-admin .ident-coral-theme .ident-line-table tbody tr:last-child td {
   border-bottom: none;
 }
-.mcm-admin .ident-coral-theme .ident-line-table th:nth-child(1),
-.mcm-admin .ident-coral-theme .ident-line-table td:nth-child(1) {
-  width: 30%;
-}
-.mcm-admin .ident-coral-theme .ident-line-table th:nth-child(2),
-.mcm-admin .ident-coral-theme .ident-line-table td:nth-child(2) {
-  width: 22%;
-}
-.mcm-admin .ident-coral-theme .ident-line-table th:nth-child(3),
-.mcm-admin .ident-coral-theme .ident-line-table td:nth-child(3) {
-  width: 18%;
-}
-.mcm-admin .ident-coral-theme .ident-line-table th:nth-child(4),
-.mcm-admin .ident-coral-theme .ident-line-table td:nth-child(4) {
-  width: 15%;
-}
-.mcm-admin .ident-coral-theme .ident-line-table th:nth-child(5),
-.mcm-admin .ident-coral-theme .ident-line-table td:nth-child(5) {
-  width: 15%;
+.mcm-admin .ident-coral-theme .ident-line-table th,
+.mcm-admin .ident-coral-theme .ident-line-table td {
+  width: 20%;
 }
 .mcm-admin .ident-coral-theme .ident-line-card__footer {
   padding: 10px 16px;
@@ -8740,22 +9003,152 @@
   margin-left: auto;
   margin-right: auto;
 }
+/* Numbers tab's "FIX" heading only, independent of the buttons below it
+   (left-aligned, see .fix-col-left right below) — the two don't have to
+   share one alignment. Still centered, but extra right padding nudges
+   the centered text left of true-center without going all the way to
+   the column's left edge. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.fix-col-right {
+  text-align: left !important;
+  padding-left: 6px !important;
+}
+/* Numbers tab's own Fix column only (Extensions' stays centered) — the
+   "Apply standard"/"Needs a decision" pills sit at the cell's left edge
+   instead of floating in the middle of this now-wider column. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.fix-col-left,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.fix-col-left {
+  text-align: left !important;
+  /* fix-col is excluded from the page's general 6px left padding above
+     (it's normally centered, so padding doesn't matter there) — needed
+     here now that it's left-aligned, or the button sits at whatever
+     wider default padding the plain <td>/<th> carries instead of lining
+     up with every other left-aligned column on the page. */
+  padding-left: 6px !important;
+}
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.fix-col-left > * {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+/* Call coverage's Numbers/Extensions tables, left-aligned instead of
+   centered — every earlier centering override on this page (first-child,
+   2nd column, the table-wide base rule) is undone here with `!important`
+   rather than chased one specificity war at a time, since this file has
+   already shown how easy it is for two same-specificity rules to silently
+   swap which one wins as more get added later. Fix stays centered — its
+   button isn't text. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th:not(.fix-col),
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td:not(.fix-col) {
+  text-align: left !important;
+  padding-left: 6px !important;
+}
+/* Both "EXTENSION" (Extensions tab) and "NUMBER" (Numbers tab) headings
+   plus, for Numbers, its value too — nudged right of their own centered
+   position (extra left padding on a centered box shifts the centered
+   content right). */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.num-right,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.num-right {
+  padding-left: 24px !important;
+}
+/* Numbers tab's "NUMBER" heading and value — left-aligned instead of
+   the `.num` class's usual center. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.num-left,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.num-left {
+  text-align: left !important;
+  padding-left: 6px !important;
+}
+/* Extensions tab's "Name" column only — both heading and value nudged
+   right of the page's default 6px left padding. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.name-col,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.name-col {
+  padding-left: 55px !important;
+}
+/* Numbers tab's "Assigned to" column only — both heading and value
+   nudged right of the page's default 6px left padding. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.assigned-col,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.assigned-col {
+  padding-left: 40px !important;
+}
+/* Numbers tab's "What a caller gets" column only — explicitly pinned
+   left, since its own long header text nearly fills the column and can
+   look centered even while genuinely left-aligned. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.caller-gets-col,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.caller-gets-col {
+  text-align: left !important;
+  padding-left: 6px !important;
+}
+/* Extensions tab's "WHAT A CALLER GETS" heading only — centered over its
+   own two-line wrapped sentence below, which spans nearly the full
+   column width (the value itself stays left-aligned to read naturally). */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.ext-caller-gets-col {
+  text-align: center !important;
+}
+/* Voicemail greetings tab's "Person" column only — heading and value
+   nudged right of the page's default 6px left padding. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.person-col,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.person-col {
+  padding-left: 30px !important;
+}
+/* Voicemail greetings tab's "EXTENSION" heading only — nudged right of
+   its own default left position. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.extension-col {
+  padding-left: 35px !important;
+}
+/* Voicemail greetings tab's "Greeting" and "What the caller will hear"
+   columns only — both headings and values nudged right of the page's
+   default 6px left padding. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.greeting-col,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.greeting-col {
+  padding-left: 65px !important;
+}
+/* The sentence itself stays close to the page's normal left padding — it
+   needs to read left-to-right without clipping against the column edge,
+   which the 90px push above was starting to do. The heading text is
+   short, so it can center over the sentence's own width instead of
+   sharing the sentence's left position. Extra left padding on both
+   nudges the centered pair right together without reintroducing that
+   clipping. */
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.hear-col {
+  text-align: center !important;
+  padding-left: 20px !important;
+}
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.hear-col {
+  text-align: center !important;
+  padding-left: 20px !important;
+}
+/* Voicemail greetings tab's "Generate" column only (Numbers tab's Fix
+   stays centered) — icon shifted to the cell's left edge, matching
+   "GENERATE" above it. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.generate-col-left,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.generate-col-left {
+  text-align: left !important;
+  padding-left: 6px !important;
+}
+/* Number column only: centered, matching its own two-line value (flag +
+   digits, with a shorter subtext line below) instead of the page's
+   default left. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.num,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.num {
+  text-align: center !important;
+}
+/* The global `.num` class (used across the app for tabular/monospace
+   figures) gave this column's digits — and its header, since `.num` is
+   also on the <th> — a tighter letter-spacing and monospaced numeral
+   style that read as a different font/weight from Assigned to right next
+   to it, even though both already share the same font-family. Undone for
+   this page only. */
+.mcm-admin .ident-coral-theme.call-coverage-page table thead th.num,
+.mcm-admin .ident-coral-theme.call-coverage-page table tbody td.num {
+  font-family: inherit;
+  font-variant-numeric: normal;
+  letter-spacing: normal;
+}
 
-/* The Action column's "..." button was rendered centered in its cell (via
-   TableManager's own flex/justify-center wrapper), but this theme's header
-   text-align was pulled to the left (see the th rule above), leaving the
-   header label and the row's button no longer sitting above one another.
-   Overriding both nested flex wrappers the button renders through pulls it
-   back under the header instead. */
-.mcm-admin .ident-coral-theme .ident-table-card--plain table tbody td:last-child {
-  padding-left: 6px;
-}
-.mcm-admin .ident-coral-theme .ident-table-card--plain table tbody td:last-child > div {
-  justify-content: flex-start !important;
-}
-.mcm-admin .ident-coral-theme .ident-table-card--plain table tbody td:last-child > div > div {
-  justify-content: flex-start !important;
-}
+/* The Action column's "..." button renders centered in its cell via its
+   own JSX (`justify-center` on both nested flex wrappers) — that used to
+   get forced to flex-start here to match this theme's then-left-aligned
+   header. Headers are centered now (see the th rule above), so the
+   button's own centering is what actually belongs under it; no override
+   needed here any more. */
 
 /* Both tables' cells carry whitespace-nowrap (table.tsx's base TableHead/
    TableCell classes), so the browser's auto table layout only sizes each
@@ -8769,27 +9162,33 @@
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities th:nth-child(1),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities td:nth-child(1) {
-  width: 24%;
+  width: 16.66%;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities th:nth-child(2),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities td:nth-child(2) {
-  width: 14%;
+  width: 16.66%;
+  /* This table's own generic header-centering rule above loses the
+     cascade to the Numbers-list-only "2nd column left-align" rule
+     further down the file (same specificity, later source order) — this
+     more specific selector (adds nth-child(2) on top of the class match)
+     wins outright and actually centers Type over Individual/Business. */
+  text-align: center;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities th:nth-child(3),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities td:nth-child(3) {
-  width: 22%;
+  width: 16.66%;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities th:nth-child(4),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities td:nth-child(4) {
-  width: 13%;
+  width: 16.66%;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities th:nth-child(5),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities td:nth-child(5) {
-  width: 13%;
+  width: 16.66%;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities th:nth-child(6),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--identities td:nth-child(6) {
-  width: 14%;
+  width: 16.66%;
 }
 
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses table {
@@ -8797,40 +9196,47 @@
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses th:nth-child(1),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses td:nth-child(1) {
-  width: 19%;
+  width: 13%;
   white-space: normal;
 }
+/* City's own content (a short place name) doesn't need as much room as
+   Country/Region or Address, so it's narrower — the header, centered
+   within that smaller width, now sits directly over the name instead of
+   floating in a wide column mostly empty to its right. */
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses th:nth-child(2),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses td:nth-child(2) {
-  width: 12%;
+  width: 11%;
+  text-align: center;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses th:nth-child(3),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses td:nth-child(3) {
   width: 11%;
 }
-/* Address is left-aligned text that's usually much shorter than its old
-   20% share, and Proofs (centered, right next to it) was a fixed-width
-   count chip - so most of that width just sat as dead space between the
-   two, reading as an oversized gap. Narrowing Address and Proofs and
-   handing the freed width to Description closes that gap without
-   affecting the other columns' spacing. */
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses th:nth-child(4),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses td:nth-child(4) {
-  width: 14%;
+  width: 22%;
   white-space: normal;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses th:nth-child(5),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses td:nth-child(5) {
-  width: 8%;
+  width: 9%;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses th:nth-child(6),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses td:nth-child(6) {
-  width: 25%;
+  width: 22%;
   white-space: normal;
+}
+/* Proofs' count sits centered in its own narrow (8%) column, right next
+   to Description's left-aligned text starting with its own small default
+   padding — the two read as cramped together rather than clearly separate
+   columns. Extra left padding on Description alone (not touched on the
+   th, so the header label stays where it was) opens that gap up. */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses td:nth-child(6) {
+  padding-left: 22px;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses th:nth-child(7),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--addresses td:nth-child(7) {
-  width: 11%;
+  width: 12%;
 }
 
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications table {
@@ -8838,24 +9244,55 @@
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications th:nth-child(1),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications td:nth-child(1) {
-  width: 24%;
+  width: 20%;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications th:nth-child(2),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications td:nth-child(2) {
-  width: 28%;
+  width: 20%;
   white-space: normal;
+  /* Same fix as Identities' Type column above: the table's generic
+     header-centering rule loses to the Numbers-list-only 2nd-column
+     left-align rule elsewhere in the file; this more specific selector
+     wins and actually centers Country/City over its value. */
+  text-align: center;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications th:nth-child(3),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications td:nth-child(3) {
-  width: 16%;
+  width: 20%;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications th:nth-child(4),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications td:nth-child(4) {
-  width: 16%;
+  width: 20%;
 }
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications th:nth-child(5),
 .mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--verifications td:nth-child(5) {
-  width: 16%;
+  width: 20%;
+}
+
+/* All numbers' own 8 columns (Number/Label/Assigned to/Forwarded to/Type/
+   Features/Site/Action) — equally divided, matching Identities/Addresses/
+   Verification's own equal-width treatment above. Scoped to the
+   `ident-table--all-numbers` marker set only on the 'all' view (see
+   number-list/index.tsx), not the other views sharing this same
+   `.ident-table-card--plain` shell, which have fewer columns. */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--all-numbers table {
+  table-layout: fixed !important;
+}
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--all-numbers th,
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--all-numbers td {
+  width: 12.5% !important;
+}
+
+/* Released's own 6 columns (Number/Label/Last assigned to/Type/Site/Held
+   from) — equally divided, same reasoning as ident-table--all-numbers
+   above (this archive view shares the same table shell but has a
+   different column set from every other view). */
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--released table {
+  table-layout: fixed;
+}
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--released th,
+.mcm-admin .ident-coral-theme .ident-table-card--plain.ident-table--released td {
+  width: 16.66%;
 }
 
 /* The Type badge (Individual/Business) still carried this page's coral
@@ -9056,7 +9493,7 @@
   }
   .ident-form-popup .custom-react-select__option--is-focused {
     background-color: #f3f4f6 !important;
-    color: #111827 !important;
+    color: #111111 !important;
   }
   .ident-form-popup .custom-react-select__option--is-selected,
   .ident-form-popup
@@ -9070,7 +9507,7 @@
    * Listed AFTER hover, and naming the hover and focus combinations explicitly,
    * because react-select puts BOTH classes on the row when you mouse over the
    * option that is already chosen. At equal specificity the later rule wins, so
-   * without this the selected row lost its red the moment the cursor touched
+   * without this the selected row lost its tint the moment the cursor touched
    * it — which is the one place the colour actually carries meaning. */
   body:has(.mcm-company-theme) .custom-react-select__option--is-selected,
   body:has(.mcm-company-theme) .custom-react-select__option--is-selected:hover,
@@ -9079,7 +9516,7 @@
   body:has(.mcm-company-theme) .select-group__option--is-selected:hover,
   body:has(.mcm-company-theme) .select-group__option--is-selected.select-group__option--is-focused {
     background-color: #fdecec !important;
-    color: #d92b2b !important;
+    color: #111111 !important;
     font-weight: 600 !important;
   }
 
@@ -9095,531 +9532,99 @@
   }
 }
 
-/* TableManager renders the table and its pagination footer as two separate
-   boxes, each with its own rounded border, spaced apart by the wrapper's
-   gap — on top of the outer .panel-card that already frames this whole
-   area, that read as three stacked cards. Dropping each piece's own
-   border/radius and closing the gap between them merges everything into
-   the one surface .panel-card already provides, with the pagination row
-   reading as a footer (divider line only) rather than a card of its own. */
-.mcm-admin .ident-coral-theme .ident-table-card,
-.ident-form-popup .ident-table-card {
-  gap: 0;
+/* ============================================================
+   Chat list filter tabs (All / Team / Direct / Favorites) — the
+   same pill treatment as the phone console's .seg direction
+   filters: grey idle, solid dark active, red-wash on hover.
+   ============================================================ */
+.mcm-chat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
 }
-.mcm-admin .ident-coral-theme .ident-table-card .table-scroll,
-.ident-form-popup .ident-table-card .table-scroll {
-  border: none;
-  border-radius: 0;
-}
-/* TableManager's customHeader (the search bar row) sits directly against
-   the table below it — its own `border-b` and the table header's grey
-   `thead` fill start on the very same line, so the divider read as fused
-   to the table instead of separating two distinct sections the way By
-   line's own (structurally separate) search card reads against its line
-   cards below. The gap alone (no line) is what reads as two sections here,
-   matching how By line's own search card has no bottom border of its own
-   either — the space between cards does that job there too.
-   `:has(+ .table-scroll)` keeps this to cards that actually have a table
-   right after the header (All numbers, Identities, Addresses,
-   Verification) — By line's own search card has no `.table-scroll`
-   sibling at all (it's the card's only child, already spaced from the
-   line cards below by the parent's own gap), and was picking up this same
-   margin on top of that existing gap, doubling its spacing. */
-.mcm-admin .ident-coral-theme .ident-table-card--plain > div:first-child:has(+ .table-scroll),
-.ident-form-popup .ident-table-card--plain > div:first-child:has(+ .table-scroll) {
-  margin-bottom: 10px;
-  border-bottom: none !important;
-}
-.mcm-admin .ident-coral-theme .ident-table-card .table-scroll ~ div,
-.ident-form-popup .ident-table-card .table-scroll ~ div {
-  margin-top: 0;
-  border: none;
-  border-top: 1px solid #f0f0f0;
-  border-radius: 0;
-  background: #ffffff;
-}
-/* TableManager's default (non-centerPager) footer variant wraps itself in
-   its own fully-bordered, rounded pill (`rounded-xl border border-gray-200`
-   in table-manager.tsx) — nested one level deeper than the `.table-scroll ~
-   div` sibling selector above reaches (see the `button.rounded-full`
-   comment further down this file for the same nesting quirk), so that
-   reset never got to it. Left alone, this pill's own full border sits
-   right against the card's own border below it and reads as one line
-   doubled rather than the single top divider every other footer here has.
-   A plain descendant selector reaches it regardless of the extra nesting. */
-.mcm-admin .ident-coral-theme .ident-table-card div.rounded-xl.border.border-gray-200,
-.ident-form-popup .ident-table-card div.rounded-xl.border.border-gray-200 {
-  border: none !important;
-  border-top: 1px solid #f0f0f0 !important;
-  border-radius: 0 !important;
-  background: #ffffff !important;
-}
-.mcm-admin .ident-coral-theme .ident-header-container {
-  padding: 16px 16px 12px;
-  border-bottom: 1px solid var(--line);
-}
-/* .ident-stats-row is a flex-wrap row now, so cards reflow to narrower
-   screens on their own — no breakpoint-specific column count needed. */
-
-/* The shadcn Tabs primitive ships as a segmented control by default — each
-   trigger carries its own border, radius and an active-state shadow, and
-   picks up a focus ring on click. `.ptabstrip` already repaints this as a
-   plain underline strip, but it only touches color and the bottom border,
-   so the segmented-control chrome (rounded border box, shadow, focus ring)
-   still shows through underneath on the tab last clicked. Stripping all of
-   it here is what actually makes every tab read as flat text with just an
-   underline on the active one. */
-.mcm-admin .ident-coral-theme .ptabstrip button,
-.mcm-admin .ident-coral-theme .ptabstrip a {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-/* A bit more room per tab and a soft hover tint, so the strip reads as a
-   set of touch targets rather than text jammed against its neighbors.
-   Taller strip, and a real margin-top so it doesn't sit flush against the
-   stats row above — bigger and better separated, matching the rest of
-   this page's generous spacing. */
-.mcm-admin .ident-coral-theme .ptabstrip {
-  height: 46px !important;
-  gap: 6px !important;
-  border-bottom: none !important;
-  margin-top: 20px !important;
-  margin-bottom: 16px !important;
-}
-.mcm-admin .ident-coral-theme .ptabstrip button,
-.mcm-admin .ident-coral-theme .ptabstrip a {
-  /* The base .ptabstrip button rule sets margin-bottom: -1px so its old
-     underline could overlap the strip's own border — a pill has neither,
-     so that negative margin was left over, nudging every tab 1px off
-     centre and splitting the gap above/below the active pill unevenly
-     (3.5px vs 2.5px). Zeroing it, plus a fixed height + align-self here
-     rather than vertical padding, is what actually makes that gap equal. */
-  margin: 0 !important;
-  height: 36px !important;
-  align-self: center !important;
-  padding: 0 20px !important;
-  font-size: 14px !important;
-  border-radius: 999px !important;
+.mcm-chat-tabs button {
+  flex: 0 0 auto;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #64748b;
+  background: #f5f5f5;
+  white-space: nowrap;
+  cursor: pointer;
   transition:
     color 0.15s ease,
     background-color 0.15s ease;
 }
-.mcm-admin .ident-coral-theme .ptabstrip button svg,
-.mcm-admin .ident-coral-theme .ptabstrip a svg {
-  width: 17px !important;
-  height: 17px !important;
+.mcm-chat-tabs button:hover:not(.on) {
+  color: #e50914;
+  background: #fdeaec;
 }
-/* Not every tab strip on this theme is Radix Tabs: Call Coverage and the
-   Numbers list build theirs as a plain button/link toggled with a `.on`
-   class, so the hover/active rules below key off either marker — [data-state]
-   for Radix, `.on` for the hand-rolled strips — rather than assuming one. */
-.mcm-admin .ident-coral-theme .ptabstrip button:hover:not([data-state='active']):not(.on),
-.mcm-admin .ident-coral-theme .ptabstrip a:hover:not(.on) {
-  background: var(--surface-2) !important;
-  color: var(--ink) !important;
-}
-/* The active tab reads as a filled pill/button rather than an underlined
-   label — a light accent wash rather than the full-strength accent, so it
-   sits alongside the page's other "light red" surfaces (avatars, type
-   badges, per-page select) instead of standing out as a heavier red block. */
-.mcm-admin .ident-coral-theme .ptabstrip button[data-state='active'],
-.mcm-admin .ident-coral-theme .ptabstrip button.on,
-.mcm-admin .ident-coral-theme .ptabstrip a.on {
-  background: var(--accent-wash) !important;
-  color: var(--accent) !important;
-  font-weight: 800 !important;
+.mcm-chat-tabs button.on {
+  color: #ffffff;
+  background: #0b1220;
 }
 
-/* The "NUMBERS" eyebrow above the title, matching the design mockup's red
-   label + leading icon (see AdminPage's `sectionIcon` prop) — every other
-   admin page keeps the plain grey text-only eyebrow. */
-.mcm-admin .ident-coral-theme .mcm-adminpage-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  font-style: normal;
-  font-weight: 800;
-  font-size: 12px;
-  line-height: 18px;
-  letter-spacing: 0.14em;
-  color: rgb(220, 38, 38);
-}
-.mcm-admin .ident-coral-theme .mcm-adminpage-eyebrow svg {
-  flex: none;
-}
-/* The page title in the design mockup's display serif rather than the
-   console's usual UI sans — an italic headline treatment for this section's
-   three pages (Identities & addresses, All numbers, Call coverage) only. */
-.mcm-admin .ident-coral-theme .mcm-adminpage-title h1 {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-style: italic;
-  font-weight: 400;
-  font-size: 27px;
-  line-height: 41px;
-  color: rgb(23, 23, 23);
-  letter-spacing: normal;
-}
-/* The info icon standing in for the description line — not italic/serif like
-   the title text next to it, so it still reads clearly as a UI control.
-   Same dark roundel as the Integration pages' own title badge
-   (`.mcm-intpage-info`) — a white glyph on translucent black — rather than
-   this section's own light-grey roundel, so the two read as the same
-   control. `cursor: pointer` replaces the browser's default "help"
-   (question-mark) cursor — this icon opens a tooltip, it isn't a
-   contextual-help trigger. */
-.mcm-admin .ident-coral-theme .ident-title-info {
-  width: 18px;
-  height: 18px;
-  padding: 3px;
-  box-sizing: border-box;
-  flex: none;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.45);
-  border-radius: 50%;
-  cursor: pointer;
-}
-.mcm-admin .ident-coral-theme .ident-title-info:hover {
-  background: rgba(0, 0, 0, 0.65);
-}
-
-/* The design mockup puts the page's "+ Add …" button beside the search box
-   in the filters bar rather than up in the page head. `.mcm-adminpage-bar`'s
-   own rule caps every direct child at max-width:380px (so search doesn't
-   stretch full width) — fine for one child, but here the row itself is the
-   only direct child and needs to span the bar so the button can sit flush
-   right of the search input, so that cap is lifted just for this wrapper. */
-.mcm-admin .ident-coral-theme .ident-searchbar-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  max-width: none !important;
-  width: 100%;
-}
-/* Same fix as .ident-searchbar-row above, for the same reason: passed
-   through `filters`, this card is a direct child of .mcm-adminpage-bar,
-   whose own rule caps every direct child at max-width:380px. Without this
-   override the whole stats+search card (not just the search row) was
-   squeezed into that 380px column, leaving no room for the stat cards to
-   sit side by side — they wrapped onto their own line each instead. */
-.mcm-admin .ident-coral-theme .ident-header-container {
-  max-width: none !important;
-  width: 100%;
-}
-/* A pill button in either of the mockup's two treatments: solid (Add number)
-   or a hollow accent outline (Add identity) — same shape, different fill, so
-   both read as part of this theme rather than the console's default .btn. */
-.mcm-admin .ident-coral-theme .ident-pill-btn {
+/* ============================================================
+   Chat header icon buttons (search / add / filter) — bordered
+   rounded-square buttons matching the Agent Chat header.
+   ============================================================ */
+.mcm-chat-iconbtn {
   display: inline-flex;
   align-items: center;
-  flex: none;
-  gap: 6px;
-  height: 40px;
-  padding: 0 18px;
-  border-radius: 999px;
-  font-size: 13.5px;
-  font-weight: 700;
-  white-space: nowrap;
-  border: 1px solid var(--accent);
-  transition: all 0.12s;
-}
-.mcm-admin .ident-coral-theme .ident-pill-btn.solid {
-  background: var(--accent);
-  color: #fff;
-}
-.mcm-admin .ident-coral-theme .ident-pill-btn.solid:hover {
-  background: var(--accent-ink);
-  border-color: var(--accent-ink);
-}
-.mcm-admin .ident-coral-theme .ident-pill-btn.outline {
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  border: 1px solid #e5e7eb;
   background: #fff;
-  color: var(--accent);
-}
-.mcm-admin .ident-coral-theme .ident-pill-btn.outline:hover {
-  background: var(--accent-wash);
-}
-/* A third fill, matching the black primary actions used in the Add
-   Number/Identity/Address popups — the base rule's border is always the
-   theme's red accent, so this overrides it too rather than just the fill. */
-.mcm-admin .ident-coral-theme .ident-pill-btn.black {
-  background: #000;
-  color: #fff;
-  border-color: #000;
-}
-.mcm-admin .ident-coral-theme .ident-pill-btn.black:hover {
-  background: #1f2937;
-  border-color: #1f2937;
-}
-
-/* Type / Address / Proofs read as plain numbers and words in the base
-   table styling; the design mockup gives each its own small badge so they
-   scan at a glance instead of blending into the row's other text. */
-.mcm-admin .ident-coral-theme .ident-type-badge {
-  display: inline-block;
-  padding: 3px 12px;
-  border-radius: 999px;
-  background: var(--accent-wash);
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 700;
-  /* Cancels the badge's own padding-left so its visible text lines up with
-     the column header, which has no such padding. */
-  margin-left: -12px;
-}
-.mcm-admin .ident-coral-theme .ident-count-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-width: 0;
-  padding: 2px 8px;
-  border-radius: var(--r-sm);
-  /* A literal neutral grey rather than --surface-2 — that variable is this
-     page's pink table-header wash, not a grey, so reusing it here tinted
-     these chips pink instead of the mockup's plain grey. */
-  background: #f1f2f4;
-  color: var(--ink);
-  font-size: 12.5px;
-  font-weight: 600;
-  /* Cancels the chip's own padding-left, same reasoning as the badge above. */
-  margin-left: -8px;
-}
-
-/* Decorative graphic in the page head — see AdminPage's `icon` prop. */
-.mcm-admin .mcm-adminpage-icon {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: var(--r-md, 12px);
-  background: var(--accent-wash);
-  color: var(--accent);
-  position: relative;
-  z-index: 1;
-}
-.mcm-admin .mcm-adminpage-icon svg {
-  width: 28px;
-  height: 28px;
-}
-
-/* The Identities & addresses head carries its own two-piece illustration
-   (see IdentitiesHeroIcon) instead of a single centered glyph, so the
-   generic box above is let go of its fixed size and fill for this page. */
-.mcm-admin .ident-coral-theme .mcm-adminpage-icon {
-  width: auto;
-  height: auto;
-  background: transparent;
-  overflow: visible;
-}
-.mcm-admin .ident-coral-theme .ident-hero {
-  position: relative;
-  width: 132px;
-  height: 92px;
-}
-.mcm-admin .ident-coral-theme .ident-hero-card {
-  position: absolute;
-  top: 4px;
-  left: 0;
-  width: 116px;
-  height: 72px;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow:
-    0 10px 24px rgba(232, 84, 63, 0.16),
-    0 2px 6px rgba(13, 21, 38, 0.06);
-}
-.mcm-admin .ident-coral-theme .ident-hero-avatar {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  background: var(--accent);
-}
-.mcm-admin .ident-coral-theme .ident-hero-avatar svg {
-  width: 15px;
-  height: 15px;
-  color: #ffffff;
-}
-.mcm-admin .ident-coral-theme .ident-hero-lines {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 4px;
-}
-.mcm-admin .ident-coral-theme .ident-hero-line {
-  display: block;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--accent-wash);
-}
-.mcm-admin .ident-coral-theme .ident-hero-pin {
-  position: absolute;
-  right: 4px;
-  bottom: 0;
-  width: 40px;
-  height: 40px;
-  filter: drop-shadow(0 6px 10px rgba(232, 84, 63, 0.35));
-}
-/* The All numbers hero's badge per its own mockup: a solid circle carrying
-   the phone icon itself, with a white ring standing in for the map pin's
-   plain center dot on this page — rather than the SVG teardrop the other
-   "Numbers" section pages use. */
-.mcm-admin .ident-coral-theme .ident-hero-pin--circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 3px solid #ffffff;
-}
-.mcm-admin .ident-coral-theme .ident-hero-pin--circle svg {
-  width: 16px;
-  height: 16px;
-  color: #ffffff;
-}
-
-/* Every page in this theme (Identities & addresses, all five Numbers-list
-   views, Call coverage) keeps a plain flush head — just the eyebrow, title
-   and description, no floating gradient card, decorative icon or dots —
-   with the filter/tab bar beneath it on a grey surface instead of white. */
-.mcm-admin .ident-coral-theme .mcm-adminpage-head {
-  /* The base rule bottom-aligns the head's children (flex-end) — fine when
-     every page's description is the same length, but here it means a
-     one-line description (All numbers) sits lower than a two-line one
-     (Identities & addresses), since both blocks share the same bottom edge
-     and only the shorter one leaves room above itself. Top-aligning instead
-     pins the eyebrow to the same offset from the head's top on every page,
-     regardless of how many lines the description wraps to. */
-  align-items: flex-start;
-  padding-top: 22px;
-  /* Same 22px side gutter as the Integration pages' own head
-     (`.mcm-intpage-head`), and matched by `.mcm-adminpage-body` below, so
-     the title/eyebrow lines up with the container's left edge. */
-  padding-left: 22px;
-  padding-right: 22px;
-}
-/* Numbers' view tabs and search now render through `headerTabs`/`actions`
-   (see AdminPage) instead of further down the page, on the shared
-   `:has()` three-column grid (see the base rule above). The ident-theme
-   rule right above this pins the head to `align-items: flex-start` for its
-   plain two-line title heads — wrong here, where a single-line search box
-   and the centred filter need to sit level with the title's full height
-   instead of hanging from its top edge. */
-.mcm-admin .ident-coral-theme .mcm-adminpage-head:has(.mcm-adminpage-headtabs) {
-  align-items: center;
-}
-/* `.mcm-segmented`'s own base rule pins it to `align-self: flex-start`
-   (fine where it sits alone under a stats row) — as this grid's centred
-   column it only needs to fill the row, not hang from the top. */
-.mcm-admin .ident-coral-theme .mcm-adminpage-headtabs .mcm-segmented {
-  align-self: center;
-}
-/* `.mcm-segmented`'s own base rule reads its background/border off
-   `--surface-2`/`--line-2` — this theme redefines both to a rose tint for
-   its own pink accents elsewhere, which left the tab strip's container
-   pink instead of the neutral grey it reads as everywhere else `.mcm-
-   segmented` is used (e.g. CRM's own filter). Pinned back to the base
-   theme's neutral values here, scoped to this control only so the rest of
-   the section's intentional pink stays untouched. */
-.mcm-admin .ident-coral-theme .mcm-segmented {
-  position: relative;
-  background: #fafafa;
-  border-color: #efefef;
-  border-radius: 9999px;
-}
-.mcm-admin .ident-coral-theme .mcm-segmented button,
-.mcm-admin .ident-coral-theme .mcm-segmented > a {
-  position: relative;
-  z-index: 1;
-  border-radius: 9999px;
+  color: #6b7280;
+  box-shadow: 0 1px 3px rgba(17, 17, 17, 0.06);
+  cursor: pointer;
   transition:
-    color 0.22s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
-.mcm-admin .ident-coral-theme .mcm-segmented button.is-active,
-.mcm-admin .ident-coral-theme .mcm-segmented > a.is-active {
-  /* The sliding `.ident-segmented-indicator` (a sibling, z-index 0) now
-     supplies the pink fill — this stays transparent so the indicator
-     shows through, rather than the two backgrounds needing to be kept in
-     visual sync by hand. */
-  background: transparent;
-  color: #171717;
+.mcm-chat-iconbtn:hover,
+.mcm-chat-iconbtn[aria-expanded='true'],
+.mcm-chat-iconbtn[data-state='open'] {
+  border-color: #e50914;
+  color: #e50914;
+  background: #fff1f2;
+  box-shadow: 0 2px 6px rgba(229, 9, 20, 0.12);
 }
-/* Absolutely positioned by useSlidingTabIndicator (top-left 0,0 plus a
-   translate to the active tab's own offset) so it can animate that
-   translate on every tab switch instead of the old plain colour swap —
-   left/top themselves stay static, only `transform`/`width` move. */
-.mcm-admin .ident-coral-theme .ident-segmented-indicator {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 0;
-  border-radius: 9999px;
-  background: var(--accent-wash);
-  pointer-events: none;
-  transition:
-    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
-    width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-}
-/* The search bar sat as a flush, full-bleed strip with just a divider line —
-   not a container. Numbers/All, Call coverage, Identities and Addresses all
-   render this row through the same `filters` slot, so giving it a rounded
-   grey card here (instead of overriding four separate pages) reads it out
-   the same way everywhere at once. */
-.mcm-admin .ident-coral-theme .mcm-adminpage-bar {
-  /* Matched to the Identities & addresses / Call coverage reference: a
-     plain white card rather than the grey this used to share with them —
-     converging all four pages on the same white-card look instead of some
-     grey and some white. */
-  background: #ffffff;
-  /* Top margin so this card reads as its own element under the page head
-     instead of sitting flush against the title/description — it was
-     touching the head with no breathing room. No bottom margin: paired
-     with .mcm-adminpage-body's own 16px top padding, a bottom margin here
-     doubled the gap down to the table card (32px total) versus Identities &
-     addresses' single 16px gap between its own two stacked cards. */
-  margin: 16px 22px 0;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  border-radius: var(--r-lg);
-}
-/* The Numbers-list views' tab strip lives in the page body, not the filters
-   bar (unlike Call coverage's, which is a `filters` child) — this wrapper
-   gives it the same white card treatment as the bar above. */
-.mcm-admin .ident-coral-theme .ident-plain-navbar {
-  background: #ffffff;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  padding: 5px 14px;
-}
-.mcm-admin .ident-coral-theme .ident-plain-navbar .ptabstrip {
-  margin: 0 !important;
+.mcm-chat-iconbtn:active {
+  background: #fdd8db;
 }
 
-/* Call Coverage's filter row and tab strip now share the same white-card
-   look as .mcm-adminpage-bar/.ident-plain-navbar above (no override
-   needed), and its active tab uses the same filled-pill style as
-   Identities/All numbers rather than the underline this page briefly had —
-   the underline override has been removed so all four pages read as one
-   consistent format. Reverted the wider right padding tried here
-   previously too — it moved the badge further IN from the bar's own edge
-   than the table's own cell content sits from the table card's edge below
-   it, so the two containers' visible content stopped at different points
-   and read as misaligned even though their outer card edges already lined
-   up exactly (both are 22px insets off .mcm-adminpage-body). Left at the
-   bar's normal 14px padding, matching the table cells' ~12px, is what
-   actually lines the two up. */
+/* Keep the chat composer's border neutral on focus — no red ring/outline
+   leaking in from the theme's primary colour. The red the user sees isn't
+   the wrapper's own border (that's gray by default) — it's the browser's
+   native focus ring on the contenteditable Slate editor itself, which
+   `outline-0` alone doesn't reliably suppress in every browser. Kill it
+   specifically on the editable surface, in every focus state a browser
+   might use, without touching other composer children's own shadows. */
+.mcm-chat-composer [contenteditable],
+#slate-container [contenteditable],
+#slate-container {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.mcm-chat-composer [contenteditable]:focus,
+.mcm-chat-composer [contenteditable]:focus-visible,
+#slate-container [contenteditable]:focus,
+#slate-container [contenteditable]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+.mcm-chat-composer {
+  border-color: #e5e7eb !important;
+}
+.mcm-chat-composer:focus-within {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.04) !important;
+}

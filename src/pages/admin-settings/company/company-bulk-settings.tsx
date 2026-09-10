@@ -30,7 +30,15 @@
 
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle2, Info, MinusCircle, Users, XCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+  MinusCircle,
+  Search,
+  Users,
+  XCircle,
+} from 'lucide-react';
 
 import CustomSelect from '@/components/custom/custom-select';
 import Loader from '@/components/custom/loader';
@@ -39,6 +47,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { fetchAllPages } from '@/lib/fetch-all-pages';
 import { invalidateGlobalUsersDirectory } from '@/lib/invalidate-global-users-directory';
 import { handleAlert } from '@/lib/utils';
@@ -353,11 +362,25 @@ const CompanyBulkSettings = () => {
 
   return (
     <section className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-gray-200/15">
-      <div className="flex min-h-[65px] flex-col justify-center border-b border-gray-200 bg-white px-4 py-3">
+      <div className="flex items-center gap-1.5 px-4 pt-3">
         <p className="text-lg font-semibold text-gray-900">Apply to many people</p>
-        <p className="text-xs text-gray-500">
-          Set the same answer on everybody at once, instead of opening each person in turn.
-        </p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+            style={{
+              background: '#fdf7f5',
+              border: 'none',
+              color: '#000',
+              boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+            }}
+          >
+            Sets the same answer on everybody at once, instead of opening each person in turn.
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-3 sm:px-4">
@@ -512,6 +535,9 @@ const CompanyBulkSettings = () => {
               <div className="w-full sm:max-w-[280px]">
                 <Input
                   placeholder="Search by name, extension or email"
+                  className="mcm-pill-input pl-8"
+                  Icon={<Search className="h-3.5 w-3.5 text-gray-500" />}
+                  IconPosition="left-0 pl-3 inset-y-0"
                   value={search}
                   disabled={running}
                   onChange={(event) => setSearch(event.target.value)}
@@ -519,8 +545,9 @@ const CompanyBulkSettings = () => {
               </div>
               <Button
                 type="button"
-                variant="outline"
+                variant="dark"
                 size="sm"
+                className="rounded-full"
                 onClick={toggleAllVisible}
                 disabled={running || visible.length === 0}
               >
@@ -605,7 +632,7 @@ const CompanyBulkSettings = () => {
                 People are saved one at a time, so a long list takes a moment. Please leave this
                 page open until it finishes.
               </p>
-              <Button type="button" variant="primary" onClick={() => run()} disabled={!canRun}>
+              <Button type="button" variant="dark" onClick={() => run()} disabled={!canRun}>
                 {running
                   ? 'Applying...'
                   : `Apply to ${preview?.changed || 0} ${

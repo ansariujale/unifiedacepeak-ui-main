@@ -1,4 +1,5 @@
 import { SearchLine } from '@/assets/icons';
+import EmojiPicker from 'emoji-picker-react';
 import CustomAvatar from '@/components/custom/custom-avatar';
 import {
   Drawer,
@@ -12,18 +13,27 @@ import { useUser } from '@/hooks/use-user';
 import { demoAgentChats, demoAgentMessages } from './demo-data';
 import DateRangeMenu from '@/components/custom/date-range-menu';
 import moment from 'moment';
-import { Pin, CircleCheck, ArrowLeft, CircleAlert } from 'lucide-react';
+import {
+  Pin,
+  CircleCheck,
+  ArrowLeft,
+  CircleAlert,
+  Monitor,
+  Smile,
+  SendHorizontal,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AgentChat from './components/agent-chat';
 import VisitorProfile from './components/visitor-profile';
 
 type AgentChatTab = 'unassigned' | 'active' | 'missed' | 'resolved';
-type AgentChatDateRange = 'today' | '7_days' | '30_days';
+type AgentChatDateRange = 'all' | 'today' | '7_days' | '30_days';
 const AGENT_CHAT_REQUEST_ACCEPTED_EVENT = 'agent-chat:request-accepted';
 
 const AGENT_CHAT_TABS: AgentChatTab[] = ['unassigned', 'active', 'missed', 'resolved'];
 const AGENT_CHAT_DATE_OPTIONS: Array<{ label: string; value: AgentChatDateRange }> = [
+  { label: 'All', value: 'all' },
   { label: 'Today', value: 'today' },
   { label: 'Last 7 Days', value: '7_days' },
   { label: 'Last 30 Days', value: '30_days' },
@@ -72,6 +82,13 @@ const getSidebarRelativeTime = (dateString?: string) => {
 
 const getAgentChatDateRange = (range: AgentChatDateRange) => {
   const today = moment();
+  // "All" fetches everything up to today, so no start bound.
+  if (range === 'all') {
+    return {
+      start_date: today.clone().subtract(10, 'years').format('YYYY-MM-DD'),
+      end_date: today.format('YYYY-MM-DD'),
+    };
+  }
   const daysBack = range === '30_days' ? 29 : range === '7_days' ? 6 : 0;
 
   return {
@@ -81,6 +98,7 @@ const getAgentChatDateRange = (range: AgentChatDateRange) => {
 };
 
 const isTimestampWithinDateRange = (dateString: string | undefined, range: AgentChatDateRange) => {
+  if (range === 'all') return true;
   if (!dateString) return false;
   const date = moment(dateString);
   if (!date.isValid()) return false;
@@ -173,61 +191,6 @@ const tabOptions: Array<{ label: string; value: AgentChatTab }> = [
   { label: 'Missed', value: 'missed' },
   { label: 'Resolved', value: 'resolved' },
 ];
-
-const sidebarTabStyles: Record<
-  AgentChatTab,
-  {
-    inactiveText: string;
-    activeText: string;
-    activeBg: string;
-    activeDecoration?: string;
-    inactiveBadgeBg: string;
-    inactiveBadgeText: string;
-    activeBadgeBg?: string;
-    activeBadgeText?: string;
-  }
-> = {
-  unassigned: {
-    inactiveText: 'text-muted-foreground',
-    activeText: 'text-ucass-orange',
-    activeBg: 'bg-white',
-    activeDecoration: 'shadow-sm',
-    inactiveBadgeBg: 'bg-muted',
-    inactiveBadgeText: 'text-muted-foreground',
-    activeBadgeBg: 'bg-ucass-orange/10',
-    activeBadgeText: 'text-ucass-orange',
-  },
-  active: {
-    inactiveText: 'text-muted-foreground',
-    activeText: 'text-white',
-    activeBg: 'bg-ucass-active',
-    activeDecoration: 'shadow-sm',
-    inactiveBadgeBg: 'bg-muted',
-    inactiveBadgeText: 'text-muted-foreground',
-    activeBadgeBg: 'bg-white/20',
-    activeBadgeText: 'text-white',
-  },
-  missed: {
-    inactiveText: 'text-muted-foreground',
-    activeText: 'text-destructive',
-    activeBg: 'bg-white',
-    activeDecoration: 'shadow-sm',
-    inactiveBadgeBg: 'bg-muted',
-    inactiveBadgeText: 'text-muted-foreground',
-    activeBadgeBg: 'bg-destructive/10',
-    activeBadgeText: 'text-destructive',
-  },
-  resolved: {
-    inactiveText: 'text-muted-foreground',
-    activeText: 'text-emerald-700',
-    activeBg: 'bg-white',
-    activeDecoration: 'shadow-sm ring-1 ring-emerald-200',
-    inactiveBadgeBg: 'bg-muted',
-    inactiveBadgeText: 'text-muted-foreground',
-    activeBadgeBg: 'bg-emerald-100',
-    activeBadgeText: 'text-emerald-700',
-  },
-};
 
 const getPinnedAtTimestampForUser = (chat: any, userId?: string) => {
   if (!chat || !userId) return 0;
@@ -507,14 +470,38 @@ const ListItem = ({
  * sample, so the socket layer has nothing to load and the composer has nowhere
  * to send. It says so rather than offering a box that silently does nothing.
  */
-const DemoConversation = ({ chat, onBack }: { chat: any; onBack: () => void }) => {
+const DemoConversation = ({
+  chat,
+  onBack,
+  onOpenProfile,
+  onResolve,
+}: {
+  chat: any;
+  onBack: () => void;
+  onOpenProfile?: () => void;
+  onResolve?: () => void;
+}) => {
   const visitor = chat?.users?.[0];
   const name = `${visitor?.first_name || ''} ${visitor?.last_name || ''}`.trim() || 'Visitor';
   const messages = demoAgentMessages(chat?.chatId || '');
+  const [draft, setDraft] = useState('');
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const device = String(chat?.metaData?.device || '').trim();
+  const domain = (() => {
+    const page = String(chat?.metaData?.page || '').trim();
+    if (!page) return '';
+    try {
+      return new URL(page).host.replace(/^www\./, '');
+    } catch {
+      return page.replace(/^https?:\/\//, '').split('/')[0];
+    }
+  })();
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col bg-white">
-      <div className="flex min-h-16 shrink-0 items-center gap-3 border-b border-gray-200 px-4">
+      {/* Header: identity + device/domain subline on the left, actions on the
+          right — mirroring the richer conversation layout. */}
+      <div className="flex min-h-16 shrink-0 items-center gap-3 border-b border-gray-200 px-4 py-3">
         <button
           type="button"
           onClick={onBack}
@@ -525,45 +512,119 @@ const DemoConversation = ({ chat, onBack }: { chat: any; onBack: () => void }) =
         </button>
         <CustomAvatar name={name} size="38" />
         <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-gray-900">{name}</div>
-          <div className="truncate text-xs text-gray-500">Web chat visitor</div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              title="View visitor profile"
+              className="truncate text-sm font-semibold text-gray-900 transition-colors hover:text-primary hover:underline"
+            >
+              {name}
+            </button>
+            <span className="shrink-0 rounded-md border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-gray-500">
+              Demo
+            </span>
+          </div>
+          <div className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-gray-500">
+            {device ? <Monitor className="h-3.5 w-3.5 shrink-0" /> : null}
+            <span className="truncate">
+              {device}
+              {device && domain ? '  |  ' : ''}
+              {domain}
+            </span>
+          </div>
         </div>
-        <span className="ml-auto inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-amber-700">
-          Demo data
-        </span>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={onResolve}
+            title="Mark this conversation resolved"
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-[13px] font-semibold text-white transition-colors hover:brightness-110"
+          >
+            <CircleCheck className="h-4 w-4" />
+            Resolve
+          </button>
+        </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto bg-[#fcfcfd] p-4">
+      {/* Messages: a flat log — sender + time above each bordered bubble. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-white p-4">
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex w-full ${message.fromVisitor ? 'justify-start' : 'justify-end'}`}
+            className={`flex w-full flex-col ${message.fromVisitor ? 'items-start' : 'items-end'}`}
           >
-            <div className="max-w-[78%]">
-              <div
-                className={`rounded-2xl px-3 py-2 text-[13px] leading-5 ${
-                  message.fromVisitor
-                    ? 'bg-white text-gray-800 shadow-[0_1px_2px_rgba(17,17,17,0.06)]'
-                    : 'bg-red-50 text-gray-900'
-                }`}
-              >
-                {message.text}
-              </div>
-              <div
-                className={`mt-1 text-[10.5px] text-gray-400 ${
-                  message.fromVisitor ? 'text-left' : 'text-right'
-                }`}
-              >
-                {message.at}
-              </div>
+            <div className="mb-1 flex items-baseline gap-2">
+              <span className="text-[13px] font-semibold text-gray-900">
+                {message.fromVisitor ? name : 'You'}
+              </span>
+              <span className="text-[11px] text-gray-400">{message.at}</span>
+            </div>
+            <div
+              className={`max-w-[78%] rounded-xl px-3 py-2 text-[13px] leading-5 shadow-[0_1px_2px_rgba(17,17,17,0.04)] ${
+                message.fromVisitor
+                  ? 'border border-gray-200 bg-white text-gray-800'
+                  : 'bg-primary text-white'
+              }`}
+            >
+              {message.text}
             </div>
           </div>
         ))}
       </div>
 
+      {/* Composer styled like the live one, but inert on a sample. */}
       <div className="shrink-0 border-t border-gray-200 p-3">
-        <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-center text-[12.5px] text-gray-400">
-          This is a sample conversation — replying is disabled.
+        <div className="flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 focus-within:border-primary">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                setDraft('');
+              }
+            }}
+            placeholder="Type a message…"
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-gray-900 outline-none placeholder:text-gray-400"
+          />
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setEmojiOpen((v) => !v)}
+              className={`flex h-7 w-7 items-center justify-center rounded-full hover:text-gray-600 ${
+                emojiOpen ? 'text-primary' : 'text-gray-400'
+              }`}
+              aria-label="Emoji"
+              aria-expanded={emojiOpen}
+            >
+              <Smile className="h-4.5 w-4.5" />
+            </button>
+            {emojiOpen ? (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setEmojiOpen(false)} aria-hidden />
+                <div className="absolute bottom-10 right-0 z-50 overflow-hidden rounded-lg shadow-xl">
+                  <EmojiPicker
+                    lazyLoadEmojis
+                    searchDisabled={false}
+                    previewConfig={{ showPreview: false }}
+                    height={300}
+                    width={300}
+                    onEmojiClick={(data: any) => setDraft((prev) => prev + (data?.emoji || ''))}
+                  />
+                </div>
+              </>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={() => setDraft('')}
+            disabled={!draft.trim()}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-white transition-opacity disabled:opacity-40"
+            aria-label="Send"
+          >
+            <SendHorizontal className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
@@ -578,6 +639,7 @@ const SidebarContent = ({
   isCompactLayout,
   onDemoChatSelect,
   selectedDemoChatId,
+  resolvedDemoIds = [],
 }: {
   activeTab: AgentChatTab;
   setActiveTab: (tab: AgentChatTab) => void;
@@ -588,6 +650,8 @@ const SidebarContent = ({
       behind it, so the page handles it rather than the socket layer. */
   onDemoChatSelect?: (chat: any) => void;
   selectedDemoChatId?: string;
+  /** Demo chats the agent has "Resolved" — moved to the Resolved tab. */
+  resolvedDemoIds?: string[];
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [dateRange, setDateRange] = useState<AgentChatDateRange>('today');
@@ -744,6 +808,19 @@ const SidebarContent = ({
         dateRange,
       ),
     );
+    // With no real chats or requests, the queue shows samples — so the KPI
+    // tiles count the demo data (minus anything the agent has resolved).
+    if (source.length === 0 && aiRequests.length === 0) {
+      const resolvedSet = new Set(resolvedDemoIds);
+      const open = (t: AgentChatTab) =>
+        demoAgentChats(t).filter((c) => !resolvedSet.has(c.chatId)).length;
+      return {
+        unassigned: open('unassigned'),
+        active: open('active'),
+        missed: open('missed'),
+        resolved: resolvedDemoIds.length,
+      };
+    }
     return {
       unassigned: aiRequests.filter((r: any) => r?.status === 'pending').length,
       active: source.filter((chat: any) => !chat?.isEnded).length,
@@ -752,7 +829,7 @@ const SidebarContent = ({
         dateFilteredAiRequests.filter((r: any) => r?.status === 'abandoned').length,
       resolved: source.filter((chat: any) => chat?.isEnded).length,
     };
-  }, [visibleChats, aiChatRequests, user?.uuid, dateRange]);
+  }, [visibleChats, aiChatRequests, user?.uuid, dateRange, resolvedDemoIds]);
 
   const filteredPendingRequests = useMemo(() => {
     if (activeTab !== 'unassigned' && activeTab !== 'missed') return [];
@@ -831,11 +908,20 @@ const SidebarContent = ({
     [groupList, filteredPendingRequests.length],
   );
 
-  /* Samples for whichever tab is showing, only while it has nothing real. */
-  const demoChats = useMemo(
-    () => (emptyMessenger ? demoAgentChats(activeTab) : []),
-    [emptyMessenger, activeTab],
-  );
+  /* Samples for whichever tab is showing, only while it has nothing real.
+     Resolved samples move out of their original tab into "Resolved". */
+  const demoChats = useMemo(() => {
+    if (!emptyMessenger) return [];
+    const resolvedSet = new Set(resolvedDemoIds);
+    if (activeTab === 'resolved') {
+      return [
+        ...demoAgentChats('unassigned'),
+        ...demoAgentChats('active'),
+        ...demoAgentChats('missed'),
+      ].filter((c) => resolvedSet.has(c.chatId));
+    }
+    return demoAgentChats(activeTab).filter((c) => !resolvedSet.has(c.chatId));
+  }, [emptyMessenger, activeTab, resolvedDemoIds]);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -876,7 +962,7 @@ const SidebarContent = ({
 
   return (
     <div className="w-full h-full bg-white">
-      <div className="flex items-center justify-between gap-2 px-[14px] py-3 border-b border-gray-200">
+      <div className="flex items-center justify-between gap-2 px-[14px] py-3">
         <div
           className="w-full min-w-0 truncate text-[27px] font-normal italic leading-[1.5] text-gray-900"
           style={{ fontFamily: "'Instrument Serif', Georgia, 'Times New Roman', serif" }}
@@ -948,15 +1034,7 @@ const SidebarContent = ({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             {tabOptions.map((tab) => {
-              const count = tabCounts[tab.value as AgentChatTab] || 0;
               const isActive = activeTab === tab.value;
-              const styles = sidebarTabStyles[tab.value];
-              const badgeBg = isActive
-                ? styles.activeBadgeBg || styles.inactiveBadgeBg
-                : styles.inactiveBadgeBg;
-              const badgeText = isActive
-                ? styles.activeBadgeText || styles.inactiveBadgeText
-                : styles.inactiveBadgeText;
 
               return (
                 <button
@@ -982,18 +1060,7 @@ const SidebarContent = ({
                     });
                   }}
                 >
-                  <span className="inline-flex items-center justify-center gap-0.5 whitespace-nowrap">
-                    <span>{tab.label}</span>
-                    {count > 0 && (
-                      <span
-                        className={`inline-flex h-[16px] min-w-[16px] shrink-0 items-center justify-center rounded-full px-1 text-[9px] font-bold ${
-                          isActive ? 'bg-white/20 text-white' : `${badgeBg} ${badgeText}`
-                        }`}
-                      >
-                        {count}
-                      </span>
-                    )}
-                  </span>
+                  <span className="whitespace-nowrap">{tab.label}</span>
                 </button>
               );
             })}
@@ -1108,6 +1175,9 @@ const AgentChatMessenger = () => {
   );
   const [selectedPendingRequestId, setSelectedPendingRequestId] = useState<string>('');
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
+  // The right-hand profile panel is closed by default and opened on demand by
+  // the conversation's Profile button — no separate drawer on wide screens.
+  const [showProfile, setShowProfile] = useState(false);
   const [isCompactLayout, setIsCompactLayout] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 1280 : false,
   );
@@ -1188,9 +1258,22 @@ const AgentChatMessenger = () => {
   /* The sample conversation currently open, if any. Cleared whenever a real
      chat is selected, so the two can never both be showing. */
   const [demoChat, setDemoChat] = useState<any>(null);
+  // Demo chats the agent has resolved via the Resolve button — drives the
+  // Resolved KPI tile and moves the sample into the Resolved tab.
+  const [resolvedDemoIds, setResolvedDemoIds] = useState<string[]>([]);
   useEffect(() => {
     if (activeChatId) setDemoChat(null);
   }, [activeChatId]);
+
+  const handleResolveDemo = useCallback(
+    (chatId: string) => {
+      if (!chatId) return;
+      setResolvedDemoIds((ids) => (ids.includes(chatId) ? ids : [...ids, chatId]));
+      setDemoChat(null);
+      setActiveTab('resolved');
+    },
+    [setActiveTab],
+  );
 
   const handleBackToChatList = useCallback(() => {
     setSelectedPendingRequestId('');
@@ -1225,13 +1308,21 @@ const AgentChatMessenger = () => {
           isCompactLayout={isCompactLayout}
           onDemoChatSelect={setDemoChat}
           selectedDemoChatId={demoChat?.chatId}
+          resolvedDemoIds={resolvedDemoIds}
         />
       </section>
       <section
         className={`${activeChatId || demoChat ? 'block' : 'hidden lg:block'} h-full min-h-0 w-full min-w-0 flex-1 bg-white`}
       >
         {demoChat ? (
-          <DemoConversation chat={demoChat} onBack={() => setDemoChat(null)} />
+          <DemoConversation
+            chat={demoChat}
+            onBack={() => setDemoChat(null)}
+            onOpenProfile={() =>
+              isCompactLayout ? setIsProfileDrawerOpen(true) : setShowProfile((v) => !v)
+            }
+            onResolve={() => handleResolveDemo(demoChat?.chatId)}
+          />
         ) : (
         <AgentChat
           chatId={activeChatId}
@@ -1256,11 +1347,14 @@ const AgentChatMessenger = () => {
         />
         )}
       </section>
-      <VisitorProfile
-        activeChatId={demoChat?.chatId || activeChatId}
-        chat={demoChat || selectedChat}
-        currentUserId={user?.uuid}
-      />
+      {showProfile ? (
+        <VisitorProfile
+          activeChatId={demoChat?.chatId || activeChatId}
+          chat={demoChat || selectedChat}
+          currentUserId={user?.uuid}
+          onClose={() => setShowProfile(false)}
+        />
+      ) : null}
       {isCompactLayout ? (
         <Drawer direction="right" open={isProfileDrawerOpen} onOpenChange={setIsProfileDrawerOpen}>
           <DrawerContent className="w-full max-w-none p-0 sm:w-[22rem] sm:max-w-[22rem]">
@@ -1283,8 +1377,8 @@ const AgentChatMessenger = () => {
             </DrawerHeader>
             <div className="h-[calc(100vh-56px)]">
               <VisitorProfile
-                activeChatId={activeChatId}
-                chat={selectedChat}
+                activeChatId={demoChat?.chatId || activeChatId}
+                chat={demoChat || selectedChat}
                 currentUserId={user?.uuid}
                 asDrawerContent
               />

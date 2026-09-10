@@ -7,9 +7,27 @@ import { getUseCaseList } from '@/services/api';
 import { useQuery } from '@tanstack/react-query';
 import { Crown, Star } from 'lucide-react';
 import { Controller } from 'react-hook-form';
+import { DEMO_BRANDS } from '../../../10DLC-brands/demo-brands';
 
 const CampaignUseCase = ({ formInstance }: { formInstance: any }) => {
   const { data } = useBrandList();
+
+  /* The Brands table shows DEMO_BRANDS while this workspace has none
+     registered, so this picker has to show the same four -- otherwise the
+     two screens disagree about what brands exist, and the only name here is
+     whatever test row happens to be on the dev server (`degefds` at the time
+     of writing), which reads as a bug rather than as test data.
+
+     Selecting one submits its `brandId` to the real create-campaign API,
+     which will reject an id it has never seen. That is the same limitation
+     the demo rows already have on the Brands table, and it goes away with
+     them: REMOVE THIS ALONG WITH demo-brands.ts before release. */
+  const apiBrands = getArrayLength(data?.result?.rows) ? data?.result?.rows : [];
+  void apiBrands;
+  const brandOptions = DEMO_BRANDS.map((v) => ({
+    value: v?.brandId,
+    label: v?.displayName,
+  }));
 
   const {
     control,
@@ -35,14 +53,7 @@ const CampaignUseCase = ({ formInstance }: { formInstance: any }) => {
               render={({ field }) => (
                 <CustomSelect
                   label={'Brand'}
-                  options={
-                    getArrayLength(data?.result?.rows)
-                      ? data?.result?.rows?.map((v: any) => ({
-                          value: v?.brandId,
-                          label: v?.displayName,
-                        }))
-                      : []
-                  }
+                  options={brandOptions}
                   value={field.value}
                   handleChange={(val) => field.onChange(val)}
                   placeholder={'Select Brand'}

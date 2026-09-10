@@ -86,6 +86,36 @@ const Sidebar = ({
     selectedChannelType?.number ||
     '';
 
+  // Website and All Channels carry their own header (the same one the Chat
+  // tab uses — see `ChatPageHeader`), so they render full-bleed instead of
+  // sitting inside `PageSidebarLayout`'s generic bar. Everything else
+  // (WhatsApp, Instagram, Facebook, Telegram) keeps that shared frame.
+  if (chatType === 'captain') {
+    return (
+      <CaptainChats
+        setSelectedChat={setSelectedChat}
+        selectedChat={selectedChat}
+        isCompactLayout={isCompactLayout}
+        handleChatType={handleChatType}
+        setselectedChannelType={setselectedChannelType}
+        allowedOmniChannels={allowedOmniChannels}
+      />
+    );
+  }
+
+  if (chatType === 'all_channels') {
+    return (
+      <AllChannelsChats
+        setSelectedChat={setSelectedChat}
+        selectedChat={selectedChat}
+        isCompactLayout={isCompactLayout}
+        handleChatType={handleChatType}
+        setselectedChannelType={setselectedChannelType}
+        allowedOmniChannels={allowedOmniChannels}
+      />
+    );
+  }
+
   return (
     <PageSidebarLayout
       headerCustomClass={
@@ -275,12 +305,8 @@ const Sidebar = ({
             {chatType === 'website' && (
               <WebsiteChats setSelectedChat={setSelectedChat} selectedChat={selectedChat} isCompactLayout={isCompactLayout} />
             )}
-            {chatType === 'captain' && (
-              <CaptainChats setSelectedChat={setSelectedChat} selectedChat={selectedChat} isCompactLayout={isCompactLayout} />
-            )}
-            {chatType === 'all_channels' && (
-              <AllChannelsChats setSelectedChat={setSelectedChat} selectedChat={selectedChat} isCompactLayout={isCompactLayout} />
-            )}
+            {/* 'captain' and 'all_channels' return earlier with their own
+                full-bleed header — see above. */}
           </div>
           {showCreateChatModal === 'direct' && (
             <SideDrawer

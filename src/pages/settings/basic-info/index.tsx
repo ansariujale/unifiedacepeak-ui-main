@@ -67,6 +67,7 @@ const BasicInfoSettings = () => {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { isDirty },
   } = methods;
 
@@ -89,6 +90,13 @@ const BasicInfoSettings = () => {
       invalidateGlobalUsersDirectory(queryClient);
       setLoader(false);
       setIsEditing(false);
+      /* react-hook-form's isDirty tracks against the values the form was
+         last reset with, not against what's currently saved — a
+         successful save doesn't clear it on its own, so this banner kept
+         showing "unsaved changes" right next to the success toast.
+         Re-baselining against the just-saved values (unchanged, so
+         nothing on screen moves) is what actually clears isDirty. */
+      reset(watch(), { keepValues: true });
     },
   });
 
@@ -247,19 +255,37 @@ const BasicInfoSettings = () => {
             line-height: 41px;
             color: #171717;
           }
+          .acepeak-profile [data-slot='button'] {
+            border-radius: 9999px !important;
+          }
+          /* Matches the Numbers page's own coral eyebrow (mcm-page.css's
+             .ident-coral-theme .mcm-adminpage-eyebrow) without pulling in
+             that whole theme class — reusing mcm-adminpage-eyebrow for its
+             family/case/tracking, only the 4 properties that variant
+             changes are restated here, scoped to this page. */
+          .acepeak-profile .mcm-adminpage-eyebrow {
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 18px;
+            color: #DC2626;
+          }
           /* Info-tooltip popovers on this page. Rendered through a portal, so
              they land outside .acepeak-profile in the real DOM — this class is
              what reaches them instead of ancestor scoping. Unique enough to the
              page's own markup that it never matches a tooltip anywhere else.
-             Capped to a narrow column so the description wraps into a short
-             paragraph (a handful of words per line) instead of one long row. */
+             No max-width: the earlier narrow-column cap forced short text onto
+             multiple half-empty lines instead of just fitting on one — sizing
+             purely to content (via fit-content, and text-wrap: normal instead
+             of the shared TooltipContent's own text-balance, which breaks
+             lines short and uneven on purpose) lets it use exactly the width
+             each tooltip's own text actually needs. */
           .acepeak-tooltip-content {
             background: #fdf7f5 !important;
             color: #000 !important;
             border: none !important;
-            width: max-content !important;
-            max-width: 340px !important;
+            width: 395px !important;
             white-space: normal !important;
+            text-wrap: normal !important;
             line-height: 1.5 !important;
             box-shadow: 0 6px 20px rgba(17, 17, 17, 0.18) !important;
           }
@@ -285,11 +311,23 @@ const BasicInfoSettings = () => {
           .acepeak-profile .rounded-lg {
             box-shadow: none !important;
           }
-          /* Identity / Workplace / Contact get a very light gray fill so they
-             read as distinct cards against the page, while the fields inside
-             them (below) stay white so they don't blend into it. */
+          /* Identity / Workplace / Contact merge into a single card, and
+             that card is now also attached flush to the profile-summary
+             row above it (that row's own bottom border, added in the JSX,
+             is the only divider between them) — so each .mcm-fsec section
+             becomes a plain padded row with no card look of its own, and
+             a divider line replaces the gap that used to separate them.
+             Purely visual: BasicInformation itself, and every other caller
+             of it (the admin People screen, templates, etc.), is
+             untouched. */
           .acepeak-profile .mcm-fsec {
-            background: #F8F9FA !important;
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+          }
+          .acepeak-profile .mcm-fsec + .mcm-fsec {
+            margin-top: 0 !important;
+            border-top: 1px solid #E5E7EB;
           }
           /* The Location field is read-only on this page, and the shared
              stylesheet's disabled-select gray is close enough to the card's
@@ -369,11 +407,26 @@ const BasicInfoSettings = () => {
             background: #2b2b2b !important;
             border-color: #2b2b2b !important;
           }
-          /* Edit Profile / Save / Cancel read smaller and squarer than the
-             app's default "sm" button. */
+          /* mcm-page.css resets every plain button's border to 0 (border-
+             width, not just colour) — invisible on Save/Edit since they're
+             solid-filled, but it left Cancel with no visible edge at all
+             since it has no fill of its own. Restated as a full shorthand
+             (not border-color alone) since width is what was actually
+             zeroed. */
+          .acepeak-profile .acepeak-cancel-btn {
+            border: 1px solid #D1D5DB !important;
+            color: #374151 !important;
+            background: #fff !important;
+          }
+          .acepeak-profile .acepeak-cancel-btn:hover {
+            background: #F9FAFB !important;
+            border-color: #9CA3AF !important;
+          }
+          /* Edit Profile / Save / Cancel read smaller than the app's default
+             "sm" button. */
           .acepeak-profile .acepeak-profile-actionbtn {
             font-size: 11.5px !important;
-            border-radius: 6px !important;
+            border-radius: 9999px !important;
           }
           /* "How your calls reach you" becomes its own card in the right rail
              instead of a section stacked under the form — kept visually
@@ -384,7 +437,7 @@ const BasicInfoSettings = () => {
             padding: 16px;
             border: 1px solid #E5E7EB;
             border-radius: 12px;
-            background: #FFF1F2;
+            background: #fff;
             gap: 12px;
           }
           /* The real cause of the misalignment: this column is
@@ -426,14 +479,15 @@ const BasicInfoSettings = () => {
             gap: 8px;
           }
           .acepeak-profile .mcm-setupguide-action {
-            color: var(--ap-primary) !important;
-            border-color: #FECDD3 !important;
-            background: #FFE4E6 !important;
+            color: #fff !important;
+            border-color: #000 !important;
+            background: #000 !important;
+            border-radius: 9999px !important;
           }
           .acepeak-profile .mcm-setupguide-action:hover {
-            color: var(--ap-primary-hover) !important;
-            background: #FECDD3 !important;
-            border-color: #FDA4AF !important;
+            color: #fff !important;
+            background: #1a1a1a !important;
+            border-color: #1a1a1a !important;
           }
           .acepeak-profile .mcm-setupguide-action svg {
             color: inherit !important;
@@ -450,8 +504,9 @@ const BasicInfoSettings = () => {
           }
         `}</style>
         {/* <Breadcrumb breadcrumbs={breadcrumbData} /> */}
-        <div className="flex h-[65px] min-h-0 shrink-0 items-center justify-between gap-2 overflow-hidden px-4 py-3 border-b border-gray-200 bg-white">
+        <div className="flex min-h-[65px] shrink-0 items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 bg-white">
           <div>
+            <p className="mcm-adminpage-eyebrow">My Account</p>
             <div className="flex items-center gap-1.5">
               <p className="acepeak-page-title text-gray-900 font-semibold text-xl">Basic Info</p>
               <Tooltip open={showHeaderHint || undefined}>
@@ -464,7 +519,7 @@ const BasicInfoSettings = () => {
                     <Info className="h-3.5 w-3.5" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="acepeak-tooltip-content" side="right" align="center">
+                <TooltipContent className="acepeak-tooltip-content" side="right" align="center" textWrap="pretty">
                   Your name, job title and photo are visible to colleagues across the console.
                 </TooltipContent>
               </Tooltip>
@@ -481,7 +536,8 @@ const BasicInfoSettings = () => {
               <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-6">
                 {/* LEFT — profile summary, then the form itself */}
                 <div className="flex min-w-0 flex-col gap-4">
-                  <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-gray-200 bg-white px-5 py-3.5">
+                  <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 px-5 py-3.5">
                     <div className="flex min-w-0 items-center gap-5">
                       <div className="w-20 h-20 shrink-0">
                         <div className="relative w-20 h-20 rounded-full">
@@ -573,7 +629,7 @@ const BasicInfoSettings = () => {
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="acepeak-profile-actionbtn"
+                              className="acepeak-cancel-btn acepeak-profile-actionbtn"
                               onClick={handleCancelEdit}
                             >
                               Cancel
@@ -632,6 +688,7 @@ const BasicInfoSettings = () => {
                         />
                       </form>
                     </FormProvider>
+                  </div>
                   </div>
 
                   {isDirty && (

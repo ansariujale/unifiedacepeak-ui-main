@@ -71,7 +71,7 @@ const HowCallsReachYou = ({ callForwarding, greetings }: HowCallsReachYouProps) 
               <Info className="h-3.5 w-3.5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent className="acepeak-tooltip-content" side="right" align="center">
+          <TooltipContent className="acepeak-tooltip-content" side="right" align="center" textWrap="pretty">
             Where a call comes in, and what happens if you do not pick it up.
           </TooltipContent>
         </Tooltip>

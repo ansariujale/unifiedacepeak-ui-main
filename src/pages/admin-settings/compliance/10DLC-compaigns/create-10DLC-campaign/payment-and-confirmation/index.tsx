@@ -2,52 +2,50 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Controller, UseFormReturn } from 'react-hook-form';
 
+/* The line items. Kept as data so the table renders one row per entry --
+   the two extra tiers the original had commented out drop straight back in
+   here rather than as another copied block of divs. */
+const CHARGES = [{ item: 'Application fee', price: '$20.00 upfront, one-off' }];
+
 const PaymentAndConfirmation = ({ formInstance }: { formInstance: UseFormReturn<any> }) => {
   const {
     control,
     formState: { errors },
   } = formInstance;
-  console.log('🚀 ~ PaymentAndConfirmation ~ errors:', errors);
 
   return (
-    <div className="w-full min-h-0 flex flex-col gap-3 overflow-y-auto pr-1">
-      <div className="w-full flex flex-col gap-2 1">
-        <h3 className="text-shadow-gray-900 flex items-center gap-1.5 font-medium ">
-          Payment and Confirmation
-        </h3>
-        <p className="text-gray-500 text-sm">
-          All campaigns have a 3 month minimum commitment. This means that we bill monthly, for a
-          minimum of 3 months. At the end of the initial 3 month period, campaigns renew on a
-          month-to-month basis.
-        </p>
-        <p className="text-gray-500 text-sm">
-          You will initially be charged up to $20 once you've submitted your application. This is
-          non-refundable.
-        </p>
-      </div>
-      <div className="w-full flex flex-col gap-3 mb-4 mt-2">
-        <div className="grid w-full gap-2 sm:grid-cols-2">
-          <div className="w-full pb-2 border-b border-gray-200 text-sm text-gray-900">Item</div>
-          <div className="w-full pb-2 border-b border-gray-200 text-sm text-gray-900">Price</div>
+    <div className="dlc-wizard-step-scroll h-full w-full overflow-auto pr-1">
+      {/* The same mono section rules as the step before it. This was a bold
+          heading over two grey paragraphs and a table made of bordered divs
+          -- three different type treatments and no shared rhythm with the
+          rest of the wizard. */}
+      <div className="dlc-wizard-section">What you are agreeing to</div>
+      <p className="mcm-modal-lede dlc-terms-para">
+        All campaigns have a three month minimum commitment: billing is monthly, for at least three
+        months. After that initial period the campaign renews month to month.
+      </p>
+      <p className="mcm-modal-lede dlc-terms-para">
+        You are charged up to $20 as soon as the application is submitted. That charge is
+        non-refundable.
+      </p>
+
+      <div className="dlc-wizard-section">Charges</div>
+      <div className="dlc-costtable">
+        <div className="dlc-costrow dlc-costrow--head">
+          <span>Item</span>
+          <span>Price</span>
         </div>
-        <div className="grid w-full gap-2 sm:grid-cols-2">
-          <div className="w-full pb-2 border-b border-gray-200 text-sm text-gray-900">
-            Application fee
+        {CHARGES.map(({ item, price }) => (
+          <div className="dlc-costrow" key={item}>
+            <span>{item}</span>
+            <span className="dlc-costrow-price">{price}</span>
           </div>
-          <div className="w-full pb-2 border-b border-gray-200 text-sm text-gray-900">
-            $20.00 upfront one-off
-          </div>
-        </div>
-        {/* <div className="w-full flex  gap-2">
-          <div className="w-full pb-2 border-b border-gray-200 text-sm text-gray-900">Campaign - first 3 months once</div>
-          <div className="w-full pb-2 border-b border-gray-200 text-sm text-gray-900">$30.00 upfront one-off</div>
-        </div>
-        <div className="w-full flex  gap-2">
-          <div className="w-full pb-2 border-b border-gray-200 text-sm text-gray-900">Campaign - recurring fee after first 3 months</div>
-          <div className="w-full pb-2 border-b border-gray-200 text-sm text-gray-900">$10.00 per month</div>
-        </div> */}
+        ))}
       </div>
-      <div className="flex items-start gap-2 sm:items-center">
+
+      <div className="dlc-wizard-section">Confirmation</div>
+      {/* The whole row is the target, not just the 16px box. */}
+      <label className="dlc-agree" htmlFor="payment_terms">
         <Controller
           name="payment_terms"
           control={control}
@@ -56,9 +54,9 @@ const PaymentAndConfirmation = ({ formInstance }: { formInstance: UseFormReturn<
           )}
         />
         <Label htmlFor="payment_terms">I agree with the payment terms above.</Label>
-      </div>
+      </label>
       {errors?.payment_terms && (
-        <div className="text-red-500 text-sm">{`${errors?.payment_terms?.message}`}</div>
+        <p className="dlc-wizard-blocked">{`${errors?.payment_terms?.message}`}</p>
       )}
     </div>
   );

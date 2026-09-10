@@ -116,7 +116,7 @@ const CompanySettingsCard = () => {
         </div>
         <Button
           type="button"
-          variant="outline"
+          variant="dark"
           className="rounded-xl"
           onClick={() => navigate(COMPANY_RULES_PATH)}
         >
@@ -139,7 +139,7 @@ const CompanySettingsCard = () => {
           {rows.map((row) => (
             <div
               key={row.label}
-              className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3"
+              className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 p-3"
             >
               <div className="flex min-w-0 items-start gap-2">
                 <span className="mt-0.5 text-primary">{row.icon}</span>
@@ -151,7 +151,7 @@ const CompanySettingsCard = () => {
               {/* Whether staff may override is the half admins forget, so it is
                   shown next to each rule rather than only inside the editor. */}
               <span
-                className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                className={`shrink-0 rounded-full px-2.5 py-1.5 text-[11px] font-semibold ${
                   row.staffMayChange ? 'bg-gray-100 text-gray-600' : 'bg-slate-200 text-slate-600'
                 }`}
               >

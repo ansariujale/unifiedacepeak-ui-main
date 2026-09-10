@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { SettingCard, SettingRow } from '@/components/mcm/setting-card';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, ScrollText, Voicemail } from 'lucide-react';
+import { Info, KeyRound, ScrollText, Voicemail } from 'lucide-react';
 
 import Loader from '@/components/custom/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { handleAlert } from '@/lib/utils';
 import {
   COMPANY_DEFAULTS_QUERY_KEY,
@@ -226,24 +227,37 @@ const CompanyVoicemail = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-full w-full items-center justify-center py-10">
+      <div className="flex w-full items-center justify-center py-10">
         <Loader />
       </div>
     );
   }
 
   return (
-    <section className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-gray-200/15">
-      <div className="flex min-h-[65px] flex-col justify-center border-b border-gray-200 bg-white px-4 py-3">
+    <section className="company-voicemail-page flex w-full flex-col bg-gray-200/15">
+      <div className="flex items-center gap-1.5 px-4 pt-3">
         <p className="text-lg font-semibold text-gray-900">Voicemail</p>
-        <p className="text-xs text-gray-500">
-          The voicemail settings the company starts people on, and whether a person may change them
-          on their own phone.
-        </p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+            style={{
+              background: '#fdf7f5',
+              border: 'none',
+              color: '#000',
+              boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+            }}
+          >
+            The company's default voicemail setup, and whether people can change it themselves.
+          </TooltipContent>
+        </Tooltip>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-3 sm:px-4">
-        <div className="mx-auto flex w-full max-w-[1040px] min-h-0 flex-col gap-4">
+      <div className="px-3 pt-3 pb-3 sm:px-4">
+        <div className="mx-auto flex w-full max-w-[1040px] flex-col gap-4">
           {isError && (
             <div className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-center">
               <p className="text-sm font-semibold text-gray-900">
@@ -274,7 +288,7 @@ const CompanyVoicemail = () => {
           >
             <SettingRow
               label="Let people change their own voicemail settings"
-              description="Left off, a person cannot open their own voicemail settings and an admin changes them instead. Be aware of the second reading: a new person set up from this record then also starts with the PIN and the voicemail-to-text choice below, so everyone set up that way shares one PIN."
+              description="Off, only an admin can change a person's voicemail settings. New people set up from this record also start with its PIN and voicemail-to-text choice below — so they share one PIN."
               control={
                 <Switch
                   checked={form.override}
@@ -308,7 +322,7 @@ const CompanyVoicemail = () => {
             title="Voicemail PIN"
             description="The PIN a person would type to hear their messages from a phone."
             status="coming-soon"
-            note="Coming soon. Mailboxes do not ask for a PIN yet, so this one guards nothing today. Anyone you set up from these settings still receives it, so choose a PIN you are happy to share."
+            note="Coming soon — not enforced yet, but anyone set up here still receives this PIN."
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
@@ -322,9 +336,8 @@ const CompanyVoicemail = () => {
                   onChange={(event) => updateForm({ pin: event.target.value })}
                 />
                 <p className="text-xs text-gray-500">
-                  Digits only, {PIN_MIN_LENGTH} to {PIN_MAX_LENGTH} of them. Six or more is the
-                  usual advice, because a four-digit PIN can be guessed by hand. Blank means no
-                  company PIN is recorded.
+                  {PIN_MIN_LENGTH}–{PIN_MAX_LENGTH} digits. 6+ recommended — 4 digits can be
+                  guessed by hand. Blank means no company PIN.
                 </p>
               </div>
             </div>
@@ -336,7 +349,7 @@ const CompanyVoicemail = () => {
             </p>
             <Button
               type="button"
-              variant="primary"
+              variant="dark"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

@@ -7,8 +7,10 @@ import { AISettingConfig, getAISettingConfig, getChatAgentList } from '@/service
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import { handleAlert } from '@/lib/utils';
+import { Info } from 'lucide-react';
+import CustomTooltip from '@/components/custom/custom-tooltip';
+import '@/components/mcm/mcm-page.css';
 
 const socialMediaList = [
   { key: 'facebook', apiName: 'FACEBOOK', name: 'Facebook', icon: 'Messanger' },
@@ -19,8 +21,12 @@ const socialMediaList = [
   { key: 'chat_assistant', apiName: 'CHAT_ASSISTANT', name: 'Chat Assistant', icon: 'Chat2' },
 ];
 
+/* Which channels can run unattended. This was an inline
+   `filter(key !== 'on_call' && key !== 'chat_assistant')` buried in the
+   markup, so the rule was invisible unless you read the JSX. */
+const BOT_CHANNELS = new Set(['facebook', 'whatsapp', 'telegram', 'instagram']);
+
 function AISettings() {
-  const navigate = useNavigate();
   const [initialized, setInitialized] = useState(false);
 
   const {
@@ -128,45 +134,86 @@ function AISettings() {
   };
 
   return (
-    <form className="w-full bg-gray-200/15 flex flex-col">
-      <div className="flex items-center justify-between p-3 border-b border-gray-200 min-h-[65px] bg-white">
-        <div>
-          <div className="text-gray-900 font-semibold text-lg flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => navigate('/admin-settings/knowledge/ai-agent')}
-              className="text-slate-500 transition-colors hover:text-primary"
-            >
-              AI Agents
-            </button>
-            <div className="-rotate-90 text-gray-800">
-              <Icon name="ChevronIcon" className="w-5 h-5" />
+    <form className="mcm-intpage w-full min-w-0 bg-gray-200/15 flex flex-col overflow-hidden">
+      {/* The console's page head: a red mono eyebrow naming the area, then
+          the title. It was a breadcrumb with both halves at the same weight
+          and the description crammed against the far right edge, where it
+          read as an unrelated caption rather than as this page's own
+          subtitle. The description now rides the info tip beside the title,
+          as on the compliance pages. The eyebrow is a label, not a link --
+          the sidebar is the way back. */}
+      <div className="mcm-intpage-head">
+        <div className="mcm-intpage-eyebrow">AI Tools</div>
+
+        <div className="mcm-intpage-headrow">
+          <div className="mcm-intpage-headleft">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1>Settings</h1>
+              <CustomTooltip
+                side="bottom"
+                sideOffset={10}
+                className="mcm-tooltip-info"
+                text="Which agent answers on each channel. AI Bot replies on its own; AI Assistance suggests replies to a human."
+              >
+                <Info className="mcm-intpage-info" />
+              </CustomTooltip>
             </div>
-            <span className="text-primary text-md">Settings</span>
           </div>
         </div>
-        <p className="text-gray-500 text-xs">
-          How your AI tools behave — models, limits and what they may act on.
-        </p>
       </div>
 
-      <div className="w-full h-full flex  flex-col sm:flex-row gap-4 justify-between p-3">
-        <div className="h-full bg-white rounded-lg border p-4 w-full">
-          <h3 className="font-semibold text-gray-800 mb-3">AI Bot</h3>
-          <div className="flex flex-col gap-1 h-[calc(100vh-14rem)] overflow-y-auto pr-1">
-            <div className="flex flex-col gap-2">
-              {socialMediaList
-                ?.filter((media) => media.key !== 'on_call' && media.key !== 'chat_assistant')
-                ?.map((media) => (
-                  <div
-                    key={media.key}
-                    className="flex items-center justify-between border rounded-md p-2 hover:bg-gray-50 transition"
-                  >
-                    <div className="flex items-center gap-2 text-gray-800">
-                      <Icon name={media.icon as IconType} className="w-5 h-5 text-gray-700" />
-                      <span className="font-medium">{media.name}</span>
-                    </div>
+      <div className="mcm-intbody w-full p-3 overflow-y-auto">
+        {/* One row per channel, one column per mode.
 
+            It was two cards side by side, each listing the same six channels
+            -- so every channel name was printed twice, the two cards could
+            never be the same height, and the question you actually come here
+            with ("what happens on WhatsApp?") needed you to find WhatsApp in
+            one card, remember it, then find it again in the other. Turned on
+            its side, that question is one row. */}
+        <div className="mcm-aitable">
+          <div className="mcm-aitable-head">
+            <span>Channel</span>
+            <span className="mcm-aitable-col">
+              AI Bot
+              <CustomTooltip
+                side="top"
+                sideOffset={8}
+                className="mcm-tooltip-info"
+                text="Answers the customer directly, with no one in the loop."
+              >
+                <Info className="mcm-intpage-info" />
+              </CustomTooltip>
+            </span>
+            <span className="mcm-aitable-col">
+              AI Assistance
+              <CustomTooltip
+                side="top"
+                sideOffset={8}
+                className="mcm-tooltip-info"
+                text="Drafts a reply for an agent to review before it is sent."
+              >
+                <Info className="mcm-intpage-info" />
+              </CustomTooltip>
+            </span>
+          </div>
+
+          {socialMediaList?.map((media) => {
+            const botSupported = BOT_CHANNELS.has(media.key);
+
+            return (
+              <div key={media.key} className="mcm-aitable-row">
+                <span className="mcm-airow-name">
+                  <Icon name={media.icon as IconType} className="mcm-aiicon" />
+                  {media.name}
+                </span>
+
+                {/* On call and Chat Assistant have no unattended mode. The
+                    old layout expressed that by leaving them out of the left
+                    card entirely, which reads as an oversight; saying so is
+                    clearer than a gap. */}
+                <div className="mcm-aitable-cell" data-label="AI Bot">
+                  {botSupported ? (
                     <Controller
                       control={control}
                       name={`aiBot.${media.key}`}
@@ -174,9 +221,10 @@ function AISettings() {
                         <CustomSelect
                           {...field}
                           isClearable
+                          inputClass="mcm-select"
                           isLoading={isLoading}
                           placeholder="Select agent"
-                          className="max-w-60"
+                          className="mcm-aiselect"
                           handleChange={(value) => {
                             field.onChange(value);
                             handleAgentUpdate('AI_BOT', media, value);
@@ -186,79 +234,39 @@ function AISettings() {
                         />
                       )}
                     />
-                  </div>
-                ))}
-            </div>
-            {/* <h3 className="font-semibold text-gray-800 mb-3 mt-4">Add your own AI Model</h3>
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5 w-full">
-                <p className="text-sm leading-none font-semibold text-gray-800">Select model</p>
-                <CustomSelect
-                  value={customModel}
-                  isLoading={isLoading}
-                  placeholder="Select model"
-                  className=""
-                  handleChange={(value) => {
-                    setCustomModel(value);
-                  }}
-                  options={modelOptions || []}
-                />
-              </div>
-              {customModel?.value === 'openai' && (
-                <>
-                  <Input
-                    value={secretKey}
-                    onChange={(e) => setSecretKey(e.target.value)}
-                    placeholder="Enter secret key"
-                    label="Secret Key"
-                    type="password"
-                    autoComplete="false"
-                  />
-                  <Button variant="outline" className="w-full max-w-32">
-                    Save
-                  </Button>
-                </>
-              )}
-            </div> */}
-          </div>
-        </div>
-
-        <div className="h-full bg-white rounded-lg border p-4 w-full">
-          <h3 className="font-semibold text-gray-800 mb-3">AI Assistance</h3>
-          <div className="flex flex-col gap-2 h-[calc(100vh-14rem)] overflow-y-auto pr-1">
-            {socialMediaList.map((media) => (
-              <div
-                key={media?.key}
-                className="flex items-center justify-between border rounded-md p-2 hover:bg-gray-50 transition"
-              >
-                <div className="flex items-center gap-2 text-gray-800">
-                  <Icon name={media?.icon as IconType} className="w-5 h-5 text-gray-700" />
-                  <span className="font-medium">{media?.name}</span>
+                  ) : (
+                    <span className="mcm-aitable-na">Not available</span>
+                  )}
                 </div>
 
-                <Controller
-                  control={control}
-                  name={`aiAssistance.${media?.key}`}
-                  render={({ field }) => (
-                    <CustomSelect
-                      {...field}
-                      isClearable
-                      isLoading={isLoading}
-                      placeholder="Select agent"
-                      className="max-w-60"
-                      handleChange={(value) => {
-                        field.onChange(value);
-                        handleAgentUpdate('AI_ASSISTANT', media, value);
-                      }}
-                      options={allAgents || []}
-                      error={(errors?.aiAssistance as any)?.[media.key]?.message}
-                    />
-                  )}
-                />
+                <div className="mcm-aitable-cell" data-label="AI Assistance">
+                  <Controller
+                    control={control}
+                    name={`aiAssistance.${media.key}`}
+                    render={({ field }) => (
+                      <CustomSelect
+                        {...field}
+                        isClearable
+                        inputClass="mcm-select"
+                        isLoading={isLoading}
+                        placeholder="Select agent"
+                        className="mcm-aiselect"
+                        handleChange={(value) => {
+                          field.onChange(value);
+                          handleAgentUpdate('AI_ASSISTANT', media, value);
+                        }}
+                        options={allAgents || []}
+                        error={(errors?.aiAssistance as any)?.[media.key]?.message}
+                      />
+                    )}
+                  />
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
+
+        <p className="mcm-aifoot">Changes save as soon as you pick an agent.</p>
       </div>
     </form>
   );

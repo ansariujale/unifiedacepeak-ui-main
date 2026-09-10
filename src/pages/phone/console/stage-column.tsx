@@ -1166,6 +1166,7 @@ const StageColumn = ({
               className="dial-box"
               style={{
                 position: 'relative',
+                marginTop: 20,
                 ...(isDialError ? { borderColor: '#e50914', background: '#fff5f5' } : {}),
               }}
             >

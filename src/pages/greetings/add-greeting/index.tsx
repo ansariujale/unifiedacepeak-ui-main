@@ -32,6 +32,7 @@ const AddGreeting: FC<IAddgreetings> = ({
   greetingType,
   refetch = () => {},
   isRefetchable = true,
+  selectMenuPortalTarget,
 }) => {
   const { user } = useUser();
   const queryClient = useQueryClient();
@@ -59,7 +60,11 @@ const AddGreeting: FC<IAddgreetings> = ({
     mutationFn: mediaUploadUrl,
   });
 
-  const { mutate: mutateTextToSpeech, isPending: isPendingTextToSpeech } = useMutation({
+  const {
+    mutate: mutateTextToSpeech,
+    mutateAsync: mutateTextToSpeechAsync,
+    isPending: isPendingTextToSpeech,
+  } = useMutation({
     mutationFn: textToSpeech,
     onSuccess: (data) => {
       const base64Data = data?.data?.data?.result;
@@ -104,15 +109,38 @@ const AddGreeting: FC<IAddgreetings> = ({
     try {
       setShowLoader(true);
       const greetingFile = WatchUploadFile;
+      /* The Type picker only exists for the "all types" caller (Media
+         Files), and it's hidden on the Text to Speech tab along with Name
+         — so there's nothing for the person to have chosen there. Falls
+         back to "greeting", the common case for a spoken clip, rather
+         than sending an empty type. Choose File / Record are unaffected:
+         they still read whatever was actually picked in that dropdown. */
       const greetType =
         greetingType === 'all'
-          ? watch('greeting_type')?.value?.toLowerCase()
+          ? (watch('greeting_type')?.value?.toLowerCase() ??
+            (activeTab === TAB_CONSTANT.TEXT_TO_SPEECH ? 'greeting' : undefined))
           : greetingType?.toLowerCase();
 
       let fileToUpload: File | null = null;
 
       if (activeTab === TAB_CONSTANT.TEXT_TO_SPEECH) {
         fileToUpload = WatchTextFile;
+        /* Text to Speech no longer has its own "generate" button — Upload
+           now does both steps for this tab in one click: convert the text
+           to audio first (same request the old button made), then upload
+           that result exactly as before. */
+        if (!fileToUpload) {
+          const ttsResponse = await mutateTextToSpeechAsync({
+            text: watch('textToSpeech'),
+            locale: watch('textToSpeechLocale')?.value,
+            short_name: watch('textToSpeechVoice')?.value || '',
+          });
+          const base64Data = ttsResponse?.data?.data?.result;
+          if (base64Data) {
+            fileToUpload = createFileFromBase64(base64Data);
+            setValue('textFile', fileToUpload);
+          }
+        }
       } else if (greetingFile) {
         fileToUpload = greetingFile;
       }
@@ -152,8 +180,14 @@ const AddGreeting: FC<IAddgreetings> = ({
           await audioContext.close().catch(() => undefined);
         }
 
+        /* Name isn't shown on the Text to Speech tab (it never needed a
+           file/name up front the way Choose File does), so it falls back
+           to the text that was actually converted — still a real,
+           readable name, just not one the user had to type twice. */
+        const fallbackName =
+          activeTab === TAB_CONSTANT.TEXT_TO_SPEECH ? watch('textToSpeech') : '';
         const greetingPayload = {
-          name: sanitizePlainTextInput(watch('greeting'), 50),
+          name: sanitizePlainTextInput(watch('greeting') || fallbackName, 50),
           filename: file_name,
           size: fileToUpload.size || 0,
           duration: duration,
@@ -189,7 +223,11 @@ const AddGreeting: FC<IAddgreetings> = ({
   return (
     <div className="w-full flex flex-col gap-2 justify-between h-full">
       <FormProvider {...formInstance}>
-        <div className="flex flex-col gap-4 pr-1 flex-1 overflow-y-auto">
+        <div
+          className={`flex flex-col gap-4 pr-1 flex-1 ${
+            activeTab === TAB_CONSTANT.TEXT_TO_SPEECH ? 'max-h-[65vh] overflow-y-auto' : ''
+          }`}
+        >
           <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col w-full">
             <div className="border-b border-gray-200 w-full mb-4">
               <TabsList className="flex text-sm font-semibold text-center p-0 rounded-none h-auto justify-start bg-transparent gap-6">
@@ -218,34 +256,48 @@ const AddGreeting: FC<IAddgreetings> = ({
               <TextToSpeech
                 handleTextToSpeech={handleTextToSpeech}
                 isPendingTextToSpeech={isPendingTextToSpeech}
+                selectMenuPortalTarget={selectMenuPortalTarget}
               />
             </TabsContent>
           </Tabs>
 
-          <Input
-            {...register('greeting')}
-            label={'Name'}
-            placeholder={'Enter Name'}
-            maxLength={50}
-          />
-          {greetingType === 'all' ? (
-            <CustomSelect
-              label={'Type'}
-              options={options}
-              handleChange={(value) => {
-                setValue('greeting_type', value, { shouldValidate: true });
-              }}
-              value={watch(`greeting_type`)}
-              placeholder="Select Type"
-            />
-          ) : (
-            <Input label="Type" value={capitalizeFirstLetter(greetingType)} disabled={true} />
+          {/* Name/Type only matter once there's something to actually save —
+              for Choose File and Record that's true from the moment the tab
+              opens. Text to Speech never shows them at all, even once
+              audio has been generated — Upload treats that result as a
+              complete greeting on its own (name comes from the text that
+              was converted, type from this row's own context), the same
+              way it already treats a chosen file on Choose File without
+              asking for anything extra there either. */}
+          {activeTab !== TAB_CONSTANT.TEXT_TO_SPEECH && (
+            <>
+              <Input
+                {...register('greeting')}
+                label={'Name'}
+                placeholder={'Enter Name'}
+                maxLength={50}
+              />
+              {greetingType === 'all' ? (
+                <CustomSelect
+                  label={'Type'}
+                  options={options}
+                  handleChange={(value) => {
+                    setValue('greeting_type', value, { shouldValidate: true });
+                  }}
+                  value={watch(`greeting_type`)}
+                  placeholder="Select Type"
+                />
+              ) : (
+                <Input label="Type" value={capitalizeFirstLetter(greetingType)} disabled={true} />
+              )}
+            </>
           )}
         </div>
         <div className="flex justify-end gap-2 pt-4 mt-auto">
           <Button
             variant="transparent"
             type="button"
+            className="rounded-full"
             onClick={() => {
               reset();
               setDrawerState(false);
@@ -254,13 +306,17 @@ const AddGreeting: FC<IAddgreetings> = ({
             Cancel
           </Button>
           <Button
-            variant={'outline'}
+            variant={'dark'}
             type="button"
+            className="rounded-full"
             onClick={handleCreateGreeting}
             disabled={
               showLoader ||
-              !watch('greeting') ||
-              (activeTab === TAB_CONSTANT.TEXT_TO_SPEECH ? !WatchTextFile : !WatchUploadFile)
+              (activeTab === TAB_CONSTANT.TEXT_TO_SPEECH
+                ? !watch('textToSpeech') ||
+                  !watch('textToSpeechLocale') ||
+                  !watch('textToSpeechVoice')
+                : !watch('greeting') || !WatchUploadFile)
             }
           >
             {isPending || isPendingCreateGreeting || showLoader ? (

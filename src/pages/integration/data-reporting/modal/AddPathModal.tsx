@@ -53,37 +53,31 @@ const AddPathModal = ({
   };
 
   return (
-    <form
-      className="h-full w-full flex flex-col gap-4 justify-between"
-      onSubmit={handleSubmit(onSubmit)}
-    >
-      <div className="flex flex-col gap-1.5  text-900/80 ">
-        <div className="font-semibold truncate text-md flex items-center justify-between">
+    <form className="mcm-modal" onSubmit={handleSubmit(onSubmit)}>
+      {/* Title and the one-line explanation sit together in a header band,
+          separated from the fields by a rule. They used to be two loose
+          paragraphs stacked above the first label, so the dialog opened with
+          three lines of grey text and no structure. */}
+      <div className="mcm-modal-head">
+        <div className="mcm-modal-titlerow">
           {/* The dialog is reused for editing and still said "Add". */}
-          {isEdit ? 'Edit webhook' : 'New webhook'}
-          <div
-            onClick={handleClose}
-            className="cursor-pointer text-gray-500 ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
-          >
+          <h2 className="mcm-modal-title">{isEdit ? 'Edit webhook' : 'New webhook'}</h2>
+          <button type="button" onClick={handleClose} className="mcm-modal-close" aria-label="Close">
             <CloseIcon className="w-3 h-3" />
-          </div>
+          </button>
         </div>
+        <p className="mcm-modal-lede">
+          We&apos;ll send a POST request to your URL each time the event you pick happens.
+        </p>
       </div>
       {/* asChild: DialogDescription renders a <p>, and the fields inside it
           are <div>s — invalid nesting that React reported as a hydration
           error. This keeps the aria wiring while emitting a <div>. */}
       <DialogDescription asChild>
-        <div className="flex flex-col gap-4 bg-white">
+        <div className="mcm-modal-body">
           {/* The select's own border and outline are pinned by !important
               rules (ours in a layer, react-select's emotion class outside
               one), so the accent focus ring is drawn on this wrapper. */}
-          {/* The dialog opened with two bare labels and no statement of what
-              it does. One line, so it is clear before you fill anything in. */}
-          <p className="mcm-modal-lede">
-            We&apos;ll send a POST request to your URL each time the event you pick
-            happens.
-          </p>
-
           <div className="w-full mcm-selectring">
             <CustomSelect
               inputClass="mcm-select"
@@ -115,7 +109,7 @@ const AddPathModal = ({
           </div>
         </div>
       </DialogDescription>
-      <div className="flex justify-end gap-2 w-full">
+      <div className="mcm-modal-foot">
         <Button variant={'transparent'} onClick={handleClose} type="button">
           Cancel
         </Button>

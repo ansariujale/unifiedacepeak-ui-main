@@ -104,7 +104,7 @@ const SettingPermission: FC<any> = ({ data }) => {
           note="Saved, but not used by any call yet — it only feeds opening hours once that's on."
           description="The country and clock everything else is measured against - opening hours, holidays, and the times shown in reports."
           aside={
-            <Button type="button" variant="outline" onClick={() => openModal('regionalModal')}>
+            <Button type="button" variant="dark" onClick={() => openModal('regionalModal')}>
               Change
             </Button>
           }
@@ -137,7 +137,7 @@ const SettingPermission: FC<any> = ({ data }) => {
           aside={
             <Button
               type="button"
-              variant="outline"
+              variant="dark"
               onClick={() => openModal('bussinessHoursModal')}
             >
               Change
@@ -165,7 +165,7 @@ const SettingPermission: FC<any> = ({ data }) => {
           aside={
             <Button
               type="button"
-              variant="outline"
+              variant="dark"
               onClick={() => openModal('automaticRecordingModal')}
             >
               Change
@@ -242,7 +242,7 @@ const SettingPermission: FC<any> = ({ data }) => {
           note="This one does reach the call: it is the number shown on the other person's phone."
           description="What shows on the other person's phone when somebody here calls out."
           aside={
-            <Button type="button" variant="outline" onClick={() => openModal('displayNumberModal')}>
+            <Button type="button" variant="dark" onClick={() => openModal('displayNumberModal')}>
               Change
             </Button>
           }
