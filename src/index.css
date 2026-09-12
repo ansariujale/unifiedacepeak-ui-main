@@ -397,6 +397,16 @@
     background-color: #e3e3e3;
   }
 
+  button,
+  input,
+  textarea,
+  select,
+  radio,
+  checkbox,
+  label {
+    font-family: var(--mcm-sans);
+  }
+
   input,
   textarea,
   select,

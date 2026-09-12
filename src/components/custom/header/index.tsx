@@ -426,15 +426,10 @@ const Header = () => {
 
                 @media (min-width: 768px) {
                   .hdr-quick-wrap {
-                    display: inline-flex; align-items: center;
-                    position: relative; width: 36px; height: 36px; flex: none;
+                    display: none;
                   }
                   .hdr-quick-toggle {
-                    display: inline-flex; align-items: center; justify-content: center;
-                    width: 38px; height: 38px; border-radius: 999px;
-                    background: #f3f4f6; color: #374151; cursor: pointer;
-                    transition: transform .3s cubic-bezier(.34,1.56,.64,1),
-                                background .15s ease, color .15s ease;
+                    display: none;
                   }
                   .hdr-quick-toggle:hover { background: #fee2e2; color: var(--foreground); }
                   .hdr-quick-toggle.on {
@@ -473,12 +468,29 @@ const Header = () => {
                 @media (prefers-reduced-motion: reduce) {
                   .hdr-quick-toggle, .hdr-quick > * { transition-duration: .01ms; }
                 }
+
+                .hdr-wallet-btn {
+                  background: #fbe9e9;
+                  border-color: #fcd5d5;
+                  color: #dc2626;
+                }
+                .hdr-wallet-btn:hover {
+                  background: #f8fafe !important;
+                  border-color: #e2e8f0 !important;
+                  color: #0f172a !important;
+                }
+                .hdr-wallet-btn:hover svg {
+                  color: #0f172a !important;
+                }
+                .hdr-wallet-btn:hover span {
+                  color: #0f172a !important;
+                }
               `}</style>
 
               <div className="hdr-quick-wrap">
                 <button
                   type="button"
-                  className={`hdr-quick-toggle ${isQuickMenuOpen ? 'on' : ''}`}
+                  className={`hdr-quick-toggle ${isQuickMenuOpen ? 'on' : ''} hidden`}
                   onClick={() => setIsQuickMenuOpen((prev) => !prev)}
                   aria-expanded={isQuickMenuOpen}
                   aria-label={isQuickMenuOpen ? 'Hide quick links' : 'Show quick links'}
@@ -622,21 +634,19 @@ const Header = () => {
               className={`${isMobileMenuOpen ? 'flex' : 'hidden'} w-full min-w-0 flex-wrap items-center gap-3 border-t border-gray-200 pt-3 md:order-5 md:flex md:w-auto md:shrink-0 md:flex-nowrap md:justify-end md:border-t-0 md:pt-0`}
             >
               {/* Wallet / Add Funds */}
-              {features?.plan_features?.billing?.action?.view ? (
-                <div className="flex items-center">
-                  <CustomTooltip text={'Add Funds'} side="bottom">
-                    <div
-                      className="group flex items-center gap-2 px-3.5 h-[38px] rounded-full border border-ucass-primary-200/70 bg-ucass-primary-100 transition-all hover:-translate-y-px cursor-pointer dark:border-primary/25 dark:bg-primary/10"
-                      {...getHeaderRouteHandlers(addFundsRoute)}
-                    >
-                      <Wallet className="w-4.5 h-4.5 text-primary group-hover:scale-110 transition-transform duration-300" />
-                      <span className="text-[13.5px] text-primary font-bold">
-                        {resolvedFundsDisplay}
-                      </span>
-                    </div>
-                  </CustomTooltip>
-                </div>
-              ) : null}
+              <div className="flex items-center">
+                <CustomTooltip text={'Add Funds'} side="bottom">
+                  <div
+                    className="hdr-wallet-btn group flex items-center gap-2 px-3.5 h-[38px] rounded-full border transition-all hover:-translate-y-px cursor-pointer"
+                    {...getHeaderRouteHandlers(addFundsRoute)}
+                  >
+                    <Wallet className="w-4.5 h-4.5 group-hover:scale-110 transition-transform duration-300" />
+                    <span className="text-[13.5px] font-bold">
+                      {resolvedFundsDisplay}
+                    </span>
+                  </div>
+                </CustomTooltip>
+              </div>
 
               {/* User Profile */}
               <div className="flex shrink-0 items-center rounded-full bg-gray-100 transition-all dark:bg-[#262626]">
