@@ -6,6 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
+import { Info, Loader2, Send, Users2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-user';
 import moment from 'moment';
 import { Label } from '@/components/ui/label';
@@ -171,16 +172,19 @@ const CreateDirectChat = ({
     }
   }
 
+  const messageLength = (watch('message') || '').length;
+
   return (
     <>
-      <div className="flex flex-col gap-1.5 text-gray-900">
-        <div className="font-semibold truncate text-md flex items-center justify-between min-h-11">
-          New Message
-        </div>
+      <div className="flex flex-col gap-0.5 border-b border-gray-100 pb-3 text-gray-900">
+        <div className="min-h-9 truncate text-base font-semibold">New Message</div>
+        <p className="text-xs font-normal text-gray-500">
+          Start a one-to-one conversation with a teammate.
+        </p>
       </div>
 
-      <div className="w-full flex flex-col gap-2 justify-between h-full">
-        <div className="flex flex-col h-[calc(100vh_-_10rem)] overflow-auto gap-4 pt-2">
+      <div className="w-full flex flex-col gap-2 justify-between h-full min-h-0">
+        <div className="flex flex-col min-h-0 overflow-auto gap-5 pt-3">
           <CustomSelect
             label={'Recipient'}
             options={userListing
@@ -205,25 +209,52 @@ const CreateDirectChat = ({
 
           <div className="flex flex-col gap-2.5 w-full">
             <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between">
-                <Label>{'Message'}</Label>
-                <div className="flex justify-end">
-                  {messageErrorMessage && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Label>{'Message'}</Label>
+                  <CustomTooltip
+                    side="bottom"
+                    align="start"
+                    className="max-w-64"
+                    text={
+                      <span className="text-xs leading-5">
+                        Conversation with one or more specific people is great for informal chat.
+                        For projects, team, or topic-based discussion, consider{' '}
+                        <span className="inline-flex items-center gap-1 cursor-pointer font-medium text-primary hover:underline">
+                          <Users2 className="h-3 w-3" />
+                          sending message to team.
+                        </span>
+                      </span>
+                    }
+                  >
+                    <span className="inline-flex items-center cursor-pointer text-gray-400 hover:text-primary">
+                      <Info className="h-3.5 w-3.5" />
+                    </span>
+                  </CustomTooltip>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {messageErrorMessage ? (
                     <CustomTooltip text={messageErrorMessage}>
                       <span className="inline-flex items-center cursor-pointer">
                         <NoticeLine className="w-3.5 h-3.5 text-red-500" />
                       </span>
                     </CustomTooltip>
-                  )}
+                  ) : null}
+                  <span className="text-[11px] font-medium text-gray-400">
+                    {messageLength > 0 ? `${messageLength} characters` : ''}
+                  </span>
                 </div>
               </div>
               <div
-                className={`flex items-center w-full rounded-xl ${messageErrorMessage ? 'border border-red-500' : 'border border-gray-300'}`}
+                className={`flex items-center w-full rounded-xl bg-white transition-colors focus-within:border-[var(--mcm-accent-edge)] focus-within:shadow-[0_0_0_3px_rgba(254,202,202,0.35)] ${
+                  messageErrorMessage ? 'border border-red-400' : 'border border-gray-200'
+                }`}
               >
                 <div className="flex min-h-[126px] justify-between w-full p-3 flex-col gap-2">
                   <textarea
                     rows={4}
-                    className="border-none outline-0 text-sm resize-none placeholder:text-gray-700"
+                    className="border-none outline-0 text-sm resize-none placeholder:text-gray-400"
+                    style={{ outline: 'none' }}
                     placeholder="Write a message..."
                     value={watch('message')}
                     onChange={(e) =>
@@ -245,27 +276,24 @@ const CreateDirectChat = ({
                 </div>
               </div>
             </div>
-
-            <div>
-              <p className="text-gray-900 text-sm">
-                Conversation with one or more specific people is great for informal chat. For
-                projects, team, or topic-based discussion, consider&nbsp;
-                <span className="text-primary cursor-pointer">sending message to team.</span>
-              </p>
-            </div>
           </div>
         </div>
 
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2 justify-end border-t border-gray-100 pt-3">
           <Button variant={'transparent'} type="button" onClick={handleClose}>
             Cancel
           </Button>
           <Button
-            variant={'outline'}
+            variant={'primary'}
             type="button"
             onClick={handleSubmit(handleSendMessage)}
             disabled={isSendingMessage}
           >
+            {isSendingMessage ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
             Send Message
           </Button>
         </div>

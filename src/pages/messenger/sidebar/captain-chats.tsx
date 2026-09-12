@@ -13,6 +13,10 @@ import { CHANNELS_ICON, ChatChannels } from '../constants';
 import ChatPageHeader from '../shared/chat-page-header';
 import ChatListRow from '../shared/chat-list-row';
 import { demoWebsiteChats } from '../demo-data';
+import DateRangeMenu from '@/components/custom/date-range-menu';
+import { handleDate } from '@/components/custom/date-dropdown/constant';
+
+const DATE_PRESETS = ['All', 'Today', 'Yesterday', 'Last 7 Days', 'This Month'];
 
 const CAPTAIN_API_BASE = '/captain-api/api/captain';
 
@@ -52,6 +56,7 @@ const CaptainChats = ({
 }) => {
   const { user } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('All');
 
   const { data: conversations = [], isLoading } = useQuery({
     queryKey: ['captainConversations', user?.uuid],
@@ -83,9 +88,20 @@ const CaptainChats = ({
 
   const filteredRows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) => (r.visitor_name || r.visitor_email || '').toLowerCase().includes(q));
-  }, [rows, searchQuery]);
+    const byName = q
+      ? rows.filter((r) => (r.visitor_name || r.visitor_email || '').toLowerCase().includes(q))
+      : rows;
+
+    if (dateFilter === 'All') return byName;
+    const { from, to } = handleDate(dateFilter);
+    if (!from || !to) return byName;
+    const rangeStart = new Date(`${from}T00:00:00`).getTime();
+    const rangeEnd = new Date(`${to}T23:59:59.999`).getTime();
+    return byName.filter((r) => {
+      const ts = r.last_message_at ? new Date(r.last_message_at).getTime() : NaN;
+      return Number.isFinite(ts) && ts >= rangeStart && ts <= rangeEnd;
+    });
+  }, [rows, searchQuery, dateFilter]);
 
   const filterMenu = handleChatType ? (
     <DropdownMenu>
@@ -94,12 +110,12 @@ const CaptainChats = ({
           <FilterIcon className="h-3.75 w-3.75" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 min-w-[200px]">
         {ChatChannels?.map((item: any, index: number) => (
           <DropdownMenuItem
             key={index}
             className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
-              item.value === 'captain' ? 'bg-gray-100' : ''
+              item.value === 'captain' ? 'bg-gray-100 text-gray-900' : ''
             }`}
             onClick={() => {
               handleChatType(item.value);
@@ -125,6 +141,15 @@ const CaptainChats = ({
     </DropdownMenu>
   ) : null;
 
+  const dateMenu = (
+    <DateRangeMenu
+      options={DATE_PRESETS.map((preset) => ({ label: preset, value: preset }))}
+      value={dateFilter}
+      onChange={setDateFilter}
+      label="Filter by date"
+    />
+  );
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col bg-white">
       <ChatPageHeader
@@ -132,7 +157,12 @@ const CaptainChats = ({
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search visitors…"
-        actions={filterMenu}
+        actions={
+          <>
+            {dateMenu}
+            {filterMenu}
+          </>
+        }
       />
 
       {isDemo ? (

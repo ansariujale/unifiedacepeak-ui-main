@@ -887,7 +887,9 @@
   }
 
   .epr-search-container input:focus {
-    border-color: var(--primary) !important;
+    border-color: var(--color-gray-400) !important;
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   .epr-btn {

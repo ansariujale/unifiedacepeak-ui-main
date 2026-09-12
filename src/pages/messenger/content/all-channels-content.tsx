@@ -3,6 +3,7 @@ import CaptainContent from './captain-content';
 import FacebookDemoContent from './facebook-demo-content';
 import InstagramDemoContent from './instagram-demo-content';
 import WhatsappDemoContent from './whatsapp-demo-content';
+import TelegramDemoContent from './telegram-demo-content';
 
 // Routes to whichever real content renderer matches the selected row's
 // origin — the actual internal Chat system for internal conversations, the
@@ -26,6 +27,10 @@ const AllChannelsContent = ({ selectedChat, onBackToList }: { selectedChat: any;
 
   if (selectedChat.__channelKind === 'whatsapp' && selectedChat.isDemo) {
     return <WhatsappDemoContent selectedChat={selectedChat} onBackToList={onBackToList} />;
+  }
+
+  if (selectedChat.__channelKind === 'telegram' && selectedChat.isDemo) {
+    return <TelegramDemoContent selectedChat={selectedChat} onBackToList={onBackToList} />;
   }
 
   return <Chat chatId={selectedChat.chatId} onBackToList={onBackToList} />;
