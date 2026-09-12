@@ -38,6 +38,8 @@ const COLOR_FIELDS: Array<{ key: keyof ChatWidgetColors; label: string }> = [
   { key: 'loader', label: 'Loader' },
 ];
 
+const PREVIEW_MODES = ['closed', 'open', 'chat'] as const;
+
 const ACCENT_SWATCHES = ['#2563eb', '#10b981', '#8b5cf6', '#db2777', '#f59e0b', '#111827'];
 const ACCENT_COLOR_FIELDS = [
   'headerBackground',
@@ -578,7 +580,7 @@ const ChatAgentConfigureModal = ({
     <Dialog open={open} onOpenChange={closeModal}>
       <DialogContent
         showCloseButton={false}
-        className="h-[100dvh] max-h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none border-0 p-0 sm:h-[min(820px,94dvh)] sm:max-h-[94dvh] sm:w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-2rem)] sm:rounded-xl sm:border xl:max-w-7xl"
+        className="h-[100dvh] max-h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none border-0 p-0 sm:h-[min(760px,94dvh)] sm:max-h-[94dvh] sm:w-[calc(100vw-2rem)] sm:max-w-4xl sm:rounded-xl sm:border"
       >
         <div className="flex h-full min-h-0 flex-col bg-white text-[#07142f]">
           <div className="flex min-h-[60px] shrink-0 items-start justify-between gap-3 border-b border-gray-200 px-3 py-3 sm:min-h-[66px] sm:px-5 sm:py-4">
@@ -632,7 +634,7 @@ const ChatAgentConfigureModal = ({
                     <span
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-bold ${
                         complete
-                          ? 'border-emerald-500 bg-emerald-500 text-white'
+                          ? 'border-transparent bg-emerald-100 text-emerald-600'
                           : active
                             ? 'border-red-600 text-red-600'
                             : 'border-slate-300 text-slate-400'
@@ -732,10 +734,8 @@ const ChatAgentConfigureModal = ({
                       {COLOR_FIELDS.map((field) => {
                         const value = colors[field.key];
                         return (
-                          <label
-                            key={field.key}
-                            className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-3.5 transition-colors hover:border-red-200"
-                          >
+                          <label key={field.key} className="block">
+
                             <span className="text-[11px] font-bold uppercase tracking-[0.04em] text-neutral-400">
                               {field.label}
                             </span>
@@ -771,16 +771,24 @@ const ChatAgentConfigureModal = ({
 
                   <section className="min-w-0 xl:sticky xl:top-0 xl:self-start">
                     <div className="mb-3 flex justify-center">
-                      <div className="inline-flex w-full max-w-[320px] rounded-full border border-neutral-200 bg-[#fafafa] p-1">
-                        {(['closed', 'open', 'chat'] as const).map((mode) => (
+                      <div className="relative inline-flex w-full max-w-[320px] items-center gap-0.5 rounded-full border border-neutral-200 bg-neutral-100 p-1">
+                        <span
+                          aria-hidden="true"
+                          className="absolute top-1 bottom-1 rounded-full border border-neutral-200 bg-white shadow-[0_1px_4px_rgba(17,17,17,.18)] transition-all duration-200 ease-out"
+                          style={{
+                            left: `calc((100% / 3) * ${PREVIEW_MODES.indexOf(previewMode)} + 4px)`,
+                            width: 'calc(100% / 3 - 8px)',
+                          }}
+                        />
+                        {PREVIEW_MODES.map((mode) => (
                           <button
                             key={mode}
                             type="button"
                             onClick={() => setPreviewMode(mode)}
-                            className={`h-8 min-w-0 flex-1 rounded-full px-2 text-xs font-bold capitalize transition sm:px-4 sm:text-sm ${
+                            className={`relative z-10 h-8 min-w-0 flex-1 rounded-full px-2 text-xs font-semibold capitalize transition-colors sm:px-4 sm:text-sm ${
                               previewMode === mode
-                                ? 'bg-red-600 text-white shadow-sm'
-                                : 'text-slate-600 hover:text-slate-950'
+                                ? 'text-neutral-950'
+                                : 'text-neutral-500 hover:text-red-600'
                             }`}
                           >
                             {mode}
@@ -834,7 +842,12 @@ const ChatAgentConfigureModal = ({
                   <div className="mt-5">
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <p className="text-sm font-bold text-slate-700">Embed code</p>
-                      <Button type="button" variant="outline" className="h-8" onClick={copyScript}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-8 border-0 bg-transparent text-neutral-950 shadow-none hover:bg-transparent hover:text-red-600"
+                        onClick={copyScript}
+                      >
                         {copied ? (
                           <>
                             <Check className="h-4 w-4" />
@@ -865,6 +878,7 @@ const ChatAgentConfigureModal = ({
             <Button
               type="button"
               variant="outline"
+              className="rounded-full border-neutral-300 bg-white text-neutral-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
               onClick={() =>
                 activeStep === 'deploy' ? setActiveStep('design') : closeModal(false)
               }
@@ -875,6 +889,7 @@ const ChatAgentConfigureModal = ({
               <Button
                 type="button"
                 variant="primary"
+                className="rounded-full"
                 onClick={() => saveConfiguration({ goToDeploy: true })}
                 disabled={isSaving || isSavingDomain}
               >
@@ -884,6 +899,7 @@ const ChatAgentConfigureModal = ({
               <Button
                 type="button"
                 variant="primary"
+                className="rounded-full"
                 onClick={() => saveConfiguration({ closeAfterSave: true })}
                 disabled={isSaving || isSavingDomain}
               >

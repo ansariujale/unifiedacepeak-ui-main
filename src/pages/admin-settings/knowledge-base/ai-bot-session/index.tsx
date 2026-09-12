@@ -342,9 +342,7 @@ const ChannelPill = ({
   return (
     <span
       title={label}
-      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-        isCall ? 'bg-red-50 text-red-600' : 'bg-neutral-100 text-neutral-600'
-      }`}
+      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-600"
     >
       <Icon className="h-3.5 w-3.5" strokeWidth={2.5} />
     </span>

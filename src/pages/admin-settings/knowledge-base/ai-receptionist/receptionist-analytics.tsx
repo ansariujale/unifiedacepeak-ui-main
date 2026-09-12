@@ -416,24 +416,20 @@ function AnalyticsPanel({
     >
       {isLoading && <CardLoader dark={dark} />}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           {icon}
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h3 className={`text-[14px] font-bold ${dark ? 'text-white' : 'text-neutral-950'}`}>
-                {title}
-              </h3>
-              {tip ? <InfoTip text={tip} /> : null}
-            </div>
-            {subtitle ? (
-              <p className={`mt-1 text-xs ${dark ? 'text-white/60' : 'text-neutral-500'}`}>
-                {subtitle}
-              </p>
-            ) : null}
+          <div className="flex items-center gap-1.5">
+            <h3 className={`text-[14px] font-bold ${dark ? 'text-white' : 'text-neutral-950'}`}>
+              {title}
+            </h3>
+            {tip ? <InfoTip text={tip} /> : null}
           </div>
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
+      {subtitle ? (
+        <p className={`mt-1 text-xs ${dark ? 'text-white/60' : 'text-neutral-500'}`}>{subtitle}</p>
+      ) : null}
       {children}
     </div>
   );

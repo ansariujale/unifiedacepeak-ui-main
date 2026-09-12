@@ -259,18 +259,16 @@ function AnalyticsPanel({
     >
       {isLoading && <CardLoader />}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           {icon}
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-[14px] font-bold text-neutral-950">{title}</h3>
-              {tip ? <InfoTip text={tip} /> : null}
-            </div>
-            {subtitle ? <p className="mt-1 text-xs text-neutral-500">{subtitle}</p> : null}
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-[14px] font-bold text-neutral-950">{title}</h3>
+            {tip ? <InfoTip text={tip} /> : null}
           </div>
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
+      {subtitle ? <p className="mt-1 text-xs text-neutral-500">{subtitle}</p> : null}
       {children}
     </div>
   );
@@ -1593,7 +1591,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
               isLoading={isLoading}
               icon={<Users className="mt-0.5 h-4 w-4 text-red-600" />}
             >
-              <div className="mt-4 hidden grid-cols-[minmax(0,1fr)_112px_104px_104px_92px_96px_120px_120px_20px] items-center gap-4 rounded-t-md border-b border-neutral-200 bg-[#fafafa] px-2 py-2 text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-400 md:grid">
+              <div className="mt-4 hidden grid-cols-[minmax(160px,1.6fr)_100px_96px_96px_84px_88px_104px_104px_20px] items-center gap-3 rounded-t-md border-b border-neutral-200 bg-[#fafafa] px-2 py-2 text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-600 md:grid">
                 <span>Agent</span>
                 <span>Conversations</span>
                 <span>Resolution</span>
@@ -1610,7 +1608,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
                           : 'csat-desc',
                     )
                   }
-                  className="flex cursor-pointer items-center gap-1 text-[10px]! font-bold! uppercase tracking-[0.06em] text-neutral-400! transition-colors hover:text-neutral-700!"
+                  className="flex cursor-pointer items-center gap-1 text-[10px]! font-bold! uppercase tracking-[0.06em] text-neutral-600! transition-colors hover:text-neutral-900!"
                 >
                   CSAT
                   {breakdownSort === 'csat-desc' ? (
@@ -1649,18 +1647,26 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
                         analyticsContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       className={cx(
-                        'grid grid-cols-[minmax(0,1fr)_20px] items-center gap-4 rounded-lg px-2 py-2 transition-colors md:grid-cols-[minmax(0,1fr)_112px_104px_104px_92px_96px_120px_120px_20px]',
+                        'grid grid-cols-[minmax(0,1fr)_20px] items-center gap-3 rounded-lg px-2 py-2 transition-colors md:grid-cols-[minmax(160px,1.6fr)_100px_96px_96px_84px_88px_104px_104px_20px]',
                         isDraft ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:bg-neutral-50',
                       )}
                     >
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className="shrink-0">
+                        <div className="relative shrink-0 rounded-full ring-4 ring-neutral-100">
                           <CustomAvatar
                             name={agent.name}
                             size="36"
                             showPresence={false}
                             isActivityInfo={false}
                             textClass="text-xs"
+                          />
+                          {/* Live/paused at a glance, on the avatar itself, so the
+                              status reads before the name pill even loads. */}
+                          <span
+                            className={cx(
+                              'absolute bottom-0 right-0 h-3 w-3 translate-x-1/4 translate-y-1/4 rounded-full border-2 border-white',
+                              isDraft || isPaused || isDeleted ? 'bg-neutral-400' : 'bg-emerald-500',
+                            )}
                           />
                         </div>
                         <div className="min-w-0">
@@ -1671,11 +1677,6 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
                             {isDeleted && (
                               <span className="shrink-0 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
                                 Deleted
-                              </span>
-                            )}
-                            {isPaused && (
-                              <span className="shrink-0 rounded-full border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-[10px] font-bold text-neutral-500">
-                                Paused
                               </span>
                             )}
                             {isDraft && (
