@@ -197,6 +197,7 @@ const SiteInfo = ({ formInstance }: any) => {
                 className={`relative flex w-full gap-1 ${shouldShowState ? 'md:w-1/2' : 'md:w-full'}`}
               >
                 <CustomSelect
+                  inputClass="co-grey-select"
                   label={'Country'}
                   options={countryList?.map((country) => ({
                     label: country?.name || '',
@@ -213,6 +214,7 @@ const SiteInfo = ({ formInstance }: any) => {
               {shouldShowState && (
                 <div className="relative flex w-full gap-1 md:w-1/2">
                   <CustomSelect
+                    inputClass="co-grey-select"
                     label="State"
                     placeholder="Select State"
                     options={stateOptions || []}
@@ -237,6 +239,7 @@ const SiteInfo = ({ formInstance }: any) => {
               {shouldShowCity && (
                 <div className="relative flex w-full gap-1 md:w-1/2">
                   <CustomSelect
+                    inputClass="co-grey-select"
                     label="City"
                     placeholder="Select City"
                     options={cityOptions || []}
@@ -273,6 +276,7 @@ const SiteInfo = ({ formInstance }: any) => {
             <div className="flex w-full flex-col gap-4 md:flex-row">
               <div className="relative flex w-full gap-1 md:w-1/2">
                 <CustomSelect
+                  inputClass="co-grey-select"
                   label="Timezone"
                   placeholder="Select Timezone"
                   options={timezonesList?.map((item: any) => ({
@@ -289,6 +293,7 @@ const SiteInfo = ({ formInstance }: any) => {
               </div>
               <div className="relative flex w-full gap-1 md:w-1/2">
                 <CustomSelect
+                  inputClass="co-grey-select"
                   label="Outbound caller ID"
                   placeholder="Select caller ID"
                   options={CALLER_ID_OPTIONS}

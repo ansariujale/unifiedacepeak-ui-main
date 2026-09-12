@@ -439,6 +439,7 @@ const CompanyProfileFields = () => {
 
                         <div className="flex flex-col gap-1">
                           <CustomSelect
+                            inputClass="co-grey-select"
                             label="Kind of answer"
                             options={TYPE_OPTIONS}
                             value={selectedType(field.type)}

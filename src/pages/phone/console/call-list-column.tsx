@@ -216,7 +216,7 @@ type Props = {
   liveNumber?: string;
 };
 
-const CallListColumn = ({ selectedId, onSelect, source, onSourceChange, liveNumber }: Props) => {
+const CallListColumn = ({ selectedId, onSelect, source, onSourceChange }: Props) => {
   const { dial } = useConsoleDialer();
   const navigate = useNavigate();
   const [direction, setDirection] = useState<'all' | 'in' | 'out' | 'miss'>('all');

@@ -241,6 +241,7 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
             <Input label="Street address" placeholder="Enter address" {...register('address')} />
 
             <CustomSelect
+              inputClass="co-grey-select"
               label="Country"
               placeholder="Select country"
               options={COUNTRY_OPTIONS}
@@ -255,6 +256,7 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
             />
 
             <CustomSelect
+              inputClass="co-grey-select"
               label="State / region"
               placeholder={country ? 'Select state' : 'Choose a country first'}
               options={stateOptions}
@@ -267,6 +269,7 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
             />
 
             <CustomSelect
+              inputClass="co-grey-select"
               label="City"
               placeholder={stateValue ? 'Select city' : 'Choose a state first'}
               options={cityOptions}

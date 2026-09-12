@@ -438,7 +438,7 @@ const LocationManagement = () => {
               onChange={(event) => setSearch(event.target.value)}
               Icon={<Search className="h-3.5 w-3.5 text-gray-500" />}
               IconPosition="left-0 pl-3 inset-y-0"
-              className="mcm-pill-input pl-8"
+              className="mcm-pill-input rounded-full border border-transparent pl-8 shadow-none hover:border-gray-300 focus:border-gray-300 focus:ring-0"
             />
           </div>
           <div className="min-w-[220px] flex-1">
@@ -579,6 +579,7 @@ const LocationManagement = () => {
               <div className="flex flex-wrap items-end gap-3">
                 <div className="min-w-[260px]">
                   <CustomSelect
+                    inputClass="co-grey-select"
                     label="Set timezone to"
                     placeholder={
                       selectedRows.length ? 'Select a timezone' : 'Tick some locations first'

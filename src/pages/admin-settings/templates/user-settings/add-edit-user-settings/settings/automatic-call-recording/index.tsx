@@ -68,6 +68,7 @@ const AutomaticCallRecordingModal: FC<ModalProps> = ({ modalState, setModalState
 
                 {watch('settings.recording.automatic.enabled') && (
                   <CustomSelect
+                    inputClass="co-grey-select"
                     label={'Recording Direction'}
                     options={automaticRecordArr.map(({ value, label }) => ({ value, label }))}
                     value={watch('settings.recording.automatic')}

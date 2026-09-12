@@ -200,6 +200,7 @@ const ForwardingHolidaysActions = ({
         return (
           <CustomSelect
             className={`${extenstionClass} w-fit`}
+            inputClass="co-grey-select"
             placeholder="Select Value"
             menuPlacement="top"
             options={FORWARD_VALUE_OPTIONS[currentType] || []}
@@ -219,6 +220,7 @@ const ForwardingHolidaysActions = ({
         return (
           <CustomSelect
             className="w-fit"
+            inputClass="co-grey-select"
             placeholder="Select Value"
             menuPlacement="top"
             options={FORWARD_VALUE_OPTIONS[currentType] || []}
@@ -244,7 +246,7 @@ const ForwardingHolidaysActions = ({
           <div className="w-[190px] shrink-0">
             <CustomSelect
               className="w-full"
-              inputClass="select-type-plain"
+              inputClass="select-type-plain co-grey-select"
               options={options}
               label={typeLabel}
               placeholder="Select Type"

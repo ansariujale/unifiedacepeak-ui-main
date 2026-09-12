@@ -698,6 +698,11 @@
     gap: 3px !important;
     display: flex;
     flex-direction: column;
+    /* Menu-list padding is zeroed above, so the scrollbar otherwise sits
+       flush against the menu's own rounded corner and clips into the curve.
+       A little right padding gives it room to sit inside the border-radius
+       instead of overlapping it. */
+    padding-right: 4px !important;
   }
 
   .custom-react-select__indicator-separator {
@@ -769,6 +774,26 @@
   .custom-react-select__option--is-focused {
     background-color: #fdecec !important;
     color: #d92b2b !important;
+  }
+
+  /* Location filter dropdown ("All locations" / "Needs attention" / "Details
+     complete"): grey hover instead of the app-wide pink/red, since this is a
+     neutral status filter rather than an action. Scoped via `inputClass` so
+     it doesn't touch any other CustomSelect. */
+  .loc-filter-select.custom-react-select__option:hover,
+  .loc-filter-select.custom-react-select__option--is-focused {
+    background-color: var(--color-gray-100) !important;
+    color: var(--color-black) !important;
+  }
+
+  /* Every other dropdown across Company & Locations and Company Rules (Phone
+     rules / Greetings / Ringing & voicemail): same grey hover as above,
+     shared under one marker class since none of them needed a distinct
+     accent colour. */
+  .co-grey-select.custom-react-select__option:hover,
+  .co-grey-select.custom-react-select__option--is-focused {
+    background-color: var(--color-gray-100) !important;
+    color: var(--color-black) !important;
   }
 
   /* Selected: a neutral grey band, so it reads as "this is the current value"

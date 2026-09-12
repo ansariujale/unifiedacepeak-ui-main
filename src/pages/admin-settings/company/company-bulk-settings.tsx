@@ -400,6 +400,7 @@ const CompanyBulkSettings = () => {
               description="Whether each person's calls start recording on their own, and in which direction."
               control={
                 <CustomSelect
+                  inputClass="co-grey-select"
                   options={RECORDING_OPTIONS}
                   value={RECORDING_OPTIONS.find(
                     (option) => option.value === draft.recording_automatic,
@@ -473,6 +474,7 @@ const CompanyBulkSettings = () => {
               description="Whether each person may phone numbers outside your own country. Refusing somebody always works; allowing them never reaches past the company list under Company → Calling, which stays the ceiling."
               control={
                 <CustomSelect
+                  inputClass="co-grey-select"
                   options={INTERNATIONAL_OPTIONS}
                   value={INTERNATIONAL_OPTIONS.find(
                     (option) => option.value === draft.international_calling,
@@ -502,6 +504,11 @@ const CompanyBulkSettings = () => {
                   value={draft.ring_seconds}
                   error={ringError}
                   disabled={running}
+                  className={
+                    ringError
+                      ? ''
+                      : 'hover:border-primary/50 focus:border-primary/70 focus:shadow-[0_0_0_2px_#fee2e2]'
+                  }
                   onChange={(event) =>
                     setDraft((previous) => ({ ...previous, ring_seconds: event.target.value }))
                   }
@@ -524,7 +531,7 @@ const CompanyBulkSettings = () => {
               <div className="w-full sm:max-w-[280px]">
                 <Input
                   placeholder="Search by name, extension or email"
-                  className="mcm-pill-input rounded-full border border-gray-200 pl-8 shadow-none hover:border-primary focus:border-primary focus:ring-0"
+                  className="mcm-pill-input rounded-full border border-transparent pl-8 shadow-none hover:border-primary focus:border-primary focus:ring-0"
                   Icon={<Search className="h-3.5 w-3.5 text-gray-500" />}
                   IconPosition="left-0 pl-3 inset-y-0"
                   value={search}

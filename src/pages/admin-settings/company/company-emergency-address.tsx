@@ -447,6 +447,7 @@ const CompanyEmergencyAddress = () => {
                 name="country"
                 render={({ field }) => (
                   <CustomSelect
+                    inputClass="co-grey-select"
                     label="Country"
                     placeholder="Select country"
                     options={countryOptions}
@@ -469,6 +470,7 @@ const CompanyEmergencyAddress = () => {
                   name="state"
                   render={({ field }) => (
                     <CustomSelect
+                      inputClass="co-grey-select"
                       label="State / province"
                       placeholder="Select state"
                       options={stateOptions}
@@ -494,6 +496,7 @@ const CompanyEmergencyAddress = () => {
                   name="city"
                   render={({ field }) => (
                     <CustomSelect
+                      inputClass="co-grey-select"
                       label="City"
                       placeholder="Select city"
                       options={cityOptions}
@@ -588,7 +591,7 @@ const CompanyEmergencyAddress = () => {
               checked={acknowledged}
               disabled={!canEdit}
               onCheckedChange={(checked) => setAcknowledged(checked === true)}
-              className="mt-0.5 h-4 w-4 shrink-0 border-2! border-gray-600! bg-white!"
+              className="mt-0.5 h-4 w-4 shrink-0 border-2! border-gray-600!"
             />
             <Label
               htmlFor="emergency-address-acknowledgement"

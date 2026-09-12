@@ -20,6 +20,7 @@ import {
   getDeviceId,
   getEnv,
   handleAlert,
+  isCaptchaExemptHost,
   PLAN_PENDING_COMPANY_UUID_KEY,
   PLAN_PENDING_FLAG_KEY,
   RENEW_PLAN_FROM_APP_KEY,
@@ -31,9 +32,7 @@ import * as yup from 'yup';
 import { useOrganization } from '@/hooks/use-organisation';
 import { Turnstile, type TurnstileHandle } from '@/hooks/use-turnstile';
 
-const isLocalhost = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]'].includes(
-  window.location.hostname,
-);
+const isCaptchaExempt = isCaptchaExemptHost();
 
 type Inputs = {
   email: string;
@@ -125,7 +124,7 @@ const Login = () => {
   const [largeLogoError, setLargeLogoError] = useState(false);
   const turnstileRef = useRef<TurnstileHandle>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const canSubmit = isLocalhost || Boolean(captchaToken);
+  const canSubmit = isCaptchaExempt || Boolean(captchaToken);
 
   useEffect(() => {
     setLargeLogoError(false);
@@ -484,7 +483,7 @@ const Login = () => {
                           </div>
                         </div>
                       </div>
-                      {!isLocalhost && (
+                      {!isCaptchaExempt && (
                         <Turnstile
                           ref={turnstileRef}
                           action="login"

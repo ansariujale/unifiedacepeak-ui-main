@@ -7,8 +7,6 @@ import { upsertSite } from '@/services/api';
 import { getObjectLength, handleAlert } from '@/lib/utils';
 import Loader from '@/components/custom/loader';
 import { Button } from '@/components/ui/button';
-import { Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import CustomTooltip from '@/components/custom/custom-tooltip';
 import { InfoIcon } from '@/assets/icons';
 import SiteInfo from './site-info';

@@ -12,7 +12,7 @@ import CreateReseller from '../../../reseller/create-reseller';
 import { useState } from 'react';
 import { Info } from 'lucide-react';
 import CustomTooltip from '@/components/custom/custom-tooltip';
-import { Req, req } from '@/pages/admin-settings/compliance/required-mark';
+import { req } from '@/pages/admin-settings/compliance/required-mark';
 // import { File } from 'lucide-react';
 // import { RadioGroup, RadioGroupItem } from '@radix-ui/react-radio-group';
 

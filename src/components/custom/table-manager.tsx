@@ -90,7 +90,6 @@ function TableManager({
   descriptionEmptyTable = '',
   emptyIcon = null,
   imageSize = 'min-w-44  max-w-44',
-  emptyImage = null,
   clientSideSearch = false,
   renderSubComponent,
   hideFooterRefresh = false,
@@ -576,7 +575,8 @@ function TableManager({
           <span
             className={`whitespace-nowrap font-normal ${recordsPosition === 'left' ? 'sm:pl-3' : ''} ${hideFooterDivider ? 'text-slate-500' : ''}`}
           >
-            {recordCount} record(s)
+            {recordCount}{' '}
+            {recordNoun ? `${recordNoun}${Number(recordCount) === 1 ? '' : 's'}` : 'record(s)'}
           </span>
         );
         const perPageSelect = (

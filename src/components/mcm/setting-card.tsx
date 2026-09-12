@@ -168,7 +168,7 @@ export const SettingCard = ({
 };
 
 interface SettingRowProps {
-  label: string;
+  label: ReactNode;
   /* What this does, in a sentence, for someone who has not seen it before. */
   description?: ReactNode;
   /* The input, select or switch. Sits right on wide screens, below on narrow. */
