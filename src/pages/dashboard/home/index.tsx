@@ -16,7 +16,7 @@ import {
   Phone,
   MessageSquare,
   Video,
-  Sparkles,
+  Bot,
   ArrowUpRight,
   ArrowRight,
   MoreVertical,
@@ -333,7 +333,7 @@ const ACTIVITY_KIND_META: Record<ActivityKind, { icon: ReactNode; bg: string; to
   miss: { icon: <PhoneMissed className="h-3.5 w-3.5" />, bg: '#fde9e9', tone: '#d32f2f' },
   sms: { icon: <MessageSquare className="h-3.5 w-3.5" />, bg: '#cffafe', tone: '#0e7490' },
   meeting: { icon: <Video className="h-3.5 w-3.5" />, bg: '#fdf0dc', tone: '#c2670a' },
-  ai: { icon: <Sparkles className="h-3.5 w-3.5" />, bg: '#f2ecff', tone: '#7c3aed' },
+  ai: { icon: <Bot className="h-3.5 w-3.5" />, bg: '#f2ecff', tone: '#7c3aed' },
 };
 
 const CALL_KIND_META: Record<CallKind, { label: string; pill: string }> = {
@@ -565,7 +565,7 @@ const Home = () => {
       key: 'ai',
       title: 'AI Agent',
       subtitle: 'Create / Manage agent',
-      icon: <Sparkles className="h-4.5 w-4.5" />,
+      icon: <Bot className="h-4.5 w-4.5" />,
       to: '/admin-settings/knowledge/ai-agent',
     },
   ];
@@ -622,7 +622,7 @@ const Home = () => {
     {
       key: 'ai',
       label: 'AI Agent Interactions',
-      icon: <Sparkles className="h-4.5 w-4.5" />,
+      icon: <Bot className="h-4.5 w-4.5" />,
       value: dummyTotal(DUMMY_SERIES.ai),
       changePct: null,
       isLoading: false,
@@ -708,7 +708,7 @@ const Home = () => {
             </CustomTooltip>
           </div>
           <div className="dash-home__hero-chip">
-            <Sparkles className="h-3.5 w-3.5 shrink-0" />
+            <Bot className="h-3.5 w-3.5 shrink-0" />
             Your system is running smoothly. Keep building great conversations!
           </div>
         </div>
@@ -1091,7 +1091,7 @@ const Home = () => {
           <div className="dash-home__section-head">
             <div className="flex items-start gap-3">
               <span className="dash-home__section-icon" style={{ background: '#fee2e2', color: '#dc2626' }}>
-                <Sparkles className="h-4.5 w-4.5" />
+                <Bot className="h-4.5 w-4.5" />
               </span>
               <div>
                 <div className="text-sm font-bold text-[#0d1526]">Live Activity</div>
@@ -1478,7 +1478,7 @@ const Home = () => {
               { icon: <PhoneIncoming className="h-4 w-4" />, title: '3 missed calls', desc: '+1 555-123-4567 and 2 others', time: '2h ago', tone: '#dc2626', bg: '#fee2e2' },
               { icon: <MessageSquare className="h-4 w-4" />, title: '5 new messages', desc: 'Inbox — Team & customers', time: '3h ago', tone: '#0e7490', bg: '#cffafe' },
               { icon: <Video className="h-4 w-4" />, title: '1 meeting ended', desc: 'Product Team Sync', time: '5h ago', tone: '#7c3aed', bg: '#ede9fe' },
-              { icon: <Sparkles className="h-4 w-4" />, title: 'AI resolved 4 queries', desc: 'While you were away', time: '6h ago', tone: '#c2670a', bg: '#fef3c7' },
+              { icon: <Bot className="h-4 w-4" />, title: 'AI resolved 4 queries', desc: 'While you were away', time: '6h ago', tone: '#c2670a', bg: '#fef3c7' },
             ].map((item) => (
               <div key={item.title} className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-[#fafafa]">
                 <span
