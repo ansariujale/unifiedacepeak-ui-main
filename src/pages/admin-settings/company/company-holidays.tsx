@@ -673,6 +673,7 @@ const CompanyHolidays = () => {
         <div className="mt-2 flex flex-wrap items-end gap-2">
           <div className="w-full sm:w-72">
             <CustomSelect
+              inputClass="co-grey-select"
               label="Country"
               placeholder="Select a country"
               options={COUNTRY_PRESETS.map((preset) => ({
@@ -686,6 +687,7 @@ const CompanyHolidays = () => {
           </div>
           <div className="w-full sm:w-32">
             <CustomSelect
+              inputClass="co-grey-select"
               label="Year"
               options={YEAR_OPTIONS}
               value={year}

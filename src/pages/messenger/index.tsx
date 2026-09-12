@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useSocketEvents } from '@/hooks/use-socket-events';
 import { useUser } from '@/hooks/use-user';
+import DateRangeMenu from '@/components/custom/date-range-menu';
+import { handleDate } from '@/components/custom/date-dropdown/constant';
 import moment from 'moment';
 import {
   Bell,
@@ -640,6 +642,8 @@ const SidebarContent = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [dateFilter, setDateFilter] = useState('All');
+  const DATE_PRESETS = ['All', 'Today', 'Yesterday', 'Last 7 Days', 'This Month'];
 
   const [statusFilter] = useState<MessageStatus>('all');
   const {
@@ -927,6 +931,18 @@ const SidebarContent = ({
     });
   };
 
+  const filterByDate = (arr: any[]) => {
+    if (dateFilter === 'All') return arr;
+    const { from, to } = handleDate(dateFilter);
+    if (!from || !to) return arr;
+    const rangeStart = moment(from, 'YYYY-MM-DD').startOf('day').valueOf();
+    const rangeEnd = moment(to, 'YYYY-MM-DD').endOf('day').valueOf();
+    return (arr || []).filter((chat: any) => {
+      const timestamp = getChatTimestamp(chat, draftsByKey?.[`${chat?.chatId || ''}_main`]?.updatedAt || 0);
+      return timestamp >= rangeStart && timestamp <= rangeEnd;
+    });
+  };
+
   const groupList = useMemo(() => {
     const sortByPinnedAndTime = (arr: any[]) =>
       [...arr].sort((a: any, b: any) => {
@@ -952,7 +968,7 @@ const SidebarContent = ({
           id: 1,
           label: '',
           shouldVisible: visibleChats.length > 0,
-          data: sortByPinnedAndTime(filterByStatus(filterByName(visibleChats))),
+          data: sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(visibleChats)))),
         },
       ];
     }
@@ -966,13 +982,13 @@ const SidebarContent = ({
           id: 1,
           label: 'Favorites',
           shouldVisible: favorites.length > 0,
-          data: sortByPinnedAndTime(filterByStatus(filterByName(favorites))),
+          data: sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(favorites)))),
         },
         {
           id: 2,
           label: 'Team',
           shouldVisible: teamChats.length > 0,
-          data: sortByPinnedAndTime(filterByStatus(filterByName(teamChats))),
+          data: sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(teamChats)))),
         },
         {
           id: 3,
@@ -981,7 +997,7 @@ const SidebarContent = ({
           label: '',
           shouldVisible: directMessages.length > 0 || availableUsers.length > 0,
           data: [
-            ...sortByPinnedAndTime(filterByStatus(filterByName(directMessages))),
+            ...sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(directMessages)))),
             ...filterByStatus(filterByName(availableUsers)),
           ],
         },
@@ -991,7 +1007,7 @@ const SidebarContent = ({
           id: 1,
           label: 'Team',
           shouldVisible: teamChats.length > 0,
-          data: sortByPinnedAndTime(filterByStatus(filterByName(teamChats))),
+          data: sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(teamChats)))),
         },
       ],
       direct: [
@@ -1002,7 +1018,7 @@ const SidebarContent = ({
           label: '',
           shouldVisible: directMessages.length > 0 || availableUsers.length > 0,
           data: [
-            ...sortByPinnedAndTime(filterByStatus(filterByName(directMessages))),
+            ...sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(directMessages)))),
             ...filterByStatus(filterByName(availableUsers)),
           ],
         },
@@ -1012,7 +1028,7 @@ const SidebarContent = ({
           id: 1,
           label: 'Favorites',
           shouldVisible: favorites.length > 0,
-          data: sortByPinnedAndTime(filterByStatus(filterByName(favorites))),
+          data: sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(favorites)))),
         },
       ],
     };
@@ -1025,6 +1041,7 @@ const SidebarContent = ({
     directMessages,
     searchQuery,
     statusFilter,
+    dateFilter,
     user?.uuid,
     availableUsers,
     isAgentChat,
@@ -1134,7 +1151,12 @@ const SidebarContent = ({
                   }}
                   placeholder="Search chats…"
                   aria-label="Search chats"
-                  className="h-[34px] w-[190px] max-w-[46vw] rounded-full border border-[var(--mcm-accent-edge)] bg-white px-4 text-[13px] text-gray-900 outline-none shadow-[0_1px_3px_rgba(17,17,17,0.06)] placeholder:text-[var(--mcm-ink-4)]"
+                  onFocus={(e) => {
+                    e.currentTarget.style.outline = 'none';
+                    e.currentTarget.style.borderColor = 'var(--mcm-accent-edge)';
+                  }}
+                  style={{ outline: 'none', borderColor: 'var(--mcm-accent-edge)' }}
+                  className="h-[34px] w-[190px] max-w-[46vw] rounded-full border bg-white px-4 text-[13px] text-gray-900 shadow-[0_1px_3px_rgba(17,17,17,0.06)] placeholder:text-[var(--mcm-ink-4)]"
                 />
               ) : (
                 <button
@@ -1147,6 +1169,12 @@ const SidebarContent = ({
                   <SearchLine className="w-[15px] h-[15px]" />
                 </button>
               )}
+              <DateRangeMenu
+                options={DATE_PRESETS.map((preset) => ({ label: preset, value: preset }))}
+                value={dateFilter}
+                onChange={setDateFilter}
+                label="Filter by date"
+              />
               {!isAgentChat ? (
                 <>
                   {chatAccess?.access?.DIRECT_MESSAGE || chatAccess?.access?.TEAM_MESSAGE ? (
@@ -1197,13 +1225,13 @@ const SidebarContent = ({
                         <FilterIcon className="w-[15px] h-[15px]" />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent>
+                    <DropdownMenuContent className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 min-w-[200px]">
                       {ChatChannels?.map((item: any, index: number) => {
                         return (
                           <DropdownMenuItem
                             key={index}
                             className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
-                              chatType === item.value ? 'bg-gray-100' : ''
+                              chatType === item.value ? 'bg-gray-100 text-gray-900' : ''
                             }`}
                             onClick={() => {
                               setChatType(item.value);
@@ -1219,7 +1247,7 @@ const SidebarContent = ({
                             <DropdownMenuItem
                               key={index}
                               className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
-                                chatType === item.type ? 'bg-gray-100' : ''
+                                chatType === item.type ? 'bg-gray-100 text-gray-900' : ''
                               }`}
                               onClick={() => {
                                 setChatType(item.type);
@@ -1327,6 +1355,7 @@ const SidebarContent = ({
         <SideDrawer
           width="450px"
           isHeader
+          centered
           isOpen={showCreateChatModal === 'direct'}
           handleClose={() => setShowCreateChatModal('')}
           content={
@@ -1341,8 +1370,9 @@ const SidebarContent = ({
       )}
       {showCreateChatModal === 'team' && (
         <SideDrawer
-          width="450px"
+          width="820px"
           isHeader
+          centered
           isOpen={showCreateChatModal === 'team'}
           handleClose={() => setShowCreateChatModal('')}
           content={

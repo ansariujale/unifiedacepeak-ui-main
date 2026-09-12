@@ -56,7 +56,15 @@ const ChatPageHeader = ({
                 }}
                 placeholder={searchPlaceholder}
                 aria-label={searchPlaceholder}
-                className="h-[34px] w-[190px] max-w-[46vw] rounded-full border border-[var(--mcm-accent-edge)] bg-white px-4 text-[13px] text-gray-900 outline-none shadow-[0_1px_3px_rgba(17,17,17,0.06)] placeholder:text-[var(--mcm-ink-4)]"
+                /* Inline outline/border wins over the admin shell's global
+                   `input:focus-visible` red-ring rule regardless of CSS
+                   specificity, without editing any shared stylesheet. */
+                onFocus={(e) => {
+                  e.currentTarget.style.outline = 'none';
+                  e.currentTarget.style.borderColor = 'var(--mcm-accent-edge)';
+                }}
+                style={{ outline: 'none', borderColor: 'var(--mcm-accent-edge)' }}
+                className="h-[34px] w-[190px] max-w-[46vw] rounded-full border bg-white px-4 text-[13px] text-gray-900 shadow-[0_1px_3px_rgba(17,17,17,0.06)] placeholder:text-[var(--mcm-ink-4)]"
               />
             ) : (
               <button

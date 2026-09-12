@@ -167,7 +167,7 @@ const Sidebar = ({
                   <DropdownMenuItem
                     key={index}
                     className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
-                      item.type === chatType ? 'bg-gray-100' : ''
+                      item.type === chatType ? 'bg-gray-100 text-gray-900' : ''
                     }`}
                     onClick={() => {
                       handleChatType(item.type);
@@ -267,23 +267,16 @@ const Sidebar = ({
           {(chatAccess?.access?.DIRECT_MESSAGE || chatAccess?.access?.TEAM_MESSAGE) &&
           !['instagram', 'facebook', 'messenger', 'telegram'].includes(chatType) ? (
             <DropdownMenu>
-              <DropdownMenuTrigger>
-                {
-                  <div
-                    className={
-                      'cursor-pointer flex items-center justify-center rounded-full w-10 h-10 bg-gray-100 text-gray-900/80 hover:bg-primary hover:text-white'
-                    }
-                    onClick={handleAddButtonClick}
-                  >
-                    <Plus width={18} height={18} />
-                  </div>
-                }
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="mcm-chat-iconbtn" aria-label="Add" onClick={handleAddButtonClick}>
+                  <Plus width={15} height={15} />
+                </button>
               </DropdownMenuTrigger>
               {chatType === 'chat' && (
-                <DropdownMenuContent>
+                <DropdownMenuContent className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 min-w-[200px]">
                   {chatAccess?.access?.DIRECT_MESSAGE && (
                     <DropdownMenuItem
-                      className="cursor-pointer"
+                      className="cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary"
                       onClick={() => {
                         setShowCreateChatModal('direct');
                       }}
@@ -293,7 +286,7 @@ const Sidebar = ({
                   )}
                   {chatAccess?.access?.TEAM_MESSAGE && (
                     <DropdownMenuItem
-                      className="cursor-pointer"
+                      className="cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary"
                       onClick={() => {
                         setShowCreateChatModal('team');
                       }}
@@ -308,16 +301,19 @@ const Sidebar = ({
           ) : null}
 
           <DropdownMenu>
-            <DropdownMenuTrigger>
-              <div className="cursor-pointer flex items-center justify-center rounded-full w-10 h-10 bg-gray-100 text-gray-900/80 hover:bg-primary hover:text-white">
-                <FilterIcon className="w-6 h-6" />
-              </div>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="mcm-chat-iconbtn" aria-label="Filter">
+                <FilterIcon className="w-[15px] h-[15px]" />
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 min-w-[200px]">
               {ChatChannels?.map((item: any, index: number) => {
                 return (
                   <DropdownMenuItem
                     key={index}
+                    className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
+                      chatType === item.value ? 'bg-gray-100 text-gray-900' : ''
+                    }`}
                     onClick={() => {
                       handleChatType(item.value);
                       setselectedChannelType(item);
@@ -331,6 +327,9 @@ const Sidebar = ({
                 ? allowedOmniChannels.map((item: any, index: number) => (
                     <DropdownMenuItem
                       key={index}
+                      className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
+                        chatType === item.type ? 'bg-gray-100 text-gray-900' : ''
+                      }`}
                       onClick={() => {
                         handleChatType(item.type);
                         setselectedChannelType(item);

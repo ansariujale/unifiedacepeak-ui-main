@@ -216,7 +216,7 @@ type Props = {
   liveNumber?: string;
 };
 
-const CallListColumn = ({ selectedId, onSelect, source, onSourceChange, liveNumber }: Props) => {
+const CallListColumn = ({ selectedId, onSelect, source, onSourceChange }: Props) => {
   const { dial } = useConsoleDialer();
   const navigate = useNavigate();
   const [direction, setDirection] = useState<'all' | 'in' | 'out' | 'miss'>('all');
@@ -227,7 +227,7 @@ const CallListColumn = ({ selectedId, onSelect, source, onSourceChange, liveNumb
     date_type: 'Today',
     value: handleDate('Today'),
   }));
-  const DATE_PRESETS = ['All', 'Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days', 'This Month'];
+  const DATE_PRESETS = ['All', 'Today', 'Yesterday', 'Last 7 Days', 'This Month'];
   const { data: contactsByNumber } = useFetchContact();
   const { features } = useCompanyFeatures();
   const callAccess = features?.plan_features?.advance_call_management?.access;

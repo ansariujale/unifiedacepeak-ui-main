@@ -69,13 +69,50 @@ export const getAiWidgetScriptUrl = () => {
   }
 };
 
+/* Call sites build URLs by interpolation - `${getEnv().VITE_API_BASE_URL}/${path}`
+   - which turns an unset variable into the literal string "undefined" at the
+   front of the path, so an org logo is requested from /undefined/Organisations/...
+   and silently fails to render. Unset has a meaning here: it says "the API is
+   reachable at this same origin", which is how the local dev proxy works and how
+   a deployment that proxies /api server-side works. Collapse it to an empty
+   string so those templates produce a root-relative URL that resolves there.
+   A trailing slash goes too, since every one of those templates adds its own. */
+const normalizeApiBaseUrl = (value: unknown) => {
+  const url = typeof value === 'string' ? value.trim() : '';
+  if (!url || url === 'undefined' || url === 'null') return '';
+  return url.replace(/\/+$/, '');
+};
+
+/* Where the Turnstile bot check is skipped, and why it has to be a short,
+   closed list rather than anything an attacker could put themselves on.
+
+   A Turnstile site key is bound to a list of hostnames in the Cloudflare
+   account that owns it. Ours knows the production domain, so on any other host
+   Cloudflare refuses to render the widget at all ("Unable to connect to
+   website"), no token is ever issued, and the login form can never be
+   submitted - the deployment is unusable rather than merely unprotected.
+
+   The localhost entries below are the original ones this rule was written for.
+   *.vercel.app joins them for the same reason: it is a preview host nobody
+   signs in from except us, and it cannot be a production domain, because
+   production is served from its own registered domain. So real users keep the
+   bot check on the form that actually faces them.
+
+   This is a stopgap. The real fix is adding the preview hostname under
+   Turnstile > widget > Hostname Management in Cloudflare, after which the
+   .vercel.app clause here should be removed. */
+const CAPTCHA_EXEMPT_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]'];
+
+export const isCaptchaExemptHost = (hostname = window.location.hostname) =>
+  CAPTCHA_EXEMPT_HOSTS.includes(hostname) || hostname.endsWith('.vercel.app');
+
 export function getEnv() {
   const aiBaseUrl = getAiBaseUrl();
 
   return {
     ...import.meta.env,
     VITE_PAYPAL_CLIENT_ID: import.meta.env.VITE_PAYPAL_CLIENT_ID,
-    VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+    VITE_API_BASE_URL: normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL),
     VITE_NOTIFICATION_SOCKET_URL: import.meta.env.VITE_NOTIFICATION_SOCKET_URL,
     VITE_AI_SOCKET_URL: import.meta.env.VITE_AI_SOCKET_URL,
     VITE_AGENTIC_API_URL: import.meta.env.VITE_AGENTIC_API_URL,

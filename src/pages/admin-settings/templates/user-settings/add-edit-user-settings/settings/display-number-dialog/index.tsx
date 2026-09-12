@@ -116,6 +116,7 @@ const DisplayNumberModal: FC<ModalProps> = ({ modalState, setModalState, data })
               </div>
               <div className="w-full">
                 <CustomSelect
+                  inputClass="co-grey-select"
                   options={incomingNumberOptions}
                   isSearchable={false}
                   value={{
@@ -153,6 +154,7 @@ const DisplayNumberModal: FC<ModalProps> = ({ modalState, setModalState, data })
                 </div>
                 <div className="w-full">
                   <CustomSelect
+                    inputClass="co-grey-select"
                     options={maskingOptions}
                     isSearchable={false}
                     value={displayNumber?.masking?.type}

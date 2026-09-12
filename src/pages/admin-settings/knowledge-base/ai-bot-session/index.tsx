@@ -457,20 +457,33 @@ const PillDropdown = ({
   value: string;
   options: SelectOption[];
   onChange: (option: SelectOption) => void;
-}) => (
+}) => {
+  // The trigger showed only the static label, so a picked filter left no trace
+  // on the button. It now names the active option and tints when one is set.
+  const selected = options.find((option) => option.value === value);
+  const isDefault = !selected || selected.value === (options[0]?.value ?? '');
+
+  return (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <button
         type="button"
-        className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border! border-neutral-200! bg-white! px-4 text-sm font-semibold text-neutral-700! shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-300!"
+        className={cx(
+          'inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border! bg-white! px-5 text-sm font-semibold shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-300!',
+          isDefault
+            ? 'border-neutral-200! text-neutral-700!'
+            : 'border-red-300! text-red-600!',
+        )}
       >
-        {label}
+        <span className="max-w-[160px] truncate">
+          {isDefault ? label : selected?.label}
+        </span>
         <ChevronDown className="h-3.5 w-3.5 opacity-60" />
       </button>
     </DropdownMenuTrigger>
     <DropdownMenuContent
       align="start"
-      className="flex w-[200px] max-h-[280px] flex-col gap-1 overflow-y-auto bg-white border border-neutral-200 shadow-lg rounded-xl p-1.5 z-50 animate-none"
+      className="[&_[data-slot=dropdown-menu-item]]:focus:text-neutral-900! flex w-[200px] max-h-[280px] flex-col gap-1 overflow-y-auto bg-white border border-neutral-200 shadow-lg rounded-xl p-1.5 z-50 animate-none"
     >
       {options.map((option) => {
         const isSelected = value === option.value;
@@ -491,7 +504,8 @@ const PillDropdown = ({
       })}
     </DropdownMenuContent>
   </DropdownMenu>
-);
+  );
+};
 
 const AiBotSession = () => {
   const navigate = useNavigate();
@@ -573,11 +587,33 @@ const AiBotSession = () => {
     select: (data) => data?.data?.data?.result?.rows || [],
   });
 
+  const hasActiveFilters =
+    activeChannel !== 'all' ||
+    Boolean(selectedAgent.value) ||
+    Boolean(selectedOutcome.value) ||
+    Boolean(searchText.trim());
+
+  const handleClearFilters = () => {
+    setActiveChannel('all');
+    setSelectedAgent(allAgentsOption);
+    setSelectedOutcome(allOutcomesOption);
+    setSearchText('');
+  };
+
   const rangeSessions = useMemo(() => {
-    // DUMMY DATA - preview rows appended to the API result. Remove with DUMMY_DATA.ts.
-    const allSessions = SHOW_DUMMY_DATA ? [...(sessions || []), ...DUMMY_SESSIONS] : sessions || [];
+    // DUMMY DATA - preview rows are appended client-side, so the channel and
+    // agent filters (which the API applies to the real rows) are applied here
+    // too - otherwise the preview rows ignore them.
+    const dummyRows = SHOW_DUMMY_DATA
+      ? DUMMY_SESSIONS.filter((session: any) => {
+          if (activeChannel !== 'all' && session?.channel !== activeChannel) return false;
+          if (selectedAgent.value && String(session?.agentId) !== selectedAgent.value) return false;
+          return true;
+        })
+      : [];
+    const allSessions = [...(sessions || []), ...dummyRows];
     return allSessions.filter((session: any) => isInDateRange(session, dateRange));
-  }, [dateRange, sessions]);
+  }, [dateRange, sessions, activeChannel, selectedAgent.value]);
 
   const tableRows = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase();
@@ -712,7 +748,7 @@ const AiBotSession = () => {
 
   return (
     <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#efefef] text-neutral-900">
-      <div className="flex min-h-[92px] items-center justify-between border-b border-neutral-200 bg-white px-7">
+      <div className="flex min-h-[74px] items-center justify-between border-b border-neutral-200 bg-white px-7 py-2">
         <div className="flex items-center gap-3">
           <div>
             <button
@@ -738,7 +774,7 @@ const AiBotSession = () => {
                 fontStyle: 'italic',
                 fontWeight: 400,
                 fontSize: '27px',
-                lineHeight: '41px',
+                lineHeight: '34px',
                 color: 'rgb(23, 23, 23)',
               }}
             >
@@ -751,7 +787,7 @@ const AiBotSession = () => {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border! border-neutral-200! bg-white! px-2.5 text-sm font-semibold text-neutral-700! shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-300!"
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border! border-neutral-200! bg-white! px-5 text-sm font-semibold text-neutral-700! shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-300!"
               >
                 {dateRangeOptions.find((option) => option.value === dateRange)?.label ||
                   'Date range'}
@@ -760,7 +796,7 @@ const AiBotSession = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="flex w-[180px] flex-col gap-1 bg-white border border-neutral-200 shadow-lg rounded-xl p-1.5 z-50 animate-none"
+              className="[&_[data-slot=dropdown-menu-item]]:focus:text-neutral-900! flex w-[180px] flex-col gap-1 bg-white border border-neutral-200 shadow-lg rounded-xl p-1.5 z-50 animate-none"
             >
               {dateRangeOptions.map((option) => {
                 const isSelected = dateRange === option.value;
@@ -784,7 +820,7 @@ const AiBotSession = () => {
           <button
             type="button"
             onClick={exportCsv}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-neutral-900! px-2.5 text-sm font-semibold text-white! shadow-none transition-colors hover:bg-neutral-800!"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-neutral-900! px-5 text-sm font-semibold text-white! shadow-none transition-colors hover:bg-neutral-800!"
           >
             <Download className="h-4 w-4 shrink-0" />
             <span>Export CSV</span>
@@ -792,7 +828,7 @@ const AiBotSession = () => {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-auto bg-[#efefef] px-7 py-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-auto bg-[#efefef] px-7 pt-4 pb-6">
         <div>
           <div className="mb-3 flex items-center gap-2.5">
             <h2 className="text-[12.5px] font-semibold uppercase tracking-[0.05em] text-red-600">
@@ -827,6 +863,11 @@ const AiBotSession = () => {
             <h2 className="text-[12.5px] font-semibold uppercase tracking-[0.05em] text-red-600">
               Sessions
             </h2>
+            {/* Rows here open a transcript, which the other AI Tools tables do
+                not - so the table says so rather than leaving it to hover. */}
+            <span className="shrink-0 text-xs text-neutral-400">
+              Click a row to see the transcript
+            </span>
             <span className="h-px flex-1 bg-neutral-200" />
           </div>
 
@@ -834,7 +875,7 @@ const AiBotSession = () => {
           <div className="flex flex-col gap-3 border-b border-neutral-200 bg-white px-[18px] py-3 sm:flex-row sm:items-center">
             <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full border! border-neutral-200! bg-white! pl-2 pr-3 shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-all focus-within:border-neutral-400!">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-red-600">
-                <Search className="h-3.5 w-3.5" />
+                <Search className="h-[18px] w-[18px]" strokeWidth={2.25} />
               </span>
               <input
                 value={searchText}
@@ -852,17 +893,28 @@ const AiBotSession = () => {
                 onChange={(option) => setActiveChannel((option.value || 'all') as SessionChannel)}
               />
               <PillDropdown
-                label="Agent"
-                value={selectedAgent.value}
-                options={agentOptions}
-                onChange={(option) => setSelectedAgent(option)}
-              />
-              <PillDropdown
                 label="Outcome"
                 value={selectedOutcome.value}
                 options={outcomeOptions}
                 onChange={(option) => setSelectedOutcome(option)}
               />
+              <PillDropdown
+                label="Agent"
+                value={selectedAgent.value}
+                options={agentOptions}
+                onChange={(option) => setSelectedAgent(option)}
+              />
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  aria-label="Clear filters"
+                  title="Clear filters"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border! border-neutral-200! bg-white! text-neutral-500! shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-300! hover:text-red-600!"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
 

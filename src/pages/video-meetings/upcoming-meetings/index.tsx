@@ -39,7 +39,7 @@ import { Button } from '@/components/ui/button';
 import { useUser } from '@/hooks/use-user';
 import CustomTooltip from '@/components/custom/custom-tooltip';
 import { useCompanyFeatures } from '@/hooks/rbac';
-import { Clock4Icon, InfoIcon } from 'lucide-react';
+import { Clock4Icon, InfoIcon, Search, ShieldCheck, Users2, Zap } from 'lucide-react';
 
 const MEMBER_AVATAR_TONE_CLASSES = [
   'text-primary bg-ucass-active-bg',
@@ -83,6 +83,7 @@ const UpcomingMeetings = () => {
     inviteOthers: false,
   });
   const [meetingToEnd, setMeetingToEnd] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [drawerState, setDrawerState] = useState<any>(false);
   const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
   const [, forceRenderByClock] = useReducer((count: number) => count + 1, 0);
@@ -125,8 +126,14 @@ const UpcomingMeetings = () => {
   });
 
   // Flatten all pages into a single array
-  const upcomingMeetingList =
+  const allUpcomingMeetings =
     data?.pages?.flatMap((page) => page?.data?.data?.result?.rows || []) || [];
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const upcomingMeetingList = normalizedSearch
+    ? allUpcomingMeetings.filter((meeting: any) =>
+        String(meeting?.name || '').toLowerCase().includes(normalizedSearch),
+      )
+    : allUpcomingMeetings;
 
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -236,23 +243,35 @@ const UpcomingMeetings = () => {
   return (
     <section className="flex h-full min-h-0 w-full flex-1 flex-col gap-3  bg-gray-200/15 ">
       <div className=" flex h-full min-h-0 w-full flex-col justify-start gap-4 ">
-        <div className="w-full max-w-250 mx-auto px-4 xs:pt-4 sm:pt-0">
+        <div className="w-full px-4 xs:pt-4 sm:pt-0">
           <MeetingHeader formInstance={formInstance} />
         </div>
         <div className="w-full h-full overflow-auto">
-          <div className="max-w-250 mx-auto flex min-h-0 flex-1 flex-col gap-3 mt-2 px-4">
-            <div className="flex justify-between items-center">
+          <div className="flex min-h-0 flex-1 flex-col gap-3 mt-2 px-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h4 className="text-gray-900 font-semibold text-lg flex items-center gap-1">
                 Upcoming Meetings <InfoIcon className="w-3 h-3 text-gray-600" />
               </h4>
-              <Button
-                variant="outline"
-                className="justify-center shadow-none sm:w-auto hover:bg-gray-50 hover:text-gray-600 border-gray-200 bg-white/80 h-9 min-h-9 text-xs text-gray-600"
-                type="button"
-              >
-                <span className="text-ucass-active">{upcomingMeetingList?.length || 0}</span>
-                Meeting(s)
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search meetings..."
+                    aria-label="Search meetings"
+                    className="h-9 w-44 rounded-lg border border-gray-200 bg-white/80 pl-8 pr-3 text-xs text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-primary sm:w-56"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  className="justify-center shadow-none sm:w-auto hover:bg-gray-50 hover:text-gray-600 border-gray-200 bg-white/80 h-9 min-h-9 text-xs text-gray-600"
+                  type="button"
+                >
+                  <span className="text-ucass-active">{upcomingMeetingList?.length || 0}</span>
+                  Meeting(s)
+                </Button>
+              </div>
             </div>
             <div ref={scrollContainerRef} className="flex flex-1 min-h-0 flex-col gap-3 ">
               {isPendingUpcomingMeeting ? (
@@ -518,14 +537,54 @@ const UpcomingMeetings = () => {
                   );
                 })
               ) : (
-                <div className="w-full mx-auto max-w-250 min-h-52 lg:min-h-80 bg-white p-4 rounded-lg   m-auto border border-gray-100 flex flex-col items-center justify-center gap-2">
+                <div className="w-full min-h-52 lg:min-h-80 bg-white p-6 rounded-lg m-auto border border-gray-100 flex flex-col items-center justify-center gap-2">
                   <img src={NotFound} alt="BusyImage" className="min-w-28 w-28" />
-                  <p className="flex items-center justify-center text-gray-900  font-medium">
+                  <p className="flex items-center justify-center text-gray-900 font-medium">
                     No upcoming meetings!
                   </p>
-                  <p className="text-sm text-gray-700">
-                    Start or schedule a meeting to see it appear here
+                  <p className="text-sm text-gray-500">
+                    Start, join, or schedule a meeting to see it here
                   </p>
+                  {videAccess?.create && (
+                    <Button
+                      variant="primary"
+                      type="button"
+                      className="mt-2 shadow-none"
+                      onClick={() => setDrawerState(true)}
+                    >
+                      <Icon name="CalendarIcon" className="w-3.5 h-3.5" />
+                      Schedule a Meeting
+                    </Button>
+                  )}
+                  <div className="mt-6 flex w-full max-w-lg flex-col items-center justify-center gap-4 border-t border-gray-100 pt-6 sm:flex-row sm:justify-between">
+                    <div className="flex items-center gap-2 text-center sm:text-left">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Users2 className="h-4 w-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-gray-900">Meet with anyone</span>
+                        <span className="text-[11px] text-gray-500">Invite your team or clients</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-center sm:text-left">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <ShieldCheck className="h-4 w-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-gray-900">Secure &amp; Reliable</span>
+                        <span className="text-[11px] text-gray-500">Enterprise-grade security</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-center sm:text-left">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Zap className="h-4 w-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-gray-900">High Quality</span>
+                        <span className="text-[11px] text-gray-500">Clear audio and video</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
               {/* Loading indicator for next page */}

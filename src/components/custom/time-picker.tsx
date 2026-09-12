@@ -1,12 +1,15 @@
-/* A custom 12-hour time picker.
+/* A custom analog clock-face time picker.
  *
  * Native `<input type="time">` cannot be restyled or repositioned — the popup
  * it opens is rendered by the browser/OS outside the page, so no CSS reaches
- * it (that's why the Business Hours dialog's picker kept showing Chrome's own
- * blue highlight no matter what colours were set on the input). This
- * component reproduces the same "HH:mm" 24-hour value contract but renders
- * its own dropdown, so every pixel — including the selected-item highlight —
- * is ours to theme and size.
+ * it. This component reproduces the same "HH:mm" 24-hour value contract but
+ * renders its own dropdown: a real clock dial (tap an hour, then a minute)
+ * with a digital readout and AM/PM switch above it, so every pixel is ours
+ * to theme.
+ *
+ * Picks are drafted locally and only reach the form on OK — Cancel (or a
+ * click outside) discards them, same as the reference clock picker this
+ * was modelled on.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -22,19 +25,18 @@ interface TimePickerProps {
   disabled?: boolean;
 }
 
-const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
-const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 const PERIODS = ['AM', 'PM'] as const;
+type Period = (typeof PERIODS)[number];
 
 const to12Hour = (value?: string) => {
-  if (!value) return { hour: 10, minute: 0, period: 'AM' as (typeof PERIODS)[number] };
+  if (!value) return { hour: 10, minute: 0, period: 'AM' as Period };
   const [rawHour, rawMinute] = value.split(':').map(Number);
-  const period = rawHour >= 12 ? 'PM' : 'AM';
+  const period: Period = rawHour >= 12 ? 'PM' : 'AM';
   const hour = rawHour % 12 === 0 ? 12 : rawHour % 12;
   return { hour, minute: rawMinute || 0, period };
 };
 
-const to24Hour = (hour: number, minute: number, period: (typeof PERIODS)[number]) => {
+const to24Hour = (hour: number, minute: number, period: Period) => {
   const base = hour % 12;
   const fullHour = period === 'PM' ? base + 12 : base;
   return `${String(fullHour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
@@ -46,6 +48,27 @@ const formatDisplay = (value?: string) => {
   return `${hour}:${String(minute).padStart(2, '0')} ${period}`;
 };
 
+const DIAL_SIZE = 156;
+const DIAL_CENTER = DIAL_SIZE / 2;
+const DIAL_RADIUS = 60;
+
+/* Twelve positions shared by both the hour ring (1-12) and the minute ring
+   (00, 05, ... 55) — a real clock only ever shows twelve marks regardless of
+   which one it is standing in for at the moment. Index 0 sits at 12 o'clock;
+   the rest follow clockwise, 30° apart. */
+const clockPosition = (index: number) => {
+  const angle = index * 30;
+  const rad = (angle * Math.PI) / 180;
+  return {
+    angle,
+    x: DIAL_CENTER + DIAL_RADIUS * Math.sin(rad),
+    y: DIAL_CENTER - DIAL_RADIUS * Math.cos(rad),
+  };
+};
+
+const HOUR_MARKS = Array.from({ length: 12 }, (_, i) => ({ index: i, value: i === 0 ? 12 : i }));
+const MINUTE_MARKS = Array.from({ length: 12 }, (_, i) => ({ index: i, value: i * 5 }));
+
 export function TimePicker({
   value,
   onChange,
@@ -54,8 +77,12 @@ export function TimePicker({
   disabled,
 }: TimePickerProps) {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<'hour' | 'minute'>('hour');
   const containerRef = useRef<HTMLDivElement>(null);
-  const { hour, minute, period } = to12Hour(value);
+
+  const [draftHour, setDraftHour] = useState(10);
+  const [draftMinute, setDraftMinute] = useState(0);
+  const [draftPeriod, setDraftPeriod] = useState<Period>('AM');
 
   useEffect(() => {
     if (!open) return;
@@ -68,16 +95,31 @@ export function TimePicker({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
 
-  const commit = (nextHour: number, nextMinute: number, nextPeriod: (typeof PERIODS)[number]) => {
-    onChange(to24Hour(nextHour, nextMinute, nextPeriod));
+  const openPicker = () => {
+    const current = to12Hour(value);
+    setDraftHour(current.hour);
+    setDraftMinute(current.minute);
+    setDraftPeriod(current.period);
+    setMode('hour');
+    setOpen(true);
   };
+
+  const handleOk = () => {
+    onChange(to24Hour(draftHour, draftMinute, draftPeriod));
+    setOpen(false);
+  };
+
+  const marks = mode === 'hour' ? HOUR_MARKS : MINUTE_MARKS;
+  const selectedValue = mode === 'hour' ? draftHour : draftMinute;
+  const selectedIndex = marks.find((mark) => mark.value === selectedValue)?.index ?? 0;
+  const handAngle = clockPosition(selectedIndex).angle;
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => (open ? setOpen(false) : openPicker())}
         className="flex h-9 w-[118px] shrink-0 items-center justify-between gap-1 rounded-full border border-neutral-200 bg-white px-3 text-xs text-neutral-900 outline-none transition-colors focus-visible:border-black focus-visible:ring-4 focus-visible:ring-black/10 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className={cn(!value && 'text-neutral-400')}>
@@ -87,67 +129,111 @@ export function TimePicker({
       </button>
 
       {open && (
-        <div className="absolute left-full top-0 z-50 ml-2 w-[220px] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl">
-          <div className="grid grid-cols-3 gap-px border-b border-neutral-100 bg-neutral-100 px-0.5 pt-2 pb-1.5">
-            <span className="text-center text-[10px] font-semibold tracking-wide text-neutral-400 uppercase">
-              Hour
-            </span>
-            <span className="text-center text-[10px] font-semibold tracking-wide text-neutral-400 uppercase">
-              Min
-            </span>
-            <span className="text-center text-[10px] font-semibold tracking-wide text-neutral-400 uppercase">
-              &nbsp;
-            </span>
-          </div>
-          {/* One shared scroll area for all three columns, rather than each
-              column scrolling on its own — the previous version made the
-              panel feel like three separate widgets glued together. */}
-          <div className="grid max-h-[224px] grid-cols-3 gap-1 divide-x divide-neutral-100 overflow-y-auto p-2">
-            <div className="flex flex-col gap-0.5">
-              {HOURS.map((h) => (
-                <button
-                  key={h}
-                  type="button"
-                  onClick={() => commit(h, minute, period)}
-                  className={cn(
-                    'rounded-lg py-1.5 text-center text-sm font-semibold transition-colors',
-                    h === hour ? 'bg-black text-white' : 'text-neutral-600 hover:bg-neutral-100',
-                  )}
-                >
-                  {String(h).padStart(2, '0')}
-                </button>
-              ))}
-            </div>
-            <div className="flex flex-col gap-0.5 pl-1">
-              {MINUTES.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => commit(hour, m, period)}
-                  className={cn(
-                    'rounded-lg py-1.5 text-center text-sm font-semibold transition-colors',
-                    m === minute ? 'bg-black text-white' : 'text-neutral-600 hover:bg-neutral-100',
-                  )}
-                >
-                  {String(m).padStart(2, '0')}
-                </button>
-              ))}
-            </div>
-            <div className="flex flex-col gap-0.5 pl-1">
+        <div className="absolute left-0 top-full z-50 mt-1.5 w-[196px] rounded-2xl border border-neutral-200 bg-white p-3 shadow-xl">
+          {/* Digital readout: tap either half to jump straight to that ring. */}
+          <div className="mb-3 flex items-center justify-center gap-1">
+            <button
+              type="button"
+              onClick={() => setMode('hour')}
+              className={cn(
+                'rounded-lg px-1.5 py-0.5 text-lg font-bold tabular-nums transition-colors',
+                mode === 'hour' ? 'bg-red-50 text-red-600' : 'text-neutral-900',
+              )}
+            >
+              {String(draftHour).padStart(2, '0')}
+            </button>
+            <span className="text-lg font-bold text-neutral-300">:</span>
+            <button
+              type="button"
+              onClick={() => setMode('minute')}
+              className={cn(
+                'rounded-lg px-1.5 py-0.5 text-lg font-bold tabular-nums transition-colors',
+                mode === 'minute' ? 'bg-red-50 text-red-600' : 'text-neutral-900',
+              )}
+            >
+              {String(draftMinute).padStart(2, '0')}
+            </button>
+            <div className="ml-1.5 flex flex-col overflow-hidden rounded-md border border-neutral-200">
               {PERIODS.map((p) => (
                 <button
                   key={p}
                   type="button"
-                  onClick={() => commit(hour, minute, p)}
+                  onClick={() => setDraftPeriod(p)}
                   className={cn(
-                    'rounded-lg py-1.5 text-center text-sm font-semibold transition-colors',
-                    p === period ? 'bg-black text-white' : 'text-neutral-600 hover:bg-neutral-100',
+                    'px-1.5 py-0.5 text-[10px] font-bold transition-colors',
+                    draftPeriod === p
+                      ? 'bg-red-600 text-white'
+                      : 'bg-white text-neutral-400 hover:bg-neutral-50',
                   )}
                 >
                   {p}
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Clock face */}
+          <div
+            className="relative mx-auto rounded-full bg-neutral-100"
+            style={{ width: DIAL_SIZE, height: DIAL_SIZE }}
+          >
+            <div
+              className="absolute bg-red-600"
+              style={{
+                left: DIAL_CENTER,
+                top: DIAL_CENTER,
+                width: 2,
+                height: DIAL_RADIUS - 6,
+                transformOrigin: 'top center',
+                transform: `translateX(-50%) rotate(${handAngle + 180}deg)`,
+              }}
+            />
+            <div
+              className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-600"
+              style={{ left: DIAL_CENTER, top: DIAL_CENTER }}
+            />
+            {marks.map((mark) => {
+              const { x, y } = clockPosition(mark.index);
+              const isSelected = mark.value === selectedValue;
+              return (
+                <button
+                  key={mark.value}
+                  type="button"
+                  onClick={() => {
+                    if (mode === 'hour') {
+                      setDraftHour(mark.value);
+                      setMode('minute');
+                    } else {
+                      setDraftMinute(mark.value);
+                    }
+                  }}
+                  className={cn(
+                    'absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[10px] font-semibold transition-colors',
+                    isSelected ? 'bg-red-600 text-white' : 'text-neutral-700 hover:bg-neutral-200',
+                  )}
+                  style={{ left: x, top: y }}
+                >
+                  {String(mark.value).padStart(2, '0')}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="text-[11px] font-semibold text-neutral-500 hover:text-neutral-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleOk}
+              className="rounded-full bg-neutral-900 px-3 py-1 text-[11px] font-bold text-white transition-colors hover:bg-black"
+            >
+              OK
+            </button>
           </div>
         </div>
       )}

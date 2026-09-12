@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/proxy?path=$1" },
+    {
+      "source": "/Organisations/:path*",
+      "destination": "https://api2.acepeak.com/Organisations/:path*"
+    },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

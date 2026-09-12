@@ -414,6 +414,7 @@ const CompanyPolicies = () => {
           <div className="flex flex-col gap-1">
             <div className="max-w-[220px]">
               <CustomSelect
+                inputClass="co-grey-select"
                 label={label}
                 options={RETENTION_MODE_OPTIONS}
                 value={selectedOption(RETENTION_MODE_OPTIONS, value.mode)}
@@ -520,6 +521,7 @@ const CompanyPolicies = () => {
               <div className="flex flex-col gap-1">
                 <div className="max-w-[220px]">
                   <CustomSelect
+                    inputClass="co-grey-select"
                     label="Prompt language"
                     options={LANGUAGE_OPTIONS}
                     value={selectedOption(LANGUAGE_OPTIONS, form.default_language)}
@@ -612,6 +614,7 @@ const CompanyPolicies = () => {
                 <div className="max-w-[220px]">
                   <CustomSelect
                     className="gap-2.5"
+                    inputClass="co-grey-select"
                     label={<span className="underline decoration-gray-300">Recording mode</span>}
                     options={RECORDING_MODE_OPTIONS}
                     value={selectedOption(RECORDING_MODE_OPTIONS, form.recording_mode)}
@@ -742,6 +745,7 @@ const CompanyPolicies = () => {
               <div className="flex flex-col gap-1">
                 <div className="max-w-[320px]">
                   <CustomSelect
+                    inputClass="co-grey-select"
                     label="Default for new users"
                     options={INTERNATIONAL_OPTIONS}
                     value={selectedOption(

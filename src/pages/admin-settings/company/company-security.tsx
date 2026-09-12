@@ -684,7 +684,7 @@ const CompanySecurity = () => {
 
             <Input
               placeholder="Search people by name, extension, email or role"
-              className="mcm-pill-input rounded-full border border-gray-200 pl-8 shadow-none hover:border-red-300 focus:border-red-300 focus:ring-0"
+              className="mcm-pill-input rounded-full border border-transparent pl-8 shadow-none hover:border-red-300 focus:border-red-300 focus:ring-0"
               Icon={<Search className="h-3.5 w-3.5 text-gray-500" />}
               IconPosition="left-0 pl-3 inset-y-0"
               value={peopleSearch}

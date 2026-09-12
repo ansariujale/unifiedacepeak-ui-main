@@ -180,120 +180,134 @@ const SiteInfo = ({ formInstance }: any) => {
           className="w-full"
         />
 
-        <div className="flex w-full flex-col gap-4 md:flex-row">
-          <div className={`w-full ${shouldShowState ? 'md:w-1/2' : 'md:w-full'}`}>
-            <CustomSelect
-              label={'Country'}
-              options={countryList?.map((country) => ({
-                label: country?.name || '',
-                value: country?.name || '',
-              }))}
-              handleChange={(value) => {
-                setValue('country', value, { shouldValidate: true, shouldDirty: true });
-              }}
-              value={watchedCountry}
-              placeholder={'Select Country'}
-              error={errors?.country?.message}
-            />
-          </div>
-          {shouldShowState && (
-            <div className="w-full md:w-1/2">
-              <CustomSelect
-                label="State"
-                placeholder="Select State"
-                options={stateOptions || []}
-                handleChange={(value) => {
-                  setValue('state', value?.label || '', {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  });
-                }}
-                value={
-                  stateOptions?.find((stateItem: any) => stateItem?.label === watchedState) ||
-                  (watchedState ? { label: watchedState, value: watchedState } : null)
-                }
-                error={errors?.state?.message}
-              />
+          <div className="flex w-full items-center gap-3">
+            <div className="flex w-full flex-col gap-4 md:flex-row">
+              <div
+                className={`relative flex w-full gap-1 ${shouldShowState ? 'md:w-1/2' : 'md:w-full'}`}
+              >
+                <CustomSelect
+                  inputClass="co-grey-select"
+                  label={'Country'}
+                  options={countryList?.map((country) => ({
+                    label: country?.name || '',
+                    value: country?.name || '',
+                  }))}
+                  handleChange={(value) => {
+                    setValue('country', value, { shouldValidate: true, shouldDirty: true });
+                  }}
+                  value={watchedCountry}
+                  placeholder={'Select Country'}
+                  error={errors?.country?.message}
+                />
+              </div>
+              {shouldShowState && (
+                <div className="relative flex w-full gap-1 md:w-1/2">
+                  <CustomSelect
+                    inputClass="co-grey-select"
+                    label="State"
+                    placeholder="Select State"
+                    options={stateOptions || []}
+                    handleChange={(value) => {
+                      setValue('state', value?.label || '', {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                    value={
+                      stateOptions?.find((stateItem: any) => stateItem?.label === watchedState) ||
+                      (watchedState ? { label: watchedState, value: watchedState } : null)
+                    }
+                    error={errors?.state?.message}
+                  />
+                </div>
+              )}
             </div>
-          )}
-        </div>
-
-        <div className="flex w-full flex-col gap-4 md:flex-row">
-          {shouldShowCity && (
-            <div className="w-full md:w-1/2">
-              <CustomSelect
-                label="City"
-                placeholder="Select City"
-                options={cityOptions || []}
-                handleChange={(value) => {
-                  setValue('city', value?.value || '', {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  });
-                }}
-                value={
-                  cityOptions?.find((cityItem: any) => cityItem?.value === watchedCity) ||
-                  (watchedCity ? { label: watchedCity, value: watchedCity } : null)
-                }
-                error={errors?.city?.message}
-                menuPlacement="top"
-              />
+          </div>
+          <div className="flex w-full items-center gap-3">
+            <div className="flex w-full flex-col gap-4 md:flex-row">
+              {shouldShowCity && (
+                <div className="relative flex w-full gap-1 md:w-1/2">
+                  <CustomSelect
+                    inputClass="co-grey-select"
+                    label="City"
+                    placeholder="Select City"
+                    options={cityOptions || []}
+                    handleChange={(value) => {
+                      setValue('city', value?.value || '', {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                    value={
+                      cityOptions?.find((cityItem: any) => cityItem?.value === watchedCity) ||
+                      (watchedCity ? { label: watchedCity, value: watchedCity } : null)
+                    }
+                    error={errors?.city?.message}
+                    menuPlacement="top"
+                  />
+                </div>
+              )}
+              <div
+                className={`relative flex w-full gap-1 ${shouldShowCity ? 'md:w-1/2' : 'md:w-full'}`}
+              >
+                <Input
+                  label="Postal Code"
+                  {...register('postal_code')}
+                  error={errors?.postal_code?.message}
+                  placeholder={'Enter Postal Code'}
+                  maxLength={10}
+                />
+              </div>
             </div>
-          )}
-          <div className={`w-full ${shouldShowCity ? 'md:w-1/2' : 'md:w-full'}`}>
-            <Input
-              label="Postal Code"
-              {...register('postal_code')}
-              error={errors?.postal_code?.message}
-              placeholder={'Enter Postal Code'}
-              maxLength={10}
-            />
           </div>
-        </div>
 
-        <div className="flex w-full flex-col gap-4 md:flex-row">
-          <div className="w-full md:w-1/2">
-            <CustomSelect
-              label="Timezone"
-              placeholder="Select Timezone"
-              options={timezonesList?.map((item: any) => ({
-                label: item?.zoneName,
-                value: item?.zoneName,
-              }))}
-              handleChange={(value) => {
-                setValue('timezone', value, { shouldValidate: true, shouldDirty: true });
-              }}
-              value={watchedTimezone}
-              error={errors?.timezone?.message}
-              menuPlacement="top"
-            />
+          <div className="flex w-full items-center gap-3">
+            <div className="flex w-full flex-col gap-4 md:flex-row">
+              <div className="relative flex w-full gap-1 md:w-1/2">
+                <CustomSelect
+                  inputClass="co-grey-select"
+                  label="Timezone"
+                  placeholder="Select Timezone"
+                  options={timezonesList?.map((item: any) => ({
+                    label: item?.zoneName,
+                    value: item?.zoneName,
+                  }))}
+                  handleChange={(value) => {
+                    setValue('timezone', value, { shouldValidate: true, shouldDirty: true });
+                  }}
+                  value={watchedTimezone}
+                  error={errors?.timezone?.message}
+                  menuPlacement="top"
+                />
+              </div>
+              <div className="relative flex w-full gap-1 md:w-1/2">
+                <CustomSelect
+                  inputClass="co-grey-select"
+                  label="Outbound caller ID"
+                  placeholder="Select caller ID"
+                  options={CALLER_ID_OPTIONS}
+                  handleChange={(option: any) => {
+                    const nextType = option?.value ?? option;
+                    setValue('caller_id_type', nextType, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+                    /* A name only means something for CUSTOM. Clearing it on the
+                       way out stops a hidden value being saved against a type
+                       that never shows it. */
+                    if (nextType !== 'CUSTOM') {
+                      setValue('caller_id_name', '', { shouldValidate: true });
+                    }
+                  }}
+                  value={
+                    CALLER_ID_OPTIONS.find((option) => option.value === watchedCallerIdType) || null
+                  }
+                  error={errors?.caller_id_type?.message}
+                  menuPlacement="top"
+                />
+              </div>
+            </div>
           </div>
-          <div className="w-full md:w-1/2">
-            <CustomSelect
-              label="Outbound caller ID"
-              placeholder="Select caller ID"
-              options={CALLER_ID_OPTIONS}
-              handleChange={(option: any) => {
-                const nextType = option?.value ?? option;
-                setValue('caller_id_type', nextType, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-                /* A name only means something for CUSTOM. Clearing it on the
-                   way out stops a hidden value being saved against a type
-                   that never shows it. */
-                if (nextType !== 'CUSTOM') {
-                  setValue('caller_id_name', '', { shouldValidate: true });
-                }
-              }}
-              value={
-                CALLER_ID_OPTIONS.find((option) => option.value === watchedCallerIdType) || null
-              }
-              error={errors?.caller_id_type?.message}
-              menuPlacement="top"
-            />
-          </div>
-        </div>
 
         {watchedCallerIdType === 'CUSTOM' && (
           <div className="flex w-full flex-col gap-4 md:flex-row">

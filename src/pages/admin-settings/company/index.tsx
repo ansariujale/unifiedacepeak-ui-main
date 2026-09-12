@@ -425,7 +425,7 @@ const CompanyInfo = () => {
                 <div className="w-full sm:min-w-[240px]">
                   <Input
                     placeholder="Search sites..."
-                    className="mcm-pill-input pl-8"
+                    className="mcm-pill-input rounded-full border border-transparent pl-8 shadow-none hover:border-gray-300 focus:border-gray-300 focus:ring-0"
                     IconPosition="left-0 pl-3 inset-y-0"
                     value={search}
                     onChange={(e) => {

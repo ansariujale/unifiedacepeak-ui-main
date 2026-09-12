@@ -77,7 +77,7 @@ const VoiceMailConfigureModal: FC<ModalProps> = ({ modalState, setModalState }) 
           }}
           isMulti={true}
           value={watchVoicemailSettings?.users}
-          inputClass="team_chat"
+          inputClass="team_chat co-grey-select"
           FormatOptionLabel={ExtensionListViewForVoiceMail}
         />
         <div className="flex items-center justify-between">

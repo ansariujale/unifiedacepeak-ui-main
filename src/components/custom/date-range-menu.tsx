@@ -65,10 +65,15 @@ const DateRangeMenu = <T extends string>({
                     onChange(option.value);
                     setOpen(false);
                   }}
+                  onMouseEnter={(e) => {
+                    if (!active) e.currentTarget.style.backgroundColor = '#ffe4e6';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) e.currentTarget.style.backgroundColor = '';
+                  }}
+                  style={active ? { backgroundColor: '#f3f4f6' } : undefined}
                   className={`flex w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors ${
-                    active
-                      ? 'bg-gray-100 font-bold text-black'
-                      : 'font-medium text-gray-600 hover:bg-rose-100 hover:text-primary'
+                    active ? 'font-bold text-black' : 'font-medium text-gray-600 hover:text-primary'
                   }`}
                 >
                   <span className="flex-1">{option.label}</span>

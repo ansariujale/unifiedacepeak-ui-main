@@ -310,7 +310,11 @@ const TextEditor = (
   };
 
   const editorStyle = useMemo<CSSProperties>(() => {
-    if (readOnly) return { overflowWrap: 'break-word' };
+    // Overrides the admin shell's global `.mcm-page :focus-visible` outline
+    // (mcm-page.css), which otherwise rings this contentEditable in red on
+    // focus like any other focusable element — undesired on a chat composer.
+    // An inline style always wins regardless of that rule's specificity.
+    if (readOnly) return { overflowWrap: 'break-word', outline: 'none' };
 
     let height: string | undefined = undefined;
     let minHeight: string | undefined = undefined;
@@ -330,6 +334,7 @@ const TextEditor = (
 
     return {
       overflowWrap: 'break-word',
+      outline: 'none',
       height,
       minHeight,
       maxHeight,

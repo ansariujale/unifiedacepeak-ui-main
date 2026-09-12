@@ -15,6 +15,10 @@ import { CHANNELS_ICON, ChatChannels } from '../constants';
 import ChatPageHeader from '../shared/chat-page-header';
 import ChatListRow from '../shared/chat-list-row';
 import { demoAllChannelsChats, demoChannelChats, type ChannelKey } from '../demo-data';
+import DateRangeMenu from '@/components/custom/date-range-menu';
+import { handleDate } from '@/components/custom/date-dropdown/constant';
+
+const DATE_PRESETS = ['All', 'Today', 'Yesterday', 'Last 7 Days', 'This Month'];
 
 const CAPTAIN_API_BASE = '/captain-api/api/captain';
 
@@ -100,6 +104,7 @@ const AllChannelsChats = ({
   const { user } = useUser();
   const { allChats = [] } = useSocketEvents();
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('All');
   // "all" is the default — the same convention as Agent Chat's tabs, where
   // one value drives which slice of the data is currently shown.
   const [selectedChannel, setSelectedChannel] = useState<'all' | ChannelKey>('all');
@@ -186,9 +191,15 @@ const AllChannelsChats = ({
     const byChannel =
       selectedChannel === 'all' ? rows : rows.filter((r) => r.channel === selectedChannel);
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return byChannel;
-    return byChannel.filter((r) => r.name.toLowerCase().includes(q));
-  }, [rows, selectedChannel, searchQuery]);
+    const byName = q ? byChannel.filter((r) => r.name.toLowerCase().includes(q)) : byChannel;
+
+    if (dateFilter === 'All') return byName;
+    const { from, to } = handleDate(dateFilter);
+    if (!from || !to) return byName;
+    const rangeStart = new Date(`${from}T00:00:00`).getTime();
+    const rangeEnd = new Date(`${to}T23:59:59.999`).getTime();
+    return byName.filter((r) => r.timestamp >= rangeStart && r.timestamp <= rangeEnd);
+  }, [rows, selectedChannel, searchQuery, dateFilter]);
 
   const channelLabel = CHANNEL_TABS.find((t) => t.value === selectedChannel)?.label || 'All';
 
@@ -199,12 +210,12 @@ const AllChannelsChats = ({
           <FilterIcon className="h-3.75 w-3.75" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 min-w-[200px]">
         {ChatChannels?.map((item: any, index: number) => (
           <DropdownMenuItem
             key={index}
             className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
-              item.value === 'all_channels' ? 'bg-gray-100' : ''
+              item.value === 'all_channels' ? 'bg-gray-100 text-gray-900' : ''
             }`}
             onClick={() => {
               handleChatType(item.value);
@@ -230,6 +241,15 @@ const AllChannelsChats = ({
     </DropdownMenu>
   ) : null;
 
+  const dateMenu = (
+    <DateRangeMenu
+      options={DATE_PRESETS.map((preset) => ({ label: preset, value: preset }))}
+      value={dateFilter}
+      onChange={setDateFilter}
+      label="Filter by date"
+    />
+  );
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col bg-white">
       <ChatPageHeader
@@ -237,7 +257,12 @@ const AllChannelsChats = ({
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search conversations…"
-        actions={filterMenu}
+        actions={
+          <>
+            {dateMenu}
+            {filterMenu}
+          </>
+        }
       />
 
       {/* Channel filter tabs — same pattern as Agent Chat's

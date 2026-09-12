@@ -8,16 +8,14 @@ import { useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { forgetPassword } from '@/services/api';
-import { getEnv, handleAlert } from '@/lib/utils';
+import { getEnv, handleAlert, isCaptchaExemptHost } from '@/lib/utils';
 import * as yup from 'yup';
 import Loader from '@/components/custom/loader';
 import { useEffect, useRef, useState } from 'react';
 import { useOrganization } from '@/hooks/use-organisation';
 import { Turnstile, type TurnstileHandle } from '@/hooks/use-turnstile';
 
-const isLocalhost = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]'].includes(
-  window.location.hostname,
-);
+const isCaptchaExempt = isCaptchaExemptHost();
 
 export const ForgetPasswordSchema = yup.object().shape({
   email: yup.string().email('Must be a valid email').required('Email is required'),
@@ -29,7 +27,7 @@ const ForgotPassword = () => {
   const { mainSiteInfo } = useOrganization();
   const turnstileRef = useRef<TurnstileHandle>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const canSubmit = isLocalhost || Boolean(captchaToken);
+  const canSubmit = isCaptchaExempt || Boolean(captchaToken);
   const {
     register,
     handleSubmit,
@@ -103,7 +101,7 @@ const ForgotPassword = () => {
                   </div>
                   {!isEmailSent && (
                     <>
-                      {!isLocalhost && (
+                      {!isCaptchaExempt && (
                         <Turnstile
                           ref={turnstileRef}
                           action="forgot_password"
