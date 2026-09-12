@@ -356,7 +356,7 @@ const CompanyProfileFields = () => {
               {/* The honest bit. Defining a field is real and is saved; nothing
                   yet puts it on anybody's record, and an admin who saves this
                   and then opens a colleague's profile must not be surprised. */}
-              <ul className="flex flex-wrap list-disc gap-x-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 pl-6 text-xs text-black">
+              <ul className="flex w-fit flex-wrap list-disc gap-x-4 self-start rounded-lg border border-amber-200 bg-amber-50/10 px-3 py-2 pl-6 text-xs text-amber-900">
                 <li>Coming soon — fields aren&apos;t on anyone&apos;s profile yet.</li>
                 <li>Saved now, so they&apos;re ready once this ships.</li>
               </ul>
@@ -493,7 +493,7 @@ const CompanyProfileFields = () => {
                       </div>
 
                       {isConfirming && (
-                        <div className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                        <div className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50/50 px-3 py-2">
                           <p className="text-xs font-semibold text-gray-900">
                             Remove &quot;{field.label.trim() || 'this field'}&quot;?
                           </p>

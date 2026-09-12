@@ -343,8 +343,8 @@ const SecurityCard = ({
       <p
         className={`rounded-lg border px-3 py-2 text-xs ${
           enforced
-            ? 'border-green-200 bg-green-50 text-green-800'
-            : 'border-red-200 bg-red-50 text-black'
+            ? 'border-green-200 bg-green-50/50 text-green-800'
+            : 'border-red-200 bg-red-50/50 text-black'
         }`}
       >
         {enforcementNote}
@@ -592,7 +592,7 @@ const CompanySecurity = () => {
           </div>
 
           {/* Loud, once, at the top — then specifically again on every card. */}
-          <div className="flex items-start gap-2.5 rounded-xl border border-red-300 bg-red-50 p-4">
+          <div className="flex items-start gap-2.5 rounded-xl border border-red-300 bg-red-50/50 p-4">
             <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
             <div>
               <p className="text-sm font-semibold text-red-900">
@@ -674,7 +674,7 @@ const CompanySecurity = () => {
             </p>
 
             {Boolean(exemptAdmins.length) && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+              <p className="w-fit max-w-full self-start rounded-lg border border-red-200 bg-red-50/50 px-3 py-2 text-xs text-red-800">
                 {exemptAdmins.map((person) => person.name).join(', ')}{' '}
                 {exemptAdmins.length === 1 ? 'is' : 'are'} on this list but now hold an admin role —
                 most likely promoted after being added. Untick{' '}
@@ -839,7 +839,7 @@ const CompanySecurity = () => {
                   )}
                 </div>
 
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <div className="rounded-lg border border-amber-200 bg-amber-50/10 p-3">
                   <p className="text-xs font-semibold text-amber-900">
                     You can lock yourself out with this list.
                   </p>

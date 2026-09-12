@@ -128,9 +128,9 @@ const CompanySettingsCard = () => {
       {isLoading ? (
         <p className="mt-3 text-sm text-gray-500">Loading…</p>
       ) : !hasDefaults ? (
-        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-          <p className="text-xs font-semibold text-gray-900">No company rules set yet</p>
-          <p className="mt-0.5 text-xs text-gray-700">
+        <div className="mt-3 w-fit self-start rounded-lg border border-amber-200 bg-amber-50/10 p-3">
+          <p className="text-xs font-semibold text-amber-900">No company rules set yet</p>
+          <p className="mt-0.5 text-xs text-amber-800">
             Without them, each person is set up individually and nothing is applied consistently.
           </p>
         </div>
@@ -155,7 +155,7 @@ const CompanySettingsCard = () => {
                   row.staffMayChange ? 'bg-gray-100 text-gray-600' : 'bg-slate-200 text-slate-600'
                 }`}
               >
-                {row.staffMayChange ? 'Staff can change' : 'Standard'}
+                {row.staffMayChange ? 'Staff can change' : 'Locked'}
               </span>
             </div>
           ))}

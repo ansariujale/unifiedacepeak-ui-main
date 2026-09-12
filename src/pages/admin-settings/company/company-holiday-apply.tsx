@@ -731,9 +731,9 @@ const CompanyHolidayApply = () => {
       </div>
 
       {!loadingCompany && companyHolidays.length === 0 && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+        <div className="mt-3 flex w-fit items-start gap-2 self-start rounded-lg border border-amber-200 bg-amber-50/10 p-3">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-          <p className="text-xs text-gray-700">
+          <p className="text-xs text-amber-800">
             There are no company holidays yet. Add some to the list above and save them first.
           </p>
         </div>
