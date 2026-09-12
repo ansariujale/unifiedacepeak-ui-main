@@ -724,6 +724,16 @@
     border-color: #111111 !important;
   }
 
+  /* Contact page's Group/Tag filters: a plain grey border on open/focus
+     instead of the app-wide red — there's no error or accent meaning here,
+     just a filter dropdown. Scoped via `inputClass` so it doesn't touch any
+     other CustomSelect. */
+  .contact-filter-select.custom-react-select__control--is-focused,
+  .contact-filter-select.custom-react-select__control--menu-is-open {
+    border-color: var(--color-gray-300) !important;
+    box-shadow: none !important;
+  }
+
   .custom-react-select__menu {
     position: absolute !important;
     z-index: 9999 !important;

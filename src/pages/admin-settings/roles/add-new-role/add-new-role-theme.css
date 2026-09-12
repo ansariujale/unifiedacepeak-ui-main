@@ -1,0 +1,34 @@
+/* New/Edit role form — used both from Admin Settings > Roles and
+   Directory > Roles (same AddEditUserRole component, rendered inside a
+   portalled Dialog in the Directory case). Scoped to `.mcm-userform`, the
+   class the form itself already carries, so it reaches its fields
+   regardless of where the Dialog portals to. */
+
+/* "Enter Role Name" and "Description" were picking up a red focus ring —
+   mcm-page.css's admin-wide `input/textarea:focus-visible { outline: 2px
+   solid var(--accent) }` (red by default) plus this Input's own
+   `focus:border-primary` (also red by default). Neither is an error state
+   here, just the default focus treatment, so both fields keep a plain
+   neutral border instead. */
+.mcm-userform input:focus,
+.mcm-userform input:focus-visible,
+.mcm-userform textarea:focus,
+.mcm-userform textarea:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: #d1d5db !important;
+}
+
+/* "Select a role to use as a starting point" radios rendered as a nearly
+   invisible dot with no ring: mcm-page.css's generic reset for plain
+   buttons (".mcm-page button:not([data-slot='switch']):not([data-slot='button']):not([data-slot='checkbox'])")
+   matches Radix's RadioGroupItem too (it renders as a real <button>) and is
+   more specific than mcm-page.css's own `[data-slot='radio-group-item']`
+   border rule, so it always won and zeroed the border regardless of colour.
+   Same fix already used on the phone settings page's own voicemail radios. */
+.mcm-userform [data-slot='radio-group-item'] {
+  border: 1.5px solid #9ca3af !important;
+}
+.mcm-userform [data-slot='radio-group-item'][data-state='checked'] {
+  border-color: var(--accent, #dc2626) !important;
+}

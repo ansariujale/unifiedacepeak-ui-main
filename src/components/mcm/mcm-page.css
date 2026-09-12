@@ -789,8 +789,17 @@
    button, not inert text — a visible border/background at rest on every
    Directory page, not just on hover. */
 .mcm-page .fchip-select {
-  background: var(--surface);
-  border-color: var(--line);
+  background: #000 !important;
+  border: 1px solid #000 !important;
+  color: #fff !important;
+}
+.mcm-page .fchip-select svg {
+  color: #fff !important;
+}
+.mcm-page .fchip-select:hover {
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
 }
 /* The search box is the primary control on this row on every Directory
    page — bigger and fully rounded instead of the same small chip shape as
@@ -9668,6 +9677,21 @@
 }
 .mcm-chat-iconbtn:active {
   background: #fdd8db;
+}
+.mcm-chat-iconbtn--black {
+  border-color: #000;
+  background: #000;
+  color: #fff;
+}
+.mcm-chat-iconbtn--black:hover,
+.mcm-chat-iconbtn--black[aria-expanded='true'],
+.mcm-chat-iconbtn--black[data-state='open'] {
+  border-color: #000;
+  background: #000;
+  color: #fff;
+}
+.mcm-chat-iconbtn--black:active {
+  background: #000;
 }
 
 /* Call Coverage's filter row and tab strip now share the same white-card

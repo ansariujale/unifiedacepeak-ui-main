@@ -290,7 +290,7 @@ const SMSLogs = () => {
         type="button"
         variant="outline"
         onClick={handleFilter}
-        className="cursor-pointer flex items-center justify-center min-h-9 min-w-9 max-w-9 max-h-9 h-9 w-9 rounded-lg bg-white border border-primary text-primary hover:bg-primary hover:text-white"
+        className="cursor-pointer flex items-center justify-center min-h-9 min-w-9 max-w-9 max-h-9 h-9 w-9 rounded-lg bg-white border border-black text-black hover:bg-black hover:text-white"
       >
         <FilterIcon className="w-5 h-5" />
       </Button>

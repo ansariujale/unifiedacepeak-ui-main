@@ -1193,7 +1193,7 @@ const SidebarContent = ({
                   )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button type="button" className="mcm-chat-iconbtn" aria-label="Filter">
+                      <button type="button" className="mcm-chat-iconbtn mcm-chat-iconbtn--black" aria-label="Filter">
                         <FilterIcon className="w-[15px] h-[15px]" />
                       </button>
                     </DropdownMenuTrigger>

@@ -8,9 +8,7 @@ import { getObjectLength, handleAlert } from '@/lib/utils';
 import Loader from '@/components/custom/loader';
 import { Button } from '@/components/ui/button';
 import { Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import CustomTooltip from '@/components/custom/custom-tooltip';
-import { InfoIcon } from '@/assets/icons';
 import SiteInfo from './site-info';
 import Summary from './summary';
 
@@ -131,8 +129,8 @@ const NewSiteSteps = ({ data = {}, handleClose }: any) => {
       onSubmit={handleSubmit(onSubmit)}
       className="flex h-full min-h-0 flex-col justify-between gap-3 pt-1"
     >
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
-        <div className="mb-1.5 flex items-center gap-2">
+      <div className="flex shrink-0 flex-col gap-2 pb-3">
+        <div className="flex items-center gap-2">
           <h3 className="font-mono text-[12px] font-extrabold uppercase leading-[18px] text-red-600">
             {isEdit ? 'Edit Site' : 'Create New Site'}
           </h3>
@@ -149,7 +147,7 @@ const NewSiteSteps = ({ data = {}, handleClose }: any) => {
             side="right"
             className="whitespace-normal text-left"
           >
-            <InfoIcon className="w-3.5 h-3.5 text-gray-500 cursor-pointer" />
+            <Info className="w-3.5 h-3.5 text-gray-500 cursor-pointer" />
           </CustomTooltip>
         </div>
         <div className="flex items-center gap-1.5 text-sm">

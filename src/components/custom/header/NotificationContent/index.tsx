@@ -95,7 +95,7 @@ const NotificationContent = ({ setNotificationState }: { setNotificationState: a
                 <DropdownMenuTrigger>
                   <div
                     className={
-                      'cursor-pointer flex items-center justify-center rounded-full w-9 h-9 bg-gray-100 text-gray-900/80 hover:bg-primary hover:text-white'
+                      'cursor-pointer flex items-center justify-center rounded-full w-9 h-9 bg-black text-white hover:bg-black hover:text-white'
                     }
                   >
                     <FilterIcon className="w-5 h-5" />

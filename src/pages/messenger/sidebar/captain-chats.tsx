@@ -90,7 +90,7 @@ const CaptainChats = ({
   const filterMenu = handleChatType ? (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="mcm-chat-iconbtn" aria-label="Filter">
+        <button type="button" className="mcm-chat-iconbtn mcm-chat-iconbtn--black" aria-label="Filter">
           <FilterIcon className="h-3.75 w-3.75" />
         </button>
       </DropdownMenuTrigger>

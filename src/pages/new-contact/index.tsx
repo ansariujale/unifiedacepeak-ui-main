@@ -267,7 +267,7 @@ const NewContact: FC = () => {
 
   return (
     <>
-      <section className="mcm-page flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
+      <section className="mcm-page contact-page flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
         {!canViewContact ? null : selectedGroupForContactLogs ? (
           <LeadContactLogs
             groupData={selectedGroupForContactLogs}
@@ -345,7 +345,7 @@ const NewContact: FC = () => {
                                   }
                                 : null
                             }
-                            inputClass="team_chat"
+                            inputClass="team_chat contact-filter-select"
                           />
                         </div>
                         <div className="w-full sm:w-40 md:max-lg:w-36 md:max-lg:shrink-0">
@@ -372,7 +372,7 @@ const NewContact: FC = () => {
                                   }
                                 : null
                             }
-                            inputClass="team_chat"
+                            inputClass="team_chat contact-filter-select"
                           />
                         </div>
                       </>

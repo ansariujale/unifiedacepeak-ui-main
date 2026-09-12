@@ -59,18 +59,18 @@
 }
 
 .mcm-page .ppl-red-theme .fchip-select {
-  background: #171717;
-  border-color: #171717;
-  color: #fff;
+  background: #000 !important;
+  border: 1px solid #000 !important;
+  color: #fff !important;
   border-radius: 9999px;
 }
 .ppl-red-theme .fchip-select svg {
-  color: #fff;
+  color: #fff !important;
 }
 .mcm-page .ppl-red-theme .fchip-select:hover {
-  background: #000;
-  border-color: #000;
-  color: #fff;
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
 }
 
 /* KPI band: one bordered card sharing dividers between cells, per the
