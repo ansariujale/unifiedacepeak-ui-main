@@ -266,8 +266,10 @@ const PermissionRow = ({
       </p>
     )}
     <p
-      className={`rounded-lg border px-3 py-2 text-xs text-black ${
-        enforced ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
+      className={`rounded-lg border px-3 py-2 text-xs ${
+        enforced
+          ? 'border-green-200 bg-green-50/10 text-green-800'
+          : 'border-amber-200 bg-amber-50/10 text-amber-900'
       }`}
       style={{ boxShadow: '0 6px 18px rgba(17, 17, 17, 0.1), 0 1px 4px rgba(17, 17, 17, 0.06)' }}
     >
@@ -381,7 +383,7 @@ const CompanyCallingPermissions = () => {
               </TooltipContent>
             </Tooltip>
           </div>
-          <div className="flex flex-wrap items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+          <div className="flex flex-wrap items-start gap-3 rounded-xl border border-red-200 bg-red-50/50 p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-red-700">
               <ShieldAlert className="h-5 w-5" />
             </div>

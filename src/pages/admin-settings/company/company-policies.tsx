@@ -320,8 +320,10 @@ const PolicyCard = ({
     <div className="flex flex-col gap-4 p-4">
       {children}
       <p
-        className={`rounded-lg border px-3 py-2 text-xs text-black ${
-          enforced ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
+        className={`rounded-lg border px-3 py-2 text-xs ${
+          enforced
+            ? 'border-green-200 bg-green-50/10 text-green-800'
+            : 'border-amber-200 bg-amber-50/10 text-amber-900'
         }`}
       >
         {enforcementNote}

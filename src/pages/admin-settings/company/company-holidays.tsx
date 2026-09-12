@@ -620,13 +620,13 @@ const CompanyHolidays = () => {
 
       {/* The one thing an admin must not misunderstand, at the top, in the
           colour the app uses for "read this". */}
-      <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+      <div className="mt-3 flex w-fit items-start gap-2 self-start rounded-lg border border-amber-200 bg-amber-50/10 p-3">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-gray-900">
+          <p className="text-xs font-semibold text-amber-900">
             This list is recorded, but it does not close your lines yet
           </p>
-          <p className="mt-0.5 text-xs text-gray-700">
+          <p className="mt-0.5 text-xs text-amber-800">
             Routing still reads each IVR, queue or user&apos;s own holiday list, set in its
             business-hours dialog — adding a date here doesn&apos;t close anything for you.
           </p>

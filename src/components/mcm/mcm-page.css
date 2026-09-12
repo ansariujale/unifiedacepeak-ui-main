@@ -46,7 +46,7 @@
   --accent-ink: #B91C1C;
   --accent-2: #EF4444;
   --accent-3: #F87171;
-  --accent-wash: #FEE2E2;
+  --accent-wash: #fdf2f2;
   --accent-edge: #FECACA;
 
   /* AI gets its own hue on purpose: machine output must never be
@@ -57,9 +57,9 @@
   --ai-edge: #ddccff;
 
   --live: #0d9488;
-  --live-wash: #dcf5f1;
+  --live-wash: #eefaf8;
   --warn: #c2670a;
-  --warn-wash: #fdf0dc;
+  --warn-wash: #fdf6ec;
   --crit: #d32f2f;
   --crit-wash: #fde9e9;
   --hold: #0e7490;
@@ -3029,9 +3029,9 @@
   --ai-wash: #f2ecff;
   --ai-edge: #ddccff;
   --live: #0d9488;
-  --live-wash: #dcf5f1;
+  --live-wash: #eefaf8;
   --warn: #c2670a;
-  --warn-wash: #fdf0dc;
+  --warn-wash: #fdf6ec;
   --hold: #0e7490;
   --hold-wash: #dcf1f7;
   --crit: #d32f2f;
