@@ -7,20 +7,29 @@ import {
   ArrowLeft,
   ArrowUp,
   ArrowUpDown,
+  BarChart3,
   Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Clock,
+  DollarSign,
   Download,
   FileText,
   Globe,
+  HelpCircle,
   Info,
   Instagram,
+  Languages,
   Loader2,
   Mail,
+  MapPin,
+  MessageSquare,
   Minus,
   MoreHorizontal,
   Smartphone,
+  Smile,
+  Users,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -33,10 +42,14 @@ import CustomTooltip from '@/components/custom/custom-tooltip';
 import {
   ResponsiveContainer,
   ComposedChart,
+  BarChart,
   Bar,
   XAxis,
   YAxis,
   Tooltip,
+  PieChart,
+  Pie,
+  Cell,
   LineChart,
   Line,
   CartesianGrid,
@@ -227,6 +240,7 @@ function AnalyticsPanel({
   className = '',
   isLoading = false,
   action,
+  icon,
 }: {
   title: string;
   subtitle?: string;
@@ -236,6 +250,8 @@ function AnalyticsPanel({
   isLoading?: boolean;
   /** Optional control shown at the right of the card's own header. */
   action?: ReactNode;
+  /** Optional badge shown to the left of the title. */
+  icon?: ReactNode;
 }) {
   return (
     <div
@@ -243,12 +259,15 @@ function AnalyticsPanel({
     >
       {isLoading && <CardLoader />}
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-1.5">
-            <h3 className="text-[14px] font-bold text-neutral-950">{title}</h3>
-            {tip ? <InfoTip text={tip} /> : null}
+        <div className="flex items-start gap-3">
+          {icon}
+          <div>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-[14px] font-bold text-neutral-950">{title}</h3>
+              {tip ? <InfoTip text={tip} /> : null}
+            </div>
+            {subtitle ? <p className="mt-1 text-xs text-neutral-500">{subtitle}</p> : null}
           </div>
-          {subtitle ? <p className="mt-1 text-xs text-neutral-500">{subtitle}</p> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
@@ -329,7 +348,7 @@ const OUTCOME_SERIES = [
 /* A fixed ramp for the languages bar - one hue, darkest to lightest, so a
    longer tail of languages still reads as one ordered set rather than a
    repeating cycle. */
-const LANGUAGE_RAMP = ['#dc2626', '#f87171', '#fca5a5', '#fecaca', '#fed7d7', '#94a3b8'];
+const LANGUAGE_RAMP = ['#991b1b', '#b91c1c', '#dc2626', '#ef4444', '#f87171', '#78716c'];
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -434,7 +453,7 @@ function TopicRing({ value }: { value: number }) {
   const circumference = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(100, value));
   return (
-    <span className="relative flex h-16 w-16 shrink-0 items-center justify-center">
+    <span className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white transition-transform duration-200 group-hover:-translate-y-1 group-hover:shadow-[0_10px_18px_rgba(220,38,38,0.28)]">
       <svg viewBox="0 0 64 64" className="absolute inset-0 h-16 w-16 -rotate-90" aria-hidden="true">
         <circle cx="32" cy="32" r={r} fill="none" stroke="#e5e7eb" strokeWidth="4.5" />
         <circle
@@ -594,7 +613,6 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
   );
   const [breakdownPage, setBreakdownPage] = useState(0);
   // which slice is under the pointer, so its legend row lights up too
-  const [activeLanguage, setActiveLanguage] = useState<number | null>(null);
 
   const { startDate, endDate } = useMemo(() => {
     const end = moment().format('YYYY-MM-DD');
@@ -1326,7 +1344,22 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
   const intentTotal = intents.reduce((sum, item) => sum + item.value, 0);
   const totalSpend = analyticsData?.cost_usage_breakdown?.total_spend;
   const spendRows: any[] = analyticsData?.cost_usage_breakdown?.agent_breakdown ?? [];
-  const maxSpend = Math.max(0, ...spendRows.map((row) => Number(row.total_spend || 0)));
+  const totalSpendAllAgents = spendRows.reduce((sum, row) => sum + Number(row.total_spend || 0), 0);
+
+  /* Neither total has a day-by-day figure of its own, so each day's share of
+     the range's chat volume also sets its share of the two totals - the same
+     split-by-volume approach the receptionist screen uses for its outcomes. */
+  const costTrend = (() => {
+    const totalVolume = volumeData.reduce((sum, day) => sum + Number(day.volume || 0), 0) || 1;
+    return volumeData.map((day) => {
+      const share = Number(day.volume || 0) / totalVolume;
+      return {
+        name: day.name,
+        spend: totalSpend != null ? Number((share * Number(totalSpend)).toFixed(4)) : 0,
+        replies: totalReplies != null ? Math.round(share * Number(totalReplies)) : 0,
+      };
+    });
+  })();
 
   // The daily columns and their legend totals, from the same per-day rows the
   // KPI strip and funnel used to read separately.
@@ -1558,6 +1591,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
               title="Per-agent breakdown"
               subtitle="Every agent side by side for this range — pick one to drill in."
               isLoading={isLoading}
+              icon={<Users className="mt-0.5 h-4 w-4 text-red-600" />}
             >
               <div className="mt-4 hidden grid-cols-[minmax(0,1fr)_112px_104px_104px_92px_96px_120px_120px_20px] items-center gap-4 rounded-t-md border-b border-neutral-200 bg-[#fafafa] px-2 py-2 text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-400 md:grid">
                 <span>Agent</span>
@@ -1769,6 +1803,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
               subtitle={`How each day's chats ended · ${periodLabel}`}
               tip="Each column is one day's chats: resolved by the agent, handed off to a person, or booked as a callback. The number on top is that day's resolution rate."
               isLoading={isLoading}
+              icon={<BarChart3 className="mt-0.5 h-4 w-4 text-red-600" />}
               className="flex flex-col"
               action={
                 <div className="text-right">
@@ -1807,7 +1842,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
                   </span>
                 ))}
               </div>
-              <div className="mt-4 min-h-[130px] w-full flex-1">
+              <div className="mt-4 min-h-[200px] w-full flex-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={outcomeRows}
@@ -1889,6 +1924,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
             <AnalyticsPanel
               title="Channels"
               subtitle="Where conversations came from"
+              icon={<Globe className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Share of conversations by the channel the visitor used to reach the agent."
               isLoading={isLoading}
             >
@@ -1900,21 +1936,21 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
                   return (
                     <div
                       key={item.name}
-                      className="flex items-center gap-3 rounded-2xl px-3 py-3"
+                      className="flex items-center gap-3 rounded-2xl px-4 py-5"
                       style={{ background: `color-mix(in oklab, ${item.color} 14%, white)` }}
                     >
                       <span
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_3px_8px_rgba(17,17,17,0.16)]"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_4px_10px_rgba(17,17,17,0.16)]"
                       >
-                        <ChannelIcon className="h-4 w-4 text-red-600" strokeWidth={2.25} />
+                        <ChannelIcon className="h-5 w-5 text-red-600" strokeWidth={2.25} />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-lg font-black leading-none text-neutral-900">{item.pct}</div>
+                        <div className="text-xl font-black leading-none text-neutral-900">{item.pct}</div>
                         {/* the full name, never clipped - it wraps instead of truncating */}
-                        <div className="mt-1 break-words text-[12px] font-semibold leading-tight text-neutral-800">
+                        <div className="mt-0.5 break-words text-[13px] font-semibold leading-tight text-neutral-800">
                           {item.name}
                         </div>
-                        <div className="mt-0.5 text-[10.5px] font-medium text-neutral-500">
+                        <div className="mt-0.5 text-[11px] font-medium text-neutral-500">
                           {item.value} chats
                         </div>
                       </div>
@@ -1929,6 +1965,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
             <AnalyticsPanel
               title="Conversations by hour"
               subtitle="Chats by hour of day (local time). Darker cells = busier hours."
+              icon={<Clock className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Hour-of-day distribution. Use it to schedule live agents for handoffs during peak hours."
               isLoading={isLoading}
             >
@@ -2020,6 +2057,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
             <AnalyticsPanel
               title="Top user intents"
               subtitle="What visitors actually asked about"
+              icon={<MessageSquare className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Most frequent intents, derived from intent classification of visitor messages."
               isLoading={isLoading}
               className="flex flex-col"
@@ -2029,7 +2067,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
                   intents.slice(0, 6).map((item, index) => (
                     <div
                       key={`${item.name}-${index}`}
-                      className="flex items-center gap-3.5 rounded-xl px-1.5 py-2 transition-colors hover:bg-neutral-50"
+                      className="group flex items-center gap-3.5 rounded-xl px-1.5 py-2 transition-colors hover:bg-red-50"
                     >
                       <TopicRing value={Math.round(item.pct)} />
                       <div className="min-w-0">
@@ -2053,6 +2091,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
             <AnalyticsPanel
               title="Conversation sentiment"
               subtitle="Visitor sentiment mix (0-100) at the end of each chat."
+              icon={<Smile className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Share of chats classified positive, neutral or negative each day, from the transcript. Watch the negative line more than the average."
               isLoading={isLoading}
             >
@@ -2158,6 +2197,7 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
             <AnalyticsPanel
               title="Unanswered questions"
               subtitle="Pick an agent to see their questions, then answer each one."
+              icon={<HelpCircle className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Questions visitors asked that the agent could not answer with confidence."
               isLoading={isLoading}
             >
@@ -2204,16 +2244,17 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
 
         <div>
           <SectionEyebrow label="Audience" />
-          <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[3fr_2fr]">
             <AnalyticsPanel
               title="Top countries"
               subtitle="Where your visitors are chatting from"
+              icon={<MapPin className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Visitor location from the session, by conversation count."
               isLoading={isLoading}
             >
               {/* One row per country: the bar is the comparison, the count and
                   the share are the two ways people quote it. */}
-              <div className="mt-4 divide-y divide-neutral-100">
+              <div className="mt-5 divide-y divide-neutral-100">
                 {countries.map((item: any, index: number) => {
                   const total = countries.reduce(
                     (sum: number, row: any) => sum + Number(row.value || 0),
@@ -2221,25 +2262,25 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
                   );
                   const share = total ? Math.round((Number(item.value || 0) / total) * 100) : 0;
                   return (
-                    <div key={`${item.code}-${index}`} className="flex items-center gap-3 py-2.5">
-                      <span className="w-6 shrink-0 text-center text-lg leading-none">{item.flag}</span>
-                      <span className="w-[140px] shrink-0 truncate text-xs font-semibold text-neutral-800">
+                    <div key={`${item.code}-${index}`} className="flex items-center gap-4 py-2">
+                      <span className="w-7 shrink-0 text-center text-2xl leading-none">{item.flag}</span>
+                      <span className="w-[130px] shrink-0 truncate text-sm font-bold text-neutral-900">
                         {item.name}
                       </span>
-                      <span className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-neutral-100">
+                      <span className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-none bg-neutral-100">
                         <span
-                          className="block h-full rounded-full transition-[width] duration-500 ease-out"
+                          className="block h-full rounded-none transition-[width] duration-500 ease-out"
                           style={{
                             width: `${item.barPct}%`,
-                            background: `color-mix(in oklab, ${THEME_PRIMARY} ${Math.round(35 + (item.barPct / 100) * 65)}%, white)`,
+                            background: `linear-gradient(90deg, ${THEME_PRIMARY}, color-mix(in oklab, ${THEME_PRIMARY} 55%, white))`,
                           }}
                         />
                       </span>
-                      <span className="w-10 shrink-0 text-right text-xs font-bold tabular-nums text-neutral-900">
+                      <span className="w-10 shrink-0 text-right text-sm font-bold tabular-nums text-neutral-900">
                         {item.value}
                       </span>
-                      <span aria-hidden="true" className="h-3 w-px shrink-0 bg-neutral-200" />
-                      <span className="w-10 shrink-0 text-right text-xs font-bold tabular-nums text-neutral-900">
+                      <span aria-hidden="true" className="h-4 w-px shrink-0 bg-neutral-200" />
+                      <span className="w-10 shrink-0 text-right text-sm font-bold tabular-nums text-red-600">
                         {share}%
                       </span>
                     </div>
@@ -2251,60 +2292,109 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
             <AnalyticsPanel
               title="Languages detected"
               subtitle="From visitor messages"
+              icon={<Languages className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Language detected on the visitor's side of the chat; every agent replies in the visitor's language."
               isLoading={isLoading}
+              className="max-w-[460px] p-2"
             >
-              {/* One bar, top to bottom: each language is a segment sized to
-                  its share, the number sits under its own segment, and the
-                  legend below spells out which colour is which language. */}
-              <div className="mt-6">
-                <div className="flex h-9 w-full overflow-hidden rounded-full">
-                  {languages.map((item: any, index: number) => (
-                    <div
-                      key={`${item.name}-seg-${index}`}
-                      onMouseEnter={() => setActiveLanguage(index)}
-                      onMouseLeave={() => setActiveLanguage(null)}
-                      className="h-full transition-opacity duration-150"
-                      style={{
-                        width: `${Math.max(item.pct, languages.length ? 2 : 0)}%`,
-                        background: LANGUAGE_RAMP[index % LANGUAGE_RAMP.length],
-                        opacity: activeLanguage === null || activeLanguage === index ? 1 : 0.35,
-                        marginLeft: index === 0 ? 0 : 2,
-                      }}
-                    />
-                  ))}
-                </div>
-                <div className="mt-2 flex w-full">
-                  {languages.map((item: any, index: number) => (
-                    <div
-                      key={`${item.name}-pct-${index}`}
-                      className="text-center text-sm font-bold tabular-nums text-neutral-900"
-                      style={{ width: `${Math.max(item.pct, languages.length ? 2 : 0)}%` }}
-                    >
-                      {item.pct}%
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2">
-                  {languages.map((item: any, index: number) => (
-                    <div
-                      key={`${item.name}-legend-${index}`}
-                      onMouseEnter={() => setActiveLanguage(index)}
-                      onMouseLeave={() => setActiveLanguage(null)}
-                      className={cx(
-                        'flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold text-neutral-700 transition-colors',
-                        activeLanguage === index && 'bg-neutral-50',
-                      )}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{ background: LANGUAGE_RAMP[index % LANGUAGE_RAMP.length] }}
-                      />
-                      <span className="text-sm leading-none">{item.flag}</span>
-                      {item.name}
-                    </div>
-                  ))}
+              {/* The ring says how many languages split the traffic at a
+                  glance; the list on the right carries the exact figures. */}
+              <div className="mt-0 flex items-center justify-center pr-6">
+                <div className="relative h-[280px] w-[420px] shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                      <defs>
+                        <filter id="language-hub-shadow" x="-60%" y="-60%" width="220%" height="220%">
+                          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#111111" floodOpacity="0.18" />
+                        </filter>
+                      </defs>
+                      {/* Petal-shaped slices - rounded corners plus real gaps
+                          between them - radiating out from a raised hub, each
+                          one called out by its own leader line. */}
+                      <Pie
+                        data={languages}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={54}
+                        outerRadius={100}
+                        cornerRadius={5}
+                        paddingAngle={6}
+                        dataKey="pct"
+                        stroke="none"
+                        isAnimationActive
+                        animationBegin={100}
+                        animationDuration={1100}
+                        animationEasing="ease-out"
+                        labelLine={false}
+                        label={(props: any) => {
+                          const { cx: px, cy: py, midAngle, outerRadius: pieOuterR, index } = props;
+                          const item = languages[index];
+                          if (!item) return null;
+                          const RAD = Math.PI / 180;
+                          const cos = Math.cos(-midAngle * RAD);
+                          const sin = Math.sin(-midAngle * RAD);
+                          const start = { x: px + (pieOuterR + 4) * cos, y: py + (pieOuterR + 4) * sin };
+                          const bend = { x: px + (pieOuterR + 24) * cos, y: py + (pieOuterR + 24) * sin };
+                          const isRight = cos >= 0;
+                          const labelX = bend.x + (isRight ? 14 : -14);
+                          const color = LANGUAGE_RAMP[index % LANGUAGE_RAMP.length];
+                          return (
+                            <g>
+                              <path
+                                d={`M${start.x},${start.y} L${bend.x},${bend.y} L${labelX},${bend.y}`}
+                                stroke="#cbd5e1"
+                                strokeDasharray="2 3"
+                                fill="none"
+                              />
+                              <circle cx={start.x} cy={start.y} r={2.5} fill={color} />
+                              {/* Name and share sit on one line, right next to each
+                                  other, rather than stacked - less room needed,
+                                  and nothing to visually pull apart. */}
+                              <text
+                                x={labelX + (isRight ? 4 : -4)}
+                                y={bend.y}
+                                textAnchor={isRight ? 'start' : 'end'}
+                                dominantBaseline="central"
+                                fontSize={11.5}
+                                fontWeight={700}
+                                fill="#0f172a"
+                              >
+                                {item.name} {item.pct}%
+                              </text>
+                            </g>
+                          );
+                        }}
+                      >
+                        {languages.map((_: any, index: number) => (
+                          <Cell
+                            key={`lang-${index}`}
+                            fill={LANGUAGE_RAMP[index % LANGUAGE_RAMP.length]}
+                          />
+                        ))}
+                      </Pie>
+                      {/* The raised white hub the petals radiate from. */}
+                      <Pie
+                        data={[{ value: 1 }]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={0}
+                        outerRadius={38}
+                        dataKey="value"
+                        stroke="none"
+                        isAnimationActive={false}
+                        filter="url(#language-hub-shadow)"
+                      >
+                        <Cell fill="#ffffff" />
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="pointer-events-none absolute inset-0 grid place-items-center">
+                    <span className="text-center text-[11px] font-bold uppercase leading-3 tracking-[0.04em] text-neutral-400">
+                      {languages.length}
+                      <br />
+                      langs
+                    </span>
+                  </div>
                 </div>
               </div>
             </AnalyticsPanel>
@@ -2313,10 +2403,119 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
 
         <div>
           <SectionEyebrow label="Follow-up & cost" />
-          <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[3fr_2fr]">
+            <AnalyticsPanel
+              title="Cost & usage"
+              subtitle="AI inference spend this period"
+              icon={<DollarSign className="mt-0.5 h-4 w-4 text-red-600" />}
+              tip="What the agents' replies cost to generate over the range, split by agent."
+              isLoading={isLoading}
+            >
+              <div className="mt-4 flex flex-col gap-4 lg:flex-row">
+                <div className="flex w-full shrink-0 flex-col gap-3 lg:w-[220px]">
+                  <div className="rounded-xl border border-neutral-200 bg-white p-3">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
+                      Total spend
+                    </div>
+                    <div className="mt-1 text-xl font-bold tabular-nums text-neutral-900">
+                      {totalSpend != null ? `$${Number(totalSpend).toFixed(4)}` : '--'}
+                    </div>
+                    <div className="mt-0.5 text-[10px] text-neutral-400">This period</div>
+                    <div className="mt-3 h-[46px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={costTrend} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+                          <Bar dataKey="spend" radius={[2, 2, 0, 0]} maxBarSize={12}>
+                            {costTrend.map((_, index) => (
+                              <Cell
+                                key={`spend-bar-${index}`}
+                                fill={
+                                  index === costTrend.length - 1
+                                    ? THEME_PRIMARY
+                                    : `color-mix(in oklab, ${THEME_PRIMARY} 30%, white)`
+                                }
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-neutral-200 bg-white p-3">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
+                      Total replies
+                    </div>
+                    <div className="mt-1 text-xl font-bold tabular-nums text-neutral-900">
+                      {totalReplies != null ? Number(totalReplies).toLocaleString('en-US') : '--'}
+                    </div>
+                    <div className="mt-0.5 text-[10px] text-neutral-400">Generated by agents</div>
+                    <div className="mt-3 h-[46px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={costTrend} margin={{ top: 2, right: 6, bottom: 0, left: 6 }}>
+                          <Line
+                            dataKey="replies"
+                            type="linear"
+                            stroke={THEME_PRIMARY}
+                            strokeWidth={1.5}
+                            dot={{ r: 2.5, fill: '#ffffff', stroke: THEME_PRIMARY, strokeWidth: 1.5 }}
+                            activeDot={{ r: 4, fill: '#ffffff', stroke: THEME_PRIMARY, strokeWidth: 2 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-400">
+                    Spend by agent
+                  </div>
+                  {/* Five rows fixed, the rest scrolls - so the card's
+                      height stays put no matter how many agents spend. */}
+                  <div className="max-h-[270px] divide-y divide-neutral-100 overflow-y-auto pr-1">
+                  {spendRows.map((row: any) => {
+                    const isDeleted = Boolean(row.agent_uuid && !activeAgentIdSet.has(row.agent_uuid));
+                    const spend = Number(row.total_spend || 0);
+                    const name = row.agent_name || agentNameMap.get(row.agent_uuid) || row.agent_uuid;
+                    const share = totalSpendAllAgents ? Math.round((spend / totalSpendAllAgents) * 100) : 0;
+                    return (
+                      <div key={row.agent_uuid} className="flex items-center gap-3 py-2.5 text-xs">
+                        <CustomAvatar
+                          name={name}
+                          size="32"
+                          showPresence={false}
+                          isActivityInfo={false}
+                          textClass="text-[11px]"
+                        />
+                        <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                          <span className="truncate text-[13px] font-semibold text-neutral-900">{name}</span>
+                          {isDeleted && (
+                            <span className="shrink-0 rounded-full border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-600">
+                              Deleted
+                            </span>
+                          )}
+                        </span>
+                        <span className="w-16 shrink-0 text-right font-bold tabular-nums text-neutral-900">
+                          {row.total_spend != null ? `$${spend.toFixed(4)}` : '--'}
+                        </span>
+                        <span aria-hidden="true" className="shrink-0 text-neutral-300">|</span>
+                        <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold tabular-nums text-red-600">
+                          {share}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                    {spendRows.length === 0 && (
+                      <p className="py-2 text-xs text-neutral-400">No spend data available.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </AnalyticsPanel>
+
             <AnalyticsPanel
               title="Top FAQs by usage"
               subtitle="Most-triggered answers this range"
+              icon={<FileText className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Knowledge-base answers the agent served most often."
               isLoading={isLoading}
             >
@@ -2334,72 +2533,6 @@ export default function AgentAnalytics({ onClose, agents = [] }: AgentAnalyticsP
                     </span>
                   </div>
                 ))}
-              </div>
-            </AnalyticsPanel>
-
-            <AnalyticsPanel
-              title="Cost & usage"
-              subtitle="AI inference spend this period"
-              tip="What the agents' replies cost to generate over the range, split by agent."
-              isLoading={isLoading}
-            >
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Total spend
-                  </div>
-                  <div className="mt-1 text-xl font-bold tabular-nums text-neutral-900">
-                    {totalSpend != null ? `$${Number(totalSpend).toFixed(4)}` : '--'}
-                  </div>
-                  <div className="mt-0.5 text-[10px] text-neutral-400">This period</div>
-                </div>
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-500">
-                    Total replies
-                  </div>
-                  <div className="mt-1 text-xl font-bold tabular-nums text-neutral-900">
-                    {totalReplies != null ? Number(totalReplies).toLocaleString('en-US') : '--'}
-                  </div>
-                  <div className="mt-0.5 text-[10px] text-neutral-400">Generated by agents</div>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.06em] text-neutral-400">
-                  Spend by agent
-                </div>
-                <div className="max-h-[150px] divide-y divide-neutral-100 overflow-y-auto pr-1">
-                  {spendRows.map((row: any) => {
-                    const isDeleted = Boolean(row.agent_uuid && !activeAgentIdSet.has(row.agent_uuid));
-                    const spend = Number(row.total_spend || 0);
-                    return (
-                      <div key={row.agent_uuid} className="flex items-center gap-3 py-2 text-xs">
-                        <span className="flex min-w-0 flex-1 items-center gap-1.5">
-                          <span className="truncate text-[13px] font-normal text-neutral-900">
-                            {row.agent_name || agentNameMap.get(row.agent_uuid) || row.agent_uuid}
-                          </span>
-                          {isDeleted && (
-                            <span className="shrink-0 rounded-full border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-600">
-                              Deleted
-                            </span>
-                          )}
-                        </span>
-                        <span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-neutral-100">
-                          <span
-                            className="block h-full rounded-full bg-red-600"
-                            style={{ width: `${maxSpend ? Math.round((spend / maxSpend) * 100) : 0}%` }}
-                          />
-                        </span>
-                        <span className="w-16 shrink-0 text-right font-bold tabular-nums text-neutral-900">
-                          {row.total_spend != null ? `$${spend.toFixed(4)}` : '--'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {spendRows.length === 0 && (
-                    <p className="py-2 text-xs text-neutral-400">No spend data available.</p>
-                  )}
-                </div>
               </div>
             </AnalyticsPanel>
           </div>
