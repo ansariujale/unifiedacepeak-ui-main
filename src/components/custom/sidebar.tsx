@@ -1,12 +1,23 @@
-import { Icon } from '@/assets/icons/icon';
 import { useAreaNav } from './use-area-nav';
-import type { IconType } from '@/assets/icons/type';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-// import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { useSocketEvents } from '@/hooks/use-socket-events';
 import { Fragment, useEffect, useState, type MouseEvent } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  ChevronLeft, ChevronRight,
+  Home, Phone, MessageSquare, Video, Inbox, BookUser, Users, Megaphone,
+  FileBarChart, ShieldCheck, BarChart2, List, Activity, PhoneMissed,
+  LayoutGrid, BrainCircuit, ListOrdered, GitBranch, MapPin, Mail, Star,
+  Bot, Ban,
+  type LucideIcon,
+} from 'lucide-react';
 import { getRoutePrefetchHandlers, prefetchRoute } from '@/router/route-prefetch';
+
+const NAV_ICON_MAP: Record<string, LucideIcon> = {
+  Home, Phone, MessageSquare, Video, Inbox, BookUser, Users, Megaphone,
+  FileBarChart, ShieldCheck, BarChart2, List, Activity, PhoneMissed,
+  LayoutGrid, BrainCircuit, ListOrdered, GitBranch, MapPin, Mail, Star,
+  Bot, Ban,
+};
 
 /* navList/navListBottom/NavItem live in their own module now — mixing a
    component export with plain data/type exports in the same file is what
@@ -144,8 +155,8 @@ const Sidebar = () => {
                           !isEnabled
                             ? 'cursor-not-allowed text-gray-400 dark:text-gray-600'
                             : lit
-                              ? 'text-ucass-active'
-                              : 'text-gray-500 dark:text-gray-400 hover:text-ucass-active'
+                              ? 'text-[#dc2626]'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-[#dc2626]'
                         }`;
                       }}
                     >
@@ -156,16 +167,13 @@ const Sidebar = () => {
                             <span
                               className={`flex h-[34px] w-[34px] items-center justify-center rounded-[10px] transition-all duration-150 ${
                                 lit
-                                  ? 'bg-[#e3e3e3]'
+                                  ? 'bg-[#fee2e2]'
                                   : isEnabled
-                                    ? 'bg-transparent group-hover:scale-105 group-hover:bg-[#e3e3e3]'
+                                    ? 'bg-transparent group-hover:scale-105 group-hover:bg-[#fee2e2]'
                                     : 'bg-transparent'
                               }`}
                             >
-                              <Icon
-                                name={`${icon}` as IconType}
-                                className="h-[1.15rem] w-[1.15rem] relative"
-                              />
+                              {(() => { const LI = NAV_ICON_MAP[icon]; return LI ? <LI className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.75} /> : null; })()}
                             </span>
                             {/* Two-word labels ("External Contacts") stack rather
                                 than truncate — the tile is 68px wide, so one line
@@ -214,10 +222,7 @@ const Sidebar = () => {
                     }
                   >
                     <div className="flex flex-col items-center justify-center gap-1">
-                      <Icon
-                        name={`${icon}` as IconType}
-                        className="h-[1.15rem] w-[1.15rem] relative"
-                      />
+                      {(() => { const LI = NAV_ICON_MAP[icon]; return LI ? <LI className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.75} /> : null; })()}
 
                       <small className="text-[11px] leading-none">{name}</small>
                     </div>

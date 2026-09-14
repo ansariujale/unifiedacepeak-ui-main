@@ -28,8 +28,8 @@ export type NavArea = {
  * onto nothing is worse than one that isn't there.
  */
 export const NAV_AREAS: NavArea[] = [
-  { id: 'home', label: 'Home', icon: 'HomeIcon', items: ['Home'] },
-  { id: 'directory', label: 'Directory', icon: 'ContactIcon', items: ['Contact', 'Groups'] },
+  { id: 'home', label: 'Home', icon: 'Home', items: ['Home'] },
+  { id: 'directory', label: 'Directory', icon: 'BookUser', items: ['Contact', 'Groups'] },
   {
     /**
      * Campaign stays here on purpose. `/campaign` is where an agent works a
@@ -45,16 +45,16 @@ export const NAV_AREAS: NavArea[] = [
      */
     id: 'activity',
     label: 'Activity',
-    icon: 'PhoneIcon',
+    icon: 'Phone',
     items: ['Phone', 'Chat', 'Agent Chat', 'Video', 'Campaign', 'Inbox'],
   },
   {
     id: 'performance',
     label: 'Performance',
-    icon: 'AnalyticsIcon',
+    icon: 'BarChart2',
     items: ['Performance', 'Reports'],
   },
-  { id: 'admin', label: 'Admin', icon: 'AdminIcon', items: ['Admin'] },
+  { id: 'admin', label: 'Admin', icon: 'ShieldCheck', items: ['Admin'] },
 ];
 
 /** Which area a nav item belongs to. */
@@ -127,32 +127,32 @@ export type AreaView = {
  * decisions.
  */
 export const DIRECTORY_VIEWS: AreaView[] = [
-  { key: 'people', label: 'People', icon: 'ContactIcon' },
-  { key: 'groups', label: 'Groups', icon: 'DepartmentIcon' },
-  { key: 'roles', label: 'Roles', icon: 'AdminIcon' },
-  { key: 'locations', label: 'Locations', icon: 'IntegrationIcon' },
-  { key: 'external', label: 'External Contacts', icon: 'InboxIcon' },
+  { key: 'people', label: 'People', icon: 'BookUser' },
+  { key: 'groups', label: 'Groups', icon: 'Users' },
+  { key: 'roles', label: 'Roles', icon: 'ShieldCheck' },
+  { key: 'locations', label: 'Locations', icon: 'MapPin' },
+  { key: 'external', label: 'External Contacts', icon: 'Mail' },
   { key: 'favourites', label: 'Favourites', icon: 'Star' },
-  { key: 'blocked', label: 'Blocked', icon: 'AdminIcon' },
+  { key: 'blocked', label: 'Blocked', icon: 'Ban' },
 ];
 
 export const PERFORMANCE_VIEWS: AreaView[] = [
   // the five the console leads with
-  { key: 'queues-activity', label: 'Queues', icon: 'ListIcon' },
-  { key: 'agents', label: 'Agents', icon: 'ContactIcon' },
-  { key: 'interactions', label: 'Calls', icon: 'PhoneIcon' },
-  { key: 'flows', label: 'Flows', icon: 'IntegrationIcon' },
-  { key: 'dashboards', label: 'Boards', icon: 'AnalyticsIcon' },
+  { key: 'queues-activity', label: 'Queues', icon: 'List' },
+  { key: 'agents', label: 'Agents', icon: 'BookUser' },
+  { key: 'interactions', label: 'Calls', icon: 'Phone' },
+  { key: 'flows', label: 'Flows', icon: 'GitBranch' },
+  { key: 'dashboards', label: 'Boards', icon: 'BarChart2' },
   // everything the platform has that the console does not
-  { key: 'live-interactions', label: 'Live', icon: 'ActivityIcon', sep: true },
-  { key: 'callbacks', label: 'Callbacks', icon: 'CallBackReschuledStrokeIcon' },
-  { key: 'campaign-activity', label: 'Campaigns', icon: 'DialerIcon' },
-  { key: 'speech-text', label: 'Speech', icon: 'MessageIcon' },
-  { key: 'reports', label: 'Reports', icon: 'ReportsLineIcon' },
-  { key: 'live-wallboard', label: 'Wallboard', icon: 'Grid2' },
-  { key: 'ai-wallboard', label: 'AI Wall', icon: 'AIBrainIcon', feature: 'ai' },
-  { key: 'call-queue', label: 'Queue', icon: 'CallQueue', feature: 'queue' },
-  { key: 'video-dashboard', label: 'Video', icon: 'VideoIcon', feature: 'video' },
+  { key: 'live-interactions', label: 'Live', icon: 'Activity', sep: true },
+  { key: 'callbacks', label: 'Callbacks', icon: 'PhoneMissed' },
+  { key: 'campaign-activity', label: 'Campaigns', icon: 'Megaphone' },
+  { key: 'speech-text', label: 'Speech', icon: 'MessageSquare' },
+  { key: 'reports', label: 'Reports', icon: 'FileBarChart' },
+  { key: 'live-wallboard', label: 'Wallboard', icon: 'LayoutGrid' },
+  { key: 'ai-wallboard', label: 'AI Wall', icon: 'BrainCircuit', feature: 'ai' },
+  { key: 'call-queue', label: 'Queue', icon: 'ListOrdered', feature: 'queue' },
+  { key: 'video-dashboard', label: 'Video', icon: 'Video', feature: 'video' },
 ];
 
 /** The views an area carries in its rail, if it carries any. */

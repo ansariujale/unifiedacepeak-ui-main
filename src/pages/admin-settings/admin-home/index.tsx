@@ -25,8 +25,6 @@ import '@/components/mcm/mcm-page.css';
 type Entry = { title: string; path: string; icon?: string };
 type Group = { title: string; icon: string; entries: Entry[] };
 
-/* Six wedges is as far as the donut goes legibly — the rest bucket into
-   "Others" rather than shrinking to slivers nobody can read. */
 const DONUT_COLORS = [
   'var(--accent)',
   'var(--warn)',
