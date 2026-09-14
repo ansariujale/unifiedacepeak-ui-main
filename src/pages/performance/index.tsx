@@ -1,7 +1,18 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { Info, AlertTriangle, Clock3 } from 'lucide-react';
+import {
+  Activity,
+  AlertTriangle,
+  ArrowDownLeft,
+  CheckCircle2,
+  Clock3,
+  Gauge,
+  Hourglass,
+  Info,
+  Timer as TimerIcon,
+  Users,
+  XCircle,
+} from 'lucide-react';
 import { useSearchParamManager } from '@/hooks/use-search-params';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import DateDropdown from '@/components/custom/date-dropdown';
 import { DateFilterTypes, handleDate } from '@/components/custom/date-dropdown/constant';
 import Timer from '@/components/timer';
@@ -10,7 +21,8 @@ import {
   getMonitoringCallTimestamp,
   isMonitoringCallForForwardValue,
 } from '@/pages/monitoring/live-call-helpers';
-import QueuesActivityTab from './queues-activity-tab';
+import QueuesActivityTab, { callVolumeSeries } from './queues-activity-tab';
+import Sparkline from './sparkline';
 import CampaignActivityTab from './campaign-activity-tab';
 import AgentsTab from './agents-tab';
 import InteractionsTab from './interactions-tab';
@@ -58,13 +70,18 @@ const TABS = [
 
 const SHOW_KPI_HEADER_TABS = new Set(['queues-activity', 'campaign-activity', 'dashboards']);
 
-/**
- * Which figures are live and which follow the date range. It used to sit above
- * the KPI band as body copy, which spent four lines of the page on a caveat;
- * it is now the header infotip, one hover away from the heading it qualifies.
- */
-const RANGE_NOTE =
-  'Waiting, Longest wait, Service level, On queue agents and Occupancy are live right now. Answered, Abandon rate and Avg handle time cover the selected date range.';
+/** One line under each heading saying what the view is actually showing. */
+const TAB_SUBTITLES: Record<string, string> = {
+  'queues-activity': "Live queue load and today's service levels, queue by queue.",
+  'campaign-activity': 'Outbound campaign progress and contact outcomes.',
+  agents: 'Who is signed in, what they are on, and how their day is going.',
+  interactions: 'Every call in the selected range, end to end.',
+  dashboards: 'Your saved views of this account.',
+  'live-interactions': 'Calls in progress right now.',
+  callbacks: 'Customers waiting for a call back.',
+  'speech-text': 'What was said on the calls in this range.',
+  reports: 'Scheduled and ad-hoc reporting across the contact centre.',
+};
 
 // Maps onto the shared status tokens in mcm-page.css rather than raw colours,
 // so the band stays legible in dark mode.
@@ -373,6 +390,13 @@ const Performance = () => {
   const effectiveAvgHandleTime = effectiveCallStats.avgHandleSec ?? avgHandleTime;
   const effectiveAbandonRate = effectiveCallStats.abandonRate ?? abandonRate;
 
+  /** The hero's curve: answered calls building through the selected range,
+   *  across every queue. Real history or no curve — never a filler squiggle. */
+  const heroTrend = useMemo(
+    () => callVolumeSeries(effectiveCallStats.rows || []),
+    [effectiveCallStats.rows],
+  );
+
   const waitingAnimated = useAnimatedNumber(waitingCalls.length);
   const answeredAnimated = useAnimatedNumber(effectiveTotals.answered);
   const onlineAgentsAnimated = useAnimatedNumber(onlineAgentsCount);
@@ -407,6 +431,8 @@ const Performance = () => {
 
   const kpis: {
     label: string;
+    /** The label's leading mark — shape first, words second. */
+    icon: ReactNode;
     value: ReactNode;
     sub?: ReactNode;
     /** Optional pill beside the figure, for a second reading of the same thing. */
@@ -419,6 +445,7 @@ const Performance = () => {
   }[] = [
     {
       label: 'Waiting',
+      icon: <ArrowDownLeft aria-hidden="true" />,
       value: String(Math.round(waitingAnimated)),
       sub: `across ${queues.length} ${queues.length === 1 ? 'queue' : 'queues'}`,
       indicator: (
@@ -427,6 +454,7 @@ const Performance = () => {
     },
     {
       label: 'Longest wait',
+      icon: <Hourglass aria-hidden="true" />,
       value: longestWaitTimestamp ? <Timer startTime={longestWaitTimestamp} /> : '00:00',
       sub:
         longestWaitSecs > 120 ? (
@@ -444,6 +472,7 @@ const Performance = () => {
     },
     {
       label: 'Service level',
+      icon: <Gauge aria-hidden="true" />,
       value: effectiveAvgSla === null ? '—' : `${Math.round(slAnimated)}%`,
       sub: 'target 80% in 20s',
       tone: slaTone(effectiveAvgSla),
@@ -457,6 +486,7 @@ const Performance = () => {
     },
     {
       label: 'Answered',
+      icon: <CheckCircle2 aria-hidden="true" />,
       value: String(Math.round(answeredAnimated)),
       sub: `of ${effectiveCallStats.totalCalls} calls`,
       indicator: (
@@ -469,6 +499,7 @@ const Performance = () => {
     },
     {
       label: 'Abandon rate',
+      icon: <XCircle aria-hidden="true" />,
       value: effectiveAbandonRate === null ? '—' : `${Math.round(abandonAnimated)}%`,
       sub: effectiveAbandonRate === null ? undefined : `${effectiveCallStats.missedCalls} missed`,
       tone: effectiveAbandonRate !== null && effectiveAbandonRate > 5 ? 'danger' : 'default',
@@ -481,6 +512,7 @@ const Performance = () => {
     },
     {
       label: 'Avg handle time',
+      icon: <TimerIcon aria-hidden="true" />,
       value: effectiveAvgHandleTime === null ? '—' : formatSecsToClock(ahtAnimated),
       sub: 'per answered call',
       indicator: (
@@ -491,6 +523,7 @@ const Performance = () => {
     },
     {
       label: 'On queue agents',
+      icon: <Users aria-hidden="true" />,
       value: String(Math.round(onlineAgentsAnimated)),
       helper: `${agentRows.length} active`,
       sub: 'signed in right now',
@@ -498,6 +531,7 @@ const Performance = () => {
     },
     {
       label: 'Occupancy',
+      icon: <Activity aria-hidden="true" />,
       value: occupancy === null ? '—' : `${Math.round(occupancyAnimated)}%`,
       sub: 'target 75–85%',
       indicator: <KpiBar percent={occupancy} tone={occupancyTone} targetBand={[75, 85]} />,
@@ -648,22 +682,10 @@ const Performance = () => {
           font-style:italic; font-weight:400; font-size:27px; line-height:41px;
           letter-spacing:normal; color:var(--ink);
         }
-        .mcm-page .perf-infotip {
-          display:grid; place-items:center; flex:none; width:20px; height:20px;
-          border-radius:99px; color:var(--ink-4);
-          transition:color .14s ease, background-color .14s ease;
+        .mcm-page .perf-head-sub {
+          margin:2px 0 0; max-width:56ch;
+          font-size:13px; line-height:1.5; color:var(--ink-3);
         }
-        .mcm-page .perf-infotip svg { width:14px; height:14px; }
-        .mcm-page .perf-infotip:hover,
-        .mcm-page .perf-infotip:focus-visible {
-          color:var(--accent-ink); background:var(--accent-wash);
-        }
-        .mcm-page .perf-crumbs {
-          display:flex; align-items:center; flex-wrap:wrap; gap:6px;
-          margin-top:2px; font-size:11.5px; font-weight:400; color:var(--ink-4);
-        }
-        .mcm-page .perf-crumbs .sep { color:var(--ink-4); opacity:.7; }
-        .mcm-page .perf-crumbs [aria-current] { color:var(--ink-3); font-weight:500; }
         .mcm-page .perf-head-actions {
           display:flex; align-items:center; gap:8px; flex-wrap:wrap;
           margin-left:auto; padding-top:2px;
@@ -671,18 +693,68 @@ const Performance = () => {
         .mcm-page .perf-head-actions .fchip,
         .mcm-page .perf-head-actions .btn.sm { height:34px; border-radius:9px; }
 
-        /* The filters, in the body. No strip around them and no "Filters"
-           label: the controls already look like controls, so a frame and a
-           heading only announced a row that reads perfectly well as itself. */
-        .mcm-page .perf-filters {
-          display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap;
-          margin:14px 22px 0;
-        }
-        .mcm-page .perf-filters .fchip { height:34px; border-radius:9px; }
         /* the date dropdown ships its own grey border — align it to the tokens */
-        .mcm-page .perf-filters input,
-        .mcm-page .perf-filters select,
-        .mcm-page .perf-filters [role="combobox"] { border-color:var(--line); }
+        .mcm-page .perf-head-actions input,
+        .mcm-page .perf-head-actions select,
+        .mcm-page .perf-head-actions [role="combobox"] { border-color:var(--line); }
+
+        /* A leading mark on each KPI label, so the eight cards are told apart
+           by shape before the words are read. Scoped to this page — the AI
+           screens share kpi-card.css and have no icons of their own. */
+        .mcm-page .kpi-card__label { display:flex; align-items:center; gap:6px; }
+        .mcm-page .kpi-card__label svg {
+          width:13px; height:13px; flex:none; color:var(--accent);
+        }
+
+        /* ---- the band: the standing statement, then the eight figures ----
+           The hero is the one piece of the band that isn't a reading: it says
+           what the page is for, and carries the single figure the room asks
+           first. The eight cards beside it do the measuring. */
+        .mcm-page .perf-band-row {
+          display:grid; grid-template-columns:minmax(250px,1fr) minmax(0,3.5fr);
+          gap:18px; align-items:stretch;
+        }
+        @media (max-width: 1180px) { .mcm-page .perf-band-row { grid-template-columns:minmax(0,1fr); } }
+        .mcm-page .perf-hero {
+          display:flex; flex-direction:column; gap:11px;
+          padding:20px; border-radius:14px;
+          background:var(--accent-wash); border:1px solid var(--accent-edge);
+        }
+        .mcm-page .perf-hero-eyebrow {
+          display:inline-flex; align-items:center; gap:7px;
+          font-size:10px; font-weight:800; letter-spacing:.11em; text-transform:uppercase;
+          color:var(--accent-ink);
+        }
+        .mcm-page .perf-hero-eyebrow i {
+          width:7px; height:7px; border-radius:99px; background:var(--accent); flex:none;
+        }
+        .mcm-page .perf-hero-title {
+          margin:0; font-size:21px; font-weight:800; line-height:1.22;
+          letter-spacing:-.035em; color:var(--ink);
+        }
+        .mcm-page .perf-hero-copy {
+          margin:0; font-size:12.5px; line-height:1.55; color:var(--ink-3);
+        }
+        /* The curve is the day's answered calls building up, not decoration —
+           a range with nothing behind it draws nothing at all. */
+        .mcm-page .perf-hero-art { margin-top:auto; height:54px; color:var(--accent); }
+        .mcm-page .perf-hero-art svg { width:100%; height:100%; display:block; }
+        .mcm-page .perf-hero-pill {
+          align-self:flex-start; margin-top:12px;
+          padding:8px 13px; border-radius:10px;
+          background:var(--surface); box-shadow:var(--shadow-sm);
+          font-size:12px; font-weight:800; color:var(--accent-ink);
+        }
+        /* Which figures are live and which follow the range — said in the open
+           under the band it qualifies, not only inside the heading's infotip. */
+        .mcm-page .perf-band-note {
+          display:flex; align-items:flex-start; justify-content:space-between; gap:12px 24px;
+          flex-wrap:wrap; margin:14px 0 0;
+          font-size:11.5px; font-weight:500; line-height:1.5; color:var(--ink-4);
+        }
+        .mcm-page .perf-band-note svg { width:13px; height:13px; flex:none; margin-top:1px; }
+        .mcm-page .perf-band-note-lead { display:flex; align-items:flex-start; gap:7px; min-width:0; }
+        .mcm-page .perf-band-note b { font-weight:700; color:var(--ink-3); }
       `}</style>
 
       <div className="page-bar">
@@ -694,37 +766,19 @@ const Performance = () => {
           <div className="perf-head-main">
             <div className="perf-head-title">
               <h1>{activeTabLabel}</h1>
-              {showKpiBand && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="perf-infotip"
-                      aria-label="Which figures are live and which follow the date range"
-                    >
-                      <Info aria-hidden="true" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="bottom"
-                    align="start"
-                    className="max-w-[340px] text-left leading-relaxed"
-                  >
-                    {RANGE_NOTE}
-                  </TooltipContent>
-                </Tooltip>
-              )}
             </div>
-            <nav className="perf-crumbs" aria-label="Breadcrumb">
-              <span>Performance</span>
-              <span className="sep" aria-hidden="true">
-                ›
-              </span>
-              <span aria-current="page">{activeTabLabel}</span>
-            </nav>
+            {TAB_SUBTITLES[activeTab] && (
+              <p className="perf-head-sub">{TAB_SUBTITLES[activeTab]}</p>
+            )}
           </div>
 
+          {/* Range and scope sit with the status and the actions, on the one
+              row — they qualify every figure on the page, so they belong with
+              the heading rather than floating above the first card. */}
           <div className="perf-head-actions">
+            <DateDropdown dropdownVal={dropdownVal} setDropdownVal={setDropdownVal} />
+            <span className="fchip">Division: All</span>
+            <span className="fchip">Media: All</span>
             <span className="fchip live">
               <span className="dot green pulsing" />
               Live — updates every 2s
@@ -750,49 +804,67 @@ const Performance = () => {
 
       {showKpiBand && (
         <div className="page-band">
-          {/* The shared KPI Overview card (`kpi-card.css`), the same one the
+          <div className="perf-band-row">
+            <aside className="perf-hero">
+              <span className="perf-hero-eyebrow">
+                <i aria-hidden="true" />
+                Live performance
+              </span>
+              <h2 className="perf-hero-title">Everything you need, in real-time.</h2>
+              <p className="perf-hero-copy">
+                Monitor wait times, service levels, occupancy and agent activity across your
+                contact centre.
+              </p>
+              <div className="perf-hero-art">
+                <Sparkline points={heroTrend} tone="var(--accent)" />
+              </div>
+              <span className="perf-hero-pill">
+                {effectiveAvgSla === null ? '—' : `${Math.round(effectiveAvgSla)}%`} service level
+              </span>
+            </aside>
+
+            {/* The shared KPI Overview card (`kpi-card.css`), the same one the
                 AI screens use. Eight stats, so `--cols-4` puts them in two
                 clean rows rather than a row of five and a stub of three. */}
-          <div className="kpi-section-heading">
-            <span className="kpi-section-heading__label">Overview</span>
-            <span className="kpi-section-heading__rule" />
-          </div>
-          <div className="kpi-grid kpi-grid--cols-4">
-            {kpis.map((kpi) => (
-              <div
-                key={kpi.label}
-                className={`kpi-card${kpi.alert ? ' kpi-card--alert' : ''}`}
-              >
-                <span className="kpi-card__label">{kpi.label}</span>
-                <span className="kpi-card__value-row">
-                  <span
-                    className={`kpi-card__value ${KPI_TONE_STYLES[kpi.tone || 'default']}`.trim()}
-                  >
-                    {kpi.value}
+            <div className="kpi-grid kpi-grid--cols-4">
+              {kpis.map((kpi) => (
+                <div key={kpi.label} className={`kpi-card${kpi.alert ? ' kpi-card--alert' : ''}`}>
+                  <span className="kpi-card__label">
+                    {kpi.icon}
+                    {kpi.label}
                   </span>
-                  {kpi.helper && (
-                    <span className="kpi-card__helper">
-                      <span className="kpi-card__helper-dot" />
-                      {kpi.helper}
+                  <span className="kpi-card__value-row">
+                    <span
+                      className={`kpi-card__value ${KPI_TONE_STYLES[kpi.tone || 'default']}`.trim()}
+                    >
+                      {kpi.value}
                     </span>
-                  )}
-                  {kpi.indicator}
-                </span>
-                {kpi.sub && <span className="kpi-card__description">{kpi.sub}</span>}
-              </div>
-            ))}
+                    {kpi.helper && (
+                      <span className="kpi-card__helper">
+                        <span className="kpi-card__helper-dot" />
+                        {kpi.helper}
+                      </span>
+                    )}
+                    {kpi.indicator}
+                  </span>
+                  {kpi.sub && <span className="kpi-card__description">{kpi.sub}</span>}
+                </div>
+              ))}
+            </div>
           </div>
+
+          <p className="perf-band-note">
+            <span className="perf-band-note-lead">
+              <Info aria-hidden="true" />
+              <span>
+                <b>Live now:</b> Waiting, Longest wait, Service level, On queue agents, Occupancy ·{' '}
+                <b>Selected date range:</b> Answered, Abandon rate, Avg handle time
+              </span>
+            </span>
+            <span>Updates every 2s</span>
+          </p>
         </div>
       )}
-
-      {/* The range and scope filters, out of the header and into the body.
-          They apply to every view, so they lead the content rather than
-          living inside any one tab. */}
-      <div className="perf-filters">
-        <DateDropdown dropdownVal={dropdownVal} setDropdownVal={setDropdownVal} />
-        <span className="fchip">Division: All</span>
-        <span className="fchip">Media: All</span>
-      </div>
 
       {/* Flows in the page's own scroll rather than being a separate scroll pane. */}
       <div style={{ flex: 'none' }}>
@@ -806,6 +878,7 @@ const Performance = () => {
             cdrByQueueUuid={effectiveCallStats.byQueueUuid}
             cdrRows={effectiveCallStats.rows}
             isCdrSampled={effectiveCallStats.isQueueBreakdownSampled}
+            isSampleActivity={isUsingDummyActivity}
             usersOnlineStatus={usersOnlineStatus || []}
             isLoading={isQueuesLoading}
             selectedQueueUuid={selectedQueueUuid}

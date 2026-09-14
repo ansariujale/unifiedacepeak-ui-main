@@ -1,0 +1,480 @@
+/* ==========================================================================
+   Wizard modal — header, step rail, panel, footer.
+
+   Shared by the multi-step forms that open in a dialog: Invite people and
+   Create group. One implementation so the two cannot drift apart, and so a
+   third wizard has something to adopt rather than restate.
+
+   The palette is the console's red rather than a second accent of its own.
+   ========================================================================== */
+
+/* The dialog this wizard is opened in. Wide enough for the rail and a
+   two-column person card side by side, and never taller than the viewport it
+   has to fit inside — the shell scrolls its own panel rather than the page. */
+.mcm-wizard-modal {
+  width: min(940px, calc(100vw - 32px));
+  max-width: min(940px, calc(100vw - 32px));
+  max-height: min(680px, calc(100vh - 48px));
+}
+/* Create group runs wider: five steps in the rail, and panels that carry
+   member tables and ring-strategy rows rather than a single person's fields. */
+.mcm-group-modal {
+  width: min(1040px, calc(100vw - 32px));
+  max-width: min(1040px, calc(100vw - 32px));
+  max-height: min(680px, calc(100vh - 48px));
+}
+
+.wz-shell {
+  --wz-accent: #dc2626;
+  --wz-accent-ink: #b91c1c;
+  --wz-wash: #fef2f2;
+  --wz-wash-2: #fff7f7;
+  --wz-edge: #fecaca;
+  --wz-ink: #171717;
+  --wz-ink-2: #404040;
+  --wz-ink-3: #737373;
+  --wz-line: #e5e7eb;
+  --wz-surface: #ffffff;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--wz-surface);
+  color: var(--wz-ink);
+}
+
+/* ---- header ---- */
+.wz-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--wz-line);
+  background: var(--wz-wash-2);
+}
+.wz-head-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--wz-wash);
+  border: 1px solid var(--wz-edge);
+  color: var(--wz-accent);
+}
+.wz-head-mark svg {
+  width: 19px;
+  height: 19px;
+}
+.wz-head-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--wz-ink);
+}
+.wz-head-sub {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--wz-ink-3);
+}
+
+/* ---- body: rail + panel ---- */
+.wz-body {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+/* Stacked, the rail is a band across the top rather than a grid column —
+   a single-column grid keeps both children in sized rows, and the rail's own
+   content then spills over the panel underneath it. */
+@media (max-width: 900px) {
+  .wz-body {
+    display: flex;
+    flex-direction: column;
+  }
+  .wz-body > .wz-rail {
+    flex: none;
+  }
+  .wz-body > .wz-main {
+    flex: 1;
+  }
+}
+
+.wz-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 14px;
+  border-right: 1px solid var(--wz-line);
+}
+@media (max-width: 900px) {
+  .wz-rail {
+    border-right: 0;
+    border-bottom: 1px solid var(--wz-line);
+    overflow: visible;
+  }
+}
+
+/* ---- the steps ---- */
+.wz-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (max-width: 900px) {
+  .wz-steps {
+    flex-direction: row;
+  }
+  .wz-steps > li {
+    flex: 1;
+    min-width: 0;
+  }
+}
+.wz-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  text-align: left;
+  background: transparent;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+/* A step you have already been through is the only one you can go back to,
+   so it is the only one that takes a pointer. */
+.wz-step.is-done {
+  cursor: pointer;
+}
+.wz-step.is-done:hover {
+  background: var(--wz-wash-2);
+}
+.wz-step.is-on {
+  background: var(--wz-wash);
+  border-color: var(--wz-edge);
+}
+.wz-step-n {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 21px;
+  height: 21px;
+  border-radius: 999px;
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-edge);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--wz-accent-ink);
+}
+.wz-step.is-on .wz-step-n {
+  background: var(--wz-accent);
+  border-color: var(--wz-accent);
+  color: #fff;
+}
+.wz-step-t {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--wz-ink);
+}
+.wz-step.is-on .wz-step-t {
+  color: var(--wz-accent-ink);
+}
+.wz-step-d {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--wz-ink-3);
+}
+
+/* ---- what this invite costs ---- */
+.wz-summary {
+  margin-top: auto;
+  padding: 13px;
+  border: 1px solid var(--wz-line);
+  border-radius: 12px;
+  background: var(--wz-surface);
+}
+@media (max-width: 900px) {
+  .wz-summary {
+    margin-top: 0;
+  }
+}
+.wz-summary-k {
+  margin: 0 0 9px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--wz-ink-3);
+}
+.wz-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 12.5px;
+  color: var(--wz-ink-2);
+}
+.wz-summary-row b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--wz-ink);
+}
+.wz-summary-total {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--wz-line);
+  font-weight: 700;
+  color: var(--wz-ink);
+}
+.wz-summary-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--wz-accent-ink);
+}
+.wz-summary-note svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  margin-top: 1px;
+}
+
+/* ---- the step's own panel ---- */
+.wz-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 18px 22px 22px;
+}
+.wz-section-t {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--wz-ink);
+}
+.wz-section-d {
+  margin: 3px 0 18px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--wz-ink-3);
+}
+
+/* A tinted aside — why everybody starts on the role they start on, what the
+   licence numbers mean. Carries information, never a control. */
+.wz-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--wz-line);
+  border-radius: 12px;
+  background: #fafafa;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--wz-ink-2);
+}
+.wz-note svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  margin-top: 1px;
+  color: var(--wz-ink-3);
+}
+.wz-note--warn {
+  background: var(--wz-wash);
+  border-color: var(--wz-edge);
+  color: var(--wz-accent-ink);
+}
+.wz-note--warn svg {
+  color: var(--wz-accent);
+}
+
+/* ---- how many people ---- */
+.wz-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--wz-line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--wz-surface);
+}
+.wz-count button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 40px;
+  background: #fafafa;
+  color: var(--wz-ink-2);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.wz-count button:hover:not(:disabled) {
+  background: var(--wz-wash);
+  color: var(--wz-accent-ink);
+}
+.wz-count button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.wz-count button svg {
+  width: 15px;
+  height: 15px;
+}
+.wz-count-v {
+  min-width: 46px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--wz-ink);
+}
+.wz-field-k {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--wz-ink-2);
+}
+.wz-hint {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  color: var(--wz-ink-3);
+}
+
+/* ---- one person ---- */
+.wz-person-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--wz-line);
+  background: var(--wz-wash-2);
+}
+.wz-person-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--wz-wash);
+  border: 1px solid var(--wz-edge);
+  color: var(--wz-accent);
+}
+.wz-person-mark svg {
+  width: 15px;
+  height: 15px;
+}
+.wz-person-t {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--wz-ink);
+}
+.wz-person-d {
+  margin-top: 1px;
+  font-size: 11.5px;
+  color: var(--wz-ink-3);
+}
+
+/* ---- footer ---- */
+.wz-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  padding: 13px 20px;
+  border-top: 1px solid var(--wz-line);
+  background: var(--wz-surface);
+}
+.wz-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.wz-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.wz-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.wz-btn--ghost {
+  background: transparent;
+  color: var(--wz-ink-2);
+}
+.wz-btn--ghost:hover:not(:disabled) {
+  background: #f5f5f5;
+  color: var(--wz-ink);
+}
+/* "Back" / "Prev": a step sideways, so it is filled but quiet — next to a
+   plain-text Cancel it would otherwise read as the same kind of control. */
+.wz-btn--soft {
+  background: #f5f5f5;
+  color: var(--wz-ink-2);
+}
+.wz-btn--soft:hover:not(:disabled) {
+  background: #ebebeb;
+  color: var(--wz-ink);
+}
+.wz-btn--primary {
+  background: var(--wz-accent);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.28);
+}
+.wz-btn--primary:hover:not(:disabled) {
+  background: var(--wz-accent-ink);
+}
+.wz-btn--primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.wz-foot-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}

@@ -338,90 +338,6 @@ const AdminHome = () => {
             <div className="mcm-adminoverview-eyebrow">
               <span>Overview</span>
             </div>
-            <div className="mcm-adminkpirow">
-              <div className="mcm-adminkpicard">
-                <div className="mcm-adminkpicard-body">
-                  <div className="mcm-adminkpicard-label">Total Screens</div>
-                  <div className="mcm-adminkpicard-value">{allEntries.length}</div>
-                  <div className="mcm-adminkpicard-sub">Across {groups.length} areas</div>
-                </div>
-              </div>
-              <div className="mcm-adminkpicard">
-                <div className="mcm-adminkpicard-body">
-                  <div className="mcm-adminkpicard-label">Areas</div>
-                  <div className="mcm-adminkpicard-value">{groups.length}</div>
-                  <div className="mcm-adminkpicard-sub">Sections you can reach</div>
-                </div>
-              </div>
-              <div className="mcm-adminkpicard">
-                <div className="mcm-adminkpicard-body">
-                  <div className="mcm-adminkpicard-label">Recently Used</div>
-                  <div className="mcm-adminkpicard-value">{recentCount}</div>
-                  <div className="mcm-adminkpicard-sub">Screens you've opened</div>
-                </div>
-              </div>
-              <div className="mcm-adminkpicard">
-                <div className="mcm-adminkpicard-body">
-                  <div className="mcm-adminkpicard-label">Your Role</div>
-                  <div className="mcm-adminkpicard-value mcm-adminkpicard-value-text">
-                    {roleLabel}
-                  </div>
-                  <div className="mcm-adminkpicard-sub">
-                    {IS_ADMIN ? 'Full access' : 'Limited access'}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mcm-adminoverview-row">
-              <div className="mcm-admindonut-card">
-                <div className="mcm-admincard-h">Screens by Area</div>
-                <div className="mcm-admindonut-wrap">
-                  <div className="mcm-admindonut" style={{ background: donutGradient }}>
-                    <div className="mcm-admindonut-hole">
-                      <strong>{allEntries.length}</strong>
-                      <span>Total</span>
-                    </div>
-                  </div>
-                  <ul className="mcm-admindonut-legend">
-                    {donutSlices.map((slice) => (
-                      <li key={slice.title}>
-                        <span className="mcm-admindonut-dot" style={{ background: slice.color }} />
-                        <span className="mcm-admindonut-name">{slice.title}</span>
-                        <span className="mcm-admindonut-count">
-                          {slice.count} ({Math.round(slice.pct)}%)
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="mcm-adminareas-card">
-                <div className="mcm-admincard-h">Most Accessed Areas</div>
-                <div className="mcm-adminareas-grid">
-                  {mostAccessedAreas.map((area) => (
-                    <Link
-                      className="mcm-adminareas-tile"
-                      to={area.firstPath || '/admin-settings'}
-                      key={area.title}
-                    >
-                      {area.icon ? (
-                        <span className="mcm-adminareas-tile-iconwrap" data-icon={area.icon}>
-                          <Icon name={area.icon as IconType} />
-                        </span>
-                      ) : null}
-                      <span className="mcm-adminareas-tile-body">
-                        <span className="mcm-adminareas-tile-title">{area.title}</span>
-                        <span className="mcm-adminareas-tile-sub">
-                          {area.screens} screen{area.screens === 1 ? '' : 's'}
-                        </span>
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
         ) : null}
 
@@ -435,21 +351,12 @@ const AdminHome = () => {
                     {column.map((group) => (
                       <div className="mcm-adminscreens-group" key={group.title}>
                         <div className="mcm-adminscreens-kicker">
-                          {group.icon ? (
-                            <Icon name={group.icon as IconType} className="mcm-adminscreens-kickericon" />
-                          ) : null}
                           <span className="mcm-adminscreens-kickertitle">{group.title}</span>
-                          <span className="mcm-adminscreens-kickercount">{group.entries.length}</span>
                         </div>
                         <ul className="mcm-adminscreens-list">
                           {group.entries.map((entry) => (
                             <li key={entry.path}>
                               <Link to={entry.path}>
-                                {entry.icon ? (
-                                  <span className="mcm-adminscreens-iconwrap">
-                                    <Icon name={entry.icon as IconType} />
-                                  </span>
-                                ) : null}
                                 <span>{entry.title}</span>
                               </Link>
                             </li>
