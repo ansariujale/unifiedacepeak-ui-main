@@ -1,0 +1,324 @@
+/* ==========================================================================
+   Performance surfaces — the band, stat cards, notice and panel shared by the
+   Agents and Calls views. Scoped under `.mcm-page` so it reads the console's
+   tokens and Performance's red accent without reaching other pages.
+   ========================================================================== */
+
+.mcm-page .pf-wrap {
+  /* Two elevation steps, material-style: resting and raised. */
+  --pf-e1: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.07);
+  --pf-e2: 0 2px 4px rgba(16, 24, 40, 0.05), 0 8px 20px rgba(16, 24, 40, 0.09);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 6px 22px 32px;
+}
+.dark .mcm-page .pf-wrap {
+  --pf-e1: 0 0 0 1px var(--line);
+  --pf-e2: 0 0 0 1px var(--line), 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* ---- the band: what the view is for, then its figures ---- */
+.mcm-page .pf-band {
+  display: grid;
+  grid-template-columns: minmax(270px, 1fr) minmax(0, 3.3fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.mcm-page .pf-band--wide-hero {
+  grid-template-columns: minmax(290px, 1.15fr) minmax(0, 2.6fr);
+}
+@media (max-width: 1180px) {
+  .mcm-page .pf-band,
+  .mcm-page .pf-band--wide-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A tonal surface: no border, no gradient. */
+.mcm-page .pf-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px 22px 20px;
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--accent) 6%, var(--surface));
+}
+.mcm-page .pf-hero-chip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: var(--surface);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+.mcm-page .pf-hero-chip i {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 99px;
+  background: var(--accent);
+}
+.mcm-page .pf-hero-title {
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.mcm-page .pf-hero-copy {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+/* A whole, split into its parts — a bar and a key that sum to the lead figure. */
+.mcm-page .pf-split {
+  margin-top: auto;
+  padding-top: 18px;
+}
+.mcm-page .pf-split-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.mcm-page .pf-split-head b {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .pf-split-bar {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  margin-top: 10px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 8%, transparent);
+}
+.mcm-page .pf-split-bar i {
+  display: block;
+  min-width: 6px;
+}
+.mcm-page .pf-split-keys {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+/* Once the hero spans the page, two columns of four keys leave a wide gap. */
+@media (max-width: 1180px) {
+  .mcm-page .pf-split-keys {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .mcm-page .pf-split-keys {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.mcm-page .pf-split-keys li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.mcm-page .pf-split-keys li i {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 2px;
+}
+.mcm-page .pf-split-keys li b {
+  margin-left: auto;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .pf-split-keys li em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--ink-4);
+}
+
+/* ---- stat cards ---- */
+.mcm-page .pf-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.mcm-page .pf-stats--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  .mcm-page .pf-stats,
+  .mcm-page .pf-stats--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .mcm-page .pf-stats,
+  .mcm-page .pf-stats--3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* One tonal chip for every card; colour is kept for a card that is reporting
+   a problem, so it isn't spent on decoration. */
+.mcm-page .pf-stat {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--pf-e1);
+  transition: box-shadow 0.2s ease;
+}
+.mcm-page .pf-stat:hover {
+  box-shadow: var(--pf-e2);
+}
+.mcm-page .pf-stat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.mcm-page .pf-stat-chip {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--accent) 9%, var(--surface));
+  color: var(--accent-ink);
+}
+.mcm-page .pf-stat-chip svg {
+  width: 16px;
+  height: 16px;
+}
+.mcm-page .pf-stat.is-warn .pf-stat-chip {
+  background: var(--warn-wash);
+  color: var(--warn);
+}
+.mcm-page .pf-stat-k {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .pf-stat-v {
+  margin-top: 14px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .pf-stat.is-warn .pf-stat-v {
+  color: var(--warn);
+}
+.mcm-page .pf-stat-d {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--ink-4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- notices ---- */
+.mcm-page .pf-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--accent) 7%, var(--surface));
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--accent-ink);
+}
+/* A quieter aside, for a caveat rather than a warning. */
+.mcm-page .pf-notice--quiet {
+  background: transparent;
+  padding: 0 4px;
+  color: var(--ink-4);
+}
+.mcm-page .pf-notice svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 1px;
+}
+
+/* ---- panels ---- */
+.mcm-page .pf-panel {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--pf-e1);
+  overflow: hidden;
+}
+.mcm-page .pf-panel-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 16px;
+  padding: 18px 20px 16px;
+}
+.mcm-page .pf-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: auto;
+  min-width: 0;
+}
+.mcm-page .pf-panel-title h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.mcm-page .pf-panel-title span {
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .pf-panel-title p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-4);
+}

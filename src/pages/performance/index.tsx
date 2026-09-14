@@ -75,7 +75,7 @@ const TAB_SUBTITLES: Record<string, string> = {
   'queues-activity': "Live queue load and today's service levels, queue by queue.",
   'campaign-activity': 'Outbound campaign progress and contact outcomes.',
   agents: 'Who is signed in, what they are on, and how their day is going.',
-  interactions: 'Every call in the selected range, end to end.',
+  interactions: 'Every call in the selected range, with wait, duration and charge.',
   dashboards: 'Your saved views of this account.',
   'live-interactions': 'Calls in progress right now.',
   callbacks: 'Customers waiting for a call back.',
@@ -319,6 +319,14 @@ const Performance = () => {
     dateOptions: DateFilterTypes,
   }));
   const selectedRange = dropdownVal.value;
+  /* Agent figures follow the range, so their captions can't say "today" when
+     the range is last month. */
+  const rangePhrase =
+    dropdownVal.date_type === 'Today'
+      ? 'today'
+      : dropdownVal.date_type === 'Yesterday'
+        ? 'yesterday'
+        : 'in this range';
   // The band and the heading's infotip describe the same figures, so they
   // appear and disappear together.
   const showKpiBand =
@@ -692,6 +700,21 @@ const Performance = () => {
         }
         .mcm-page .perf-head-actions .fchip,
         .mcm-page .perf-head-actions .btn.sm { height:34px; border-radius:9px; }
+        /* Wallboard and My dashboards are bare <button>s, which the console's
+           plain-button reset strips of border and background — they were
+           rendering as loose text beside the chips. The [type] and .sm steps
+           put these rules above that reset instead of losing to it. */
+        .mcm-page .perf-head-actions button.btn.sm[type='button'] {
+          padding:0 14px; border:1px solid var(--line); background:var(--surface);
+          color:var(--ink); font-weight:700;
+        }
+        .mcm-page .perf-head-actions button.btn.sm[type='button']:hover { border-color:var(--ink-4); }
+        .mcm-page .perf-head-actions button.btn.primary.sm[type='button'] {
+          border-color:#171717; background:#171717; color:#fff;
+        }
+        .mcm-page .perf-head-actions button.btn.primary.sm[type='button']:hover {
+          border-color:#000; background:#000;
+        }
 
         /* the date dropdown ships its own grey border — align it to the tokens */
         .mcm-page .perf-head-actions input,
@@ -893,9 +916,13 @@ const Performance = () => {
             activeQueueCalls={activeQueueCalls}
             queues={queues}
             isLoading={isAgentsLoading}
+            isSampleActivity={isUsingDummyActivity}
+            rangePhrase={rangePhrase}
           />
         )}
-        {activeTab === 'interactions' && <InteractionsTab selectedRange={selectedRange} />}
+        {activeTab === 'interactions' && (
+          <InteractionsTab selectedRange={selectedRange} rangePhrase={rangePhrase} />
+        )}
         {activeTab === 'dashboards' && <DashboardsTab />}
         {activeTab === 'live-interactions' && <LiveInteractionsTab />}
         {activeTab === 'callbacks' && <CallbacksTab />}

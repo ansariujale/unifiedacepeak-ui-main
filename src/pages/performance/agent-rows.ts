@@ -110,7 +110,10 @@ export const buildAgentRows = ({
     const answeredToday = typeof stats.answered_calls === 'number' ? stats.answered_calls : 0;
     const timeOnCalls =
       typeof stats.time_on_calls_minutes === 'number' ? stats.time_on_calls_minutes : 0;
-    const aht = answeredToday ? timeOnCalls / answeredToday : null;
+    /* Seconds per answered call, the unit every reader formats it in.
+       `time_on_calls_minutes` is minutes, so dividing it straight by the call
+       count read a five-and-a-half minute average as "00:05". */
+    const aht = answeredToday ? (timeOnCalls * 60) / answeredToday : null;
     const matchKeys = [agent?.uuid, agent?.user_uuid, extension]
       .filter(Boolean)
       .map((value) => String(value));
