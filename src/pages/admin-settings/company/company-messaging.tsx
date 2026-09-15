@@ -3,11 +3,12 @@ import { SettingCard, SettingRow } from '@/components/mcm/setting-card';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { count } from 'sms-length';
-import { LifeBuoy, MessageSquare, ShieldAlert } from 'lucide-react';
+import { Info, LifeBuoy, MessageSquare, ShieldAlert } from 'lucide-react';
 
 import Loader from '@/components/custom/loader';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { handleAlert } from '@/lib/utils';
 import { getDLCStatus } from '@/services/api';
 import {
@@ -152,18 +153,42 @@ const validateForm = (form: MessagingForm): Record<string, string> => {
    while the markup is the same one every other settings screen uses. */
 const ToggleRow = ({
   title,
+  titleFontSize,
   description,
   checked,
   onCheckedChange,
 }: {
   title: string;
-  description: string;
+  titleFontSize?: string;
+  description: React.ReactNode;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }) => (
   <SettingRow
-    label={title}
-    description={description}
+    label={
+      <span className="inline-flex items-center gap-1.5">
+        <span style={titleFontSize ? { fontSize: titleFontSize, fontWeight: 500 } : undefined}>
+          {title}
+        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+            style={{
+              background: '#fdf7f5',
+              border: 'none',
+              color: '#000',
+              boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+            }}
+          >
+            {description}
+          </TooltipContent>
+        </Tooltip>
+      </span>
+    }
     control={<Switch checked={checked} onCheckedChange={onCheckedChange} />}
   />
 );
@@ -269,16 +294,28 @@ const CompanyMessaging = () => {
 
   return (
     <section className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-gray-200/15">
-      <div className="flex min-h-[65px] flex-col justify-center border-b border-gray-200 bg-white px-4 py-3">
-        <p className="text-lg font-semibold text-gray-900">Messaging</p>
-        <p className="text-xs text-gray-500">
-          SMS and MMS rules for the whole company — whether texting is on, what happens on
-          unregistered US numbers, and the reply someone gets when they text HELP.
-        </p>
-      </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-3 sm:px-4">
         <div className="mx-auto flex w-full max-w-[1040px] min-h-0 flex-col gap-4">
+          <div className="flex items-center gap-1.5 px-1">
+            <p className="text-lg font-semibold text-gray-900">Messaging</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                style={{
+                  background: '#fdf7f5',
+                  border: 'none',
+                  color: '#000',
+                  boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                }}
+              >
+                SMS and MMS rules — texting, unregistered US numbers, and the HELP reply.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           {isError && (
             <div className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-center">
               <p className="text-sm font-semibold text-gray-900">
@@ -305,39 +342,48 @@ const CompanyMessaging = () => {
             title="Inbound and outbound SMS/MMS"
             description="One switch for texting with people outside the company, on every number this account owns."
             status="app-only"
-            note="Works in this app. When this is off, people are stopped from sending texts here. If you need texting stopped completely — for a legal hold or a carrier complaint — release the SMS numbers and contact support as well."
+            note="In this app only. For a full stop — legal hold, carrier complaint — release the SMS numbers and contact support too."
           >
             <ToggleRow
               title="Allow SMS and MMS"
+              titleFontSize="14px"
               description="On means people here can text customers and customers can text back."
               checked={form.sms_mms_enabled}
               onCheckedChange={(checked) => updateForm({ sms_mms_enabled: checked })}
             />
-            <div className="rounded-lg border border-gray-200 p-3">
-              <p className="text-sm font-semibold text-gray-900">
-                What switching this off is meant to do
-              </p>
-              <p className="text-xs text-gray-500">
-                &ldquo;Turn off SMS&rdquo; sounds more total than it is, so here is the intended
-                scope in full.
+            <div
+              className="rounded-lg border border-gray-200 bg-white p-3"
+              style={{
+                boxShadow: '0 6px 18px rgba(17, 17, 17, 0.1), 0 1px 4px rgba(17, 17, 17, 0.06)',
+              }}
+            >
+              <p className="font-medium text-gray-900" style={{ fontSize: '13px' }}>
+                What turning this off does
               </p>
               <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <p className="text-xs font-semibold text-gray-900">Stops</p>
+                <div
+                  className="rounded-lg border border-gray-200 bg-gray-50 p-3"
+                  style={{ boxShadow: '0 2px 6px rgba(17, 17, 17, 0.08)' }}
+                >
+                  <p className="font-medium text-gray-900" style={{ fontSize: '13px' }}>
+                    Stops
+                  </p>
                   <ul className="mt-1 flex list-disc flex-col gap-1 pl-4 text-xs text-gray-600">
-                    <li>Texts to and from people outside the company, in and out.</li>
-                    <li>The SMS APIs, so anything you have wired up to text customers.</li>
-                    <li>SMS satisfaction (CSAT) surveys sent after a call or chat.</li>
+                    <li>Texts to and from outside the company.</li>
+                    <li>The SMS APIs your integrations use.</li>
+                    <li>CSAT surveys sent after a call or chat.</li>
                   </ul>
                 </div>
-                <div className="rounded-lg bg-gray-50 p-3">
-                  <p className="text-xs font-semibold text-gray-900">Keeps working</p>
+                <div
+                  className="rounded-lg border border-gray-200 bg-gray-50 p-3"
+                  style={{ boxShadow: '0 2px 6px rgba(17, 17, 17, 0.08)' }}
+                >
+                  <p className="font-medium text-gray-900" style={{ fontSize: '13px' }}>
+                    Keeps working
+                  </p>
                   <ul className="mt-1 flex list-disc flex-col gap-1 pl-4 text-xs text-gray-600">
-                    <li>Messaging between people who both have accounts here.</li>
-                    <li>
-                      That traffic never touches a carrier — it runs over this platform&rsquo;s own
-                      messaging channel, so it is not SMS and this switch does not cover it.
-                    </li>
+                    <li>Messaging between people with accounts here.</li>
+                    <li>It runs on this platform's own channel — not SMS, so unaffected.</li>
                   </ul>
                 </div>
               </div>
@@ -349,10 +395,11 @@ const CompanyMessaging = () => {
             title="Outbound SMS/MMS from unregistered numbers (US only)"
             description="Whether US numbers with no approved 10DLC campaign behind them may still be used to text."
             status="active"
-            note="Active. You are warned before sending from a number that is not registered, because carriers are likely to block it and charge a higher rate. Registering your brand is what clears the block."
+            note="Active. You're warned before sending unregistered — carriers may block it or charge more. Registering your brand clears it."
           >
             <ToggleRow
               title="Allow texting from unregistered US numbers"
+              titleFontSize="14px"
               description="Off is the safe answer, and the one almost every US account should keep."
               checked={form.unregistered_us_outbound_allowed}
               onCheckedChange={(checked) =>
@@ -361,7 +408,7 @@ const CompanyMessaging = () => {
             />
             <div className="rounded-lg border border-gray-200 p-3">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="font-medium text-gray-900" style={{ fontSize: '13px' }}>
                   Your 10DLC registration right now
                 </p>
                 {isDlcLoading && (
@@ -387,29 +434,30 @@ const CompanyMessaging = () => {
               </div>
               <p className="mt-1 text-xs text-gray-500">
                 {isBrandVerified
-                  ? 'Live check, not a saved value. Your brand is verified, so US texting is not being blocked for that reason. Each campaign still has to be approved in its own right.'
+                  ? "Live check. Brand verified — texting isn't blocked for that reason, but each campaign still needs its own approval."
                   : isBrandUnverified
-                    ? 'Live check, not a saved value. While the brand is unverified, texts to US numbers are refused at the moment of sending, whatever this page says.'
-                    : 'We could not read a verification result just now, so treat the state as unknown rather than as approved.'}
+                    ? 'Live check. Unverified brand means US texts are refused, regardless of this setting.'
+                    : "Couldn't check right now — treat this as unknown, not approved."}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   to={TEN_DLC_BRANDS_PATH}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-primary hover:bg-gray-50"
+                  data-slot="button"
+                  className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-xs font-semibold text-white shadow-xs outline-none hover:bg-gray-700 focus-visible:bg-gray-700 focus-visible:ring-2 focus-visible:ring-black/20 focus-visible:ring-offset-2 active:bg-gray-600"
                 >
                   Register or check your brand
                 </Link>
                 <Link
                   to={TEN_DLC_CAMPAIGNS_PATH}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-primary hover:bg-gray-50"
+                  data-slot="button"
+                  className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-xs font-semibold text-white shadow-xs outline-none hover:bg-gray-700 focus-visible:bg-gray-700 focus-visible:ring-2 focus-visible:ring-black/20 focus-visible:ring-offset-2 active:bg-gray-600"
                 >
                   Register an SMS campaign
                 </Link>
               </div>
               <p className="mt-2 text-xs text-gray-500">
-                Registration is two steps and both live under 10DLC Compliance in this admin: the
-                brand is who you are, the campaign is what you will be texting people about. A
-                number only counts as registered once it sits under an approved campaign.
+                Two steps under 10DLC Compliance: brand is who you are, campaign is what you're
+                texting about. A number counts as registered only once both are approved.
               </p>
             </div>
           </SettingCard>
@@ -419,7 +467,7 @@ const CompanyMessaging = () => {
             title="HELP message"
             description="The reply someone should get when they text HELP to one of your numbers."
             status="coming-soon"
-            note="Coming soon: sending this reply for you. For now it is the wording to give your carrier when you register, so your reply is agreed and written down in one place."
+            note="Coming soon: auto-sending this reply. For now, it's the wording to give your carrier at registration."
           >
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -433,7 +481,8 @@ const CompanyMessaging = () => {
                 </Button>
               </div>
               <textarea
-                className="w-full resize-none rounded-xl border border-gray-200 p-3 text-sm leading-6 text-gray-900 shadow-none placeholder:text-gray-400 focus:ring-0 focus-visible:shadow-none focus-visible:outline-0"
+                className="w-full resize-none rounded-xl border border-gray-200 p-3 leading-6 text-gray-900 shadow-none placeholder:text-gray-400 focus:ring-0 focus-visible:shadow-none focus-visible:outline-0"
+                style={{ fontSize: '13px' }}
                 rows={4}
                 value={form.help_message}
                 placeholder={HELP_MESSAGE_TEMPLATE}
@@ -484,7 +533,7 @@ const CompanyMessaging = () => {
             </p>
             <Button
               type="button"
-              variant="primary"
+              variant="dark"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

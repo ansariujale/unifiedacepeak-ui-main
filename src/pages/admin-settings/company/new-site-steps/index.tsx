@@ -3,9 +3,6 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { upsertSiteSchema } from './schema';
-import { Ic } from '@/components/mcm/icons';
-import CustomTooltip from '@/components/custom/custom-tooltip';
-import { InfoIcon } from 'lucide-react';
 import { upsertSite } from '@/services/api';
 import { getObjectLength, handleAlert } from '@/lib/utils';
 import Loader from '@/components/custom/loader';
@@ -49,6 +46,11 @@ const NewSiteSteps = ({ data = {}, handleClose }: any) => {
     // 2: <CallerID formInstance={formInstance} />,
     2: <Summary formInstance={formInstance} />,
   };
+
+  const StepContent = [
+    { number: 1, title: 'Company Info' },
+    { number: 2, title: 'Summary' },
+  ];
 
   const { isPending, mutate } = useMutation({
     mutationFn: upsertSite,
@@ -125,7 +127,7 @@ const NewSiteSteps = ({ data = {}, handleClose }: any) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="flex h-full min-h-0 flex-col justify-between gap-4 pt-1"
+      className="flex h-full min-h-0 flex-col justify-between gap-3 pt-1"
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
         <div className="mb-1.5 flex items-center gap-2">
@@ -148,26 +150,25 @@ const NewSiteSteps = ({ data = {}, handleClose }: any) => {
             <InfoIcon className="w-3.5 h-3.5 text-gray-500 cursor-pointer" />
           </CustomTooltip>
         </div>
-        <nav className="flex flex-wrap items-center justify-center gap-1 border-b border-gray-200 pb-3">
+        <div className="flex items-center gap-1.5 text-sm">
           {StepContent.map((step, index) => (
-            <span key={step.number} className="flex shrink-0 items-center gap-1">
-              {index > 0 && <Ic n="chev" size={14} className="text-gray-300" />}
-              <button
-                type="button"
-                onClick={() => step.number < currentStep && setCurrentStep(step.number)}
+            <span key={step.number} className="flex shrink-0 items-center gap-1.5">
+              {index > 0 && <span className="text-gray-300">&gt;</span>}
+              <span
                 className={
                   currentStep === step.number
-                    ? 'text-sm font-medium text-gray-900 whitespace-nowrap'
-                    : 'text-sm font-normal text-gray-400 whitespace-nowrap'
+                    ? 'font-semibold text-gray-900'
+                    : 'font-medium text-gray-500'
                 }
               >
                 {step.title}
-              </button>
+              </span>
             </span>
           ))}
-        </nav>
-        {/* <div className=" w-full max-w-[940px] rounded-xl mx-auto  p-5 border border-gray-200 bg-white"> */}
-        <div className="mx-auto mt-3 w-full max-w-[940px]">{stepLookUp[currentStep]}</div>
+        </div>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
+        <div className="mx-auto w-full max-w-[940px]">{stepLookUp[currentStep]}</div>
       </div>
       <div className="flex flex-col-reverse gap-2 border-t border-gray-200 pt-2 sm:flex-row sm:justify-end sm:pt-2">
         <Button
@@ -180,7 +181,7 @@ const NewSiteSteps = ({ data = {}, handleClose }: any) => {
           }}
           variant={'transparent'}
           type="button"
-          className="w-full sm:w-auto"
+          className="w-full text-black hover:text-black/70 sm:w-auto"
         >
           {currentStep === 1 ? 'Cancel' : 'Back'}
         </Button>

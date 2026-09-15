@@ -94,7 +94,7 @@ const DisplayNumberModal: FC<ModalProps> = ({ modalState, setModalState, data })
         showCloseButton={false}
       >
         <div className="flex flex-col gap-1.5  text-900/80">
-          <div className="font-semibold truncate text-[18px] flex items-center justify-between">
+          <div className="font-semibold truncate text-[20px] flex items-center justify-between">
             Display Number
             <div
               onClick={handleCancel}
@@ -106,10 +106,10 @@ const DisplayNumberModal: FC<ModalProps> = ({ modalState, setModalState, data })
         </div>
         <ul role="list" className="divide-y divide-gray-200">
           {/* Incoming number */}
-          <li className="py-4 first:pt-0 last:pb-0">
+          <li className="py-3 first:pt-0 last:pb-0">
             <div className="flex gap-2 flex-col">
               <div className="flex flex-col gap-1">
-                <p className="font-semibold text-[14px] text-gray-900">Incoming number</p>
+                <p className="font-semibold text-[16px] text-gray-900">Incoming number</p>
                 <small className="text-gray-700 text-[12px]">
                   Show the number the caller is using to call you
                 </small>
@@ -142,10 +142,10 @@ const DisplayNumberModal: FC<ModalProps> = ({ modalState, setModalState, data })
 
           {/* Masking */}
           {incomingValue && (
-            <li className="py-4 flex flex-col gap-4">
+            <li className="py-3 flex flex-col gap-3">
               <div className="flex gap-2 flex-col">
                 <div className="flex flex-col gap-1">
-                  <p className="font-semibold text-[14px] text-gray-900">Masking</p>
+                  <p className="font-semibold text-[16px] text-gray-900">Masking</p>
                   <p className="text-gray-800 text-[12px]">
                     {showMaskingInputDesc[maskingValue as Exclude<MaskingType, 'N'>] ??
                       'Invalid masking type'}
@@ -256,7 +256,7 @@ const DisplayNumberModal: FC<ModalProps> = ({ modalState, setModalState, data })
           </li> */}
 
           {/* Final note */}
-          <li className="pt-4">
+          <li className="pt-3">
             <div className="flex gap-2 justify-between items-center">
               <Label className="text-[12px]">
                 If number is blocked or unknown, show my number instead
@@ -277,10 +277,20 @@ const DisplayNumberModal: FC<ModalProps> = ({ modalState, setModalState, data })
 
         <DialogFooter>
           <div className="justify-end flex gap-2">
-            <Button type="button" variant={'transparent'} onClick={handleCancel}>
+            <Button
+              type="button"
+              variant={'transparent'}
+              className="rounded-full"
+              onClick={handleCancel}
+            >
               Cancel
             </Button>
-            <Button type="button" variant={'dark'} onClick={() => handleSubmit()}>
+            <Button
+              type="button"
+              variant={'dark'}
+              className="rounded-full"
+              onClick={() => handleSubmit()}
+            >
               Submit
             </Button>
           </div>

@@ -11,7 +11,7 @@ const BrandRelationship = ({ formMethods }: { formMethods: UseFormReturn<any> })
 
   if (isSoleProprietor) {
     return (
-      <div className="flex flex-col gap-2 h-[calc(100vh_-_16rem)] overflow-auto pr-1 items-center justify-center ten-dlc-brand-step-scroll">
+      <div className="flex flex-col gap-2 h-[calc(100vh_-_16rem)] overflow-auto pr-1 items-center justify-center dlc-wizard-step-scroll">
         <p className="text-gray-500">
           Brand Relationship is not required for Sole Proprietor entities.
         </p>
@@ -20,8 +20,8 @@ const BrandRelationship = ({ formMethods }: { formMethods: UseFormReturn<any> })
   }
 
   return (
-    <div className="flex flex-col gap-2 h-[calc(100vh_-_16rem)] overflow-auto pr-1 ten-dlc-brand-step-scroll">
-      <div className="grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 ten-dlc-brand-relationship-grid">
+    <div className="flex flex-col gap-2 h-[calc(100vh_-_16rem)] overflow-auto pr-1 dlc-wizard-step-scroll">
+      <div className="grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 dlc-wizard-relationship-grid">
         {BRAND_RELATIONSHIP_OPTIONS.map((item) => {
           const Icon = item.icon;
           const isActive = selected === item.key;

@@ -241,9 +241,9 @@ const ForwardingHolidaysActions = ({
     <>
       <div className="flex items-end gap-2 justify-between">
         <div className={`flex flex-wrap items-center gap-2 w-[calc(100%_-_2.5rem)]`}>
-          <div className="w-1/3 max-w-fit shrink-0">
+          <div className="w-[190px] shrink-0">
             <CustomSelect
-              className="w-fit"
+              className="w-full"
               inputClass="select-type-plain"
               options={options}
               label={typeLabel}

@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { SettingCard, SettingRow, type SettingStatus } from '@/components/mcm/setting-card';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, PhoneCall, Timer, Users } from 'lucide-react';
+import { ArrowRight, Info, PhoneCall, Timer, Users } from 'lucide-react';
 
-import CustomSelect from '@/components/custom/custom-select';
 import Loader from '@/components/custom/loader';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { handleAlert } from '@/lib/utils';
 import {
   COMPANY_DEFAULTS_QUERY_KEY,
@@ -84,24 +84,6 @@ const SECONDS_PER_RING = 5;
 
 const ringCount = (seconds: number) => Math.round(seconds / SECONDS_PER_RING);
 
-const buildOption = (seconds: number, note?: string) => ({
-  label: `${seconds} seconds — about ${ringCount(seconds)} rings${note ? ` (${note})` : ''}`,
-  value: String(seconds),
-});
-
-const RING_TIME_OPTIONS = [
-  buildOption(5),
-  buildOption(10),
-  buildOption(CONTACT_CENTRE_SECONDS, 'contact centre pace'),
-  buildOption(15),
-  buildOption(20),
-  buildOption(25),
-  buildOption(COMMON_DEFAULT_SECONDS, 'recommended'),
-  buildOption(40),
-  buildOption(45),
-  buildOption(MAX_SECONDS, 'other established systems maximum'),
-];
-
 /* Where the "what happens next" half of this question is answered. A real route
    from src/router/index.tsx — a number's call handling, including its Business
    Hours step, is edited from the numbers list. */
@@ -165,17 +147,11 @@ const buildRingTimePayload = (form: RingTimeForm) => ({
   apply_to_new_people: form.apply_to_new_people,
 });
 
-/**
- * The same honesty badge the other company cards carry. A card is only ever
- * marked 'active' once something outside this file genuinely acts on the value.
- */
-const selectedOption = (options: { label: string; value: string }[], value: string) =>
-  options.find((option) => option.value === value) || null;
-
 const CompanyRingTime = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<RingTimeForm>(DEFAULT_FORM);
+  const [isDraggingRing, setIsDraggingRing] = useState(false);
 
   const {
     data: companyDefaultTemplate = null,
@@ -201,19 +177,6 @@ const CompanyRingTime = () => {
     () => JSON.stringify(form) !== JSON.stringify(savedForm),
     [form, savedForm],
   );
-
-  const currentSeconds = Number(form.seconds);
-
-  /* A value that came from somewhere else — an older record, or a number typed
-     straight into the API — is shown rather than hidden, so the list always has
-     an entry matching what is stored. */
-  const options = useMemo(() => {
-    const isKnown = RING_TIME_OPTIONS.some((option) => option.value === form.seconds);
-    if (isKnown) return RING_TIME_OPTIONS;
-    return [...RING_TIME_OPTIONS, buildOption(currentSeconds, 'saved earlier')].sort(
-      (a, b) => Number(a.value) - Number(b.value),
-    );
-  }, [form.seconds, currentSeconds]);
 
   const { mutate: saveRingTime, isPending: isSaving } = useMutation({
     mutationFn: saveCompanyDefaults,
@@ -250,24 +213,37 @@ const CompanyRingTime = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-full w-full items-center justify-center py-10">
+      <div className="flex w-full items-center justify-center py-10">
         <Loader />
       </div>
     );
   }
 
   return (
-    <section className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-gray-200/15">
-      <div className="flex min-h-[65px] flex-col justify-center border-b border-gray-200 bg-white px-4 py-3">
-        <p className="text-lg font-semibold text-gray-900">Ring time</p>
-        <p className="text-xs text-gray-500">
-          How long a phone rings before the call stops ringing and moves on. One number for the
-          whole company, so a new person is not set up by hand.
-        </p>
+    <section className="company-ring-time-page flex w-full flex-col bg-gray-200/15">
+      <div className="flex items-center gap-1.5 px-4 pt-3">
+        <p className="text-lg leading-none font-semibold text-gray-900">Ring time</p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+            style={{
+              background: '#fdf7f5',
+              border: 'none',
+              color: '#000',
+              boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+            }}
+          >
+            How long a phone rings before moving on — one setting for the whole company.
+          </TooltipContent>
+        </Tooltip>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-3 sm:px-4">
-        <div className="mx-auto flex min-h-0 w-full max-w-[1040px] flex-col gap-4">
+      <div className="px-3 pt-3 pb-3 sm:px-4">
+        <div className="mx-auto flex w-full max-w-[1040px] flex-col gap-4">
           {isError && (
             <div className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-center">
               <p className="text-sm font-semibold text-gray-900">
@@ -296,49 +272,83 @@ const CompanyRingTime = () => {
             status={RING_TIME_STATUS}
             note="Active. Used as the starting point: somebody with no ring time of their own gets this one. People already set up keep the time they have."
           >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="flex flex-col gap-1">
-                <CustomSelect
-                  label="Ring for"
-                  options={options}
-                  value={selectedOption(options, form.seconds)}
-                  handleChange={(option: any) =>
-                    updateForm({ seconds: option?.value || DEFAULT_FORM.seconds })
-                  }
-                />
-                <p className="text-xs text-gray-500">
-                  Between {MIN_SECONDS} and {MAX_SECONDS} seconds. Rings are counted at about five
-                  seconds each, which is what a caller hears.
-                </p>
-              </div>
-            </div>
+            {(() => {
+              const seconds = Number(form.seconds) || Number(DEFAULT_FORM.seconds);
+              const percent = ((seconds - MIN_SECONDS) / (MAX_SECONDS - MIN_SECONDS)) * 100;
+              return (
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm font-semibold text-gray-900">Ring Duration</p>
+                  <div className="flex items-center gap-3">
+                    <span className="shrink-0 text-xs text-gray-500">Ring for</span>
+                    <div className="relative w-full max-w-[420px]">
+                      {isDraggingRing && (
+                        <div
+                          className="absolute -top-6 -translate-x-1/2 rounded-md border border-gray-200 bg-white px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-gray-700 shadow-sm"
+                          style={{ left: `${percent}%` }}
+                        >
+                          {seconds} seconds
+                        </div>
+                      )}
+                      <input
+                        type="range"
+                        min={MIN_SECONDS}
+                        max={MAX_SECONDS}
+                        step={SECONDS_PER_RING}
+                        value={seconds}
+                        onPointerDown={() => setIsDraggingRing(true)}
+                        onPointerUp={() => setIsDraggingRing(false)}
+                        onChange={(event) => updateForm({ seconds: event.target.value })}
+                        className="h-1 w-full cursor-pointer appearance-none rounded-full"
+                        style={{
+                          accentColor: '#f87171',
+                          background: `linear-gradient(to right, #f87171 ${percent}%, #e5e7eb ${percent}%)`,
+                        }}
+                      />
+                      <div className="flex justify-between text-[11px] text-gray-400">
+                        <span>{MIN_SECONDS}s</span>
+                        <span>{COMMON_DEFAULT_SECONDS}s</span>
+                        <span>{MAX_SECONDS}s</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    Set the ring time from {MIN_SECONDS} to {MAX_SECONDS} seconds. Rings are
+                    approximately {SECONDS_PER_RING} seconds each, as a caller hears.
+                  </p>
+                </div>
+              );
+            })()}
 
-            {/* An unlabelled number is worse than a wrong one: an admin cannot
-                judge 30 without knowing what anyone else does. Both vendors'
-                figures are on screen, including why the list stops at 60. */}
-            <div className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
+            {/* Reference material for the curious, not something every admin
+                needs read every time — two short cards rather than the wall
+                of prose this used to be. */}
+            <div className="mt-5 flex flex-col gap-2">
               <p className="text-sm font-semibold text-gray-900">Where these numbers come from</p>
-              <ul className="flex flex-col gap-1 text-xs text-gray-600">
-                <li>
-                  <span className="font-semibold text-gray-900">
-                    Most desk phones ring for {COMMON_DEFAULT_SECONDS} seconds
-                  </span>{' '}
-                  — about {ringCount(COMMON_DEFAULT_SECONDS)} rings. That is the default here too,
-                  because it is also what this product already falls back to everywhere else.
-                </li>
-                <li>
-                  <span className="font-semibold text-gray-900">
-                    Contact centres use about {CONTACT_CENTRE_SECONDS} seconds
-                  </span>{' '}
-                  and rarely go above {MAX_SECONDS}. A short ring moves an unanswered call to the
-                  next agent quickly.
-                </li>
-                <li>
-                  This list stops at {MAX_SECONDS} seconds for that reason. Longer is not offered:
-                  most callers hang up well before a minute, and systems that cap this refuse
-                  anything longer anyway.
-                </li>
-              </ul>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="group flex items-start gap-2.5 rounded-lg border border-gray-300 bg-white p-3 shadow-[0_4px_12px_rgba(17,17,17,0.08),0_1px_3px_rgba(17,17,17,0.05)] transition-all duration-200 hover:border-primary/40 hover:shadow-[0_8px_22px_rgba(17,17,17,0.12),0_2px_6px_rgba(17,17,17,0.07)]">
+                  <PhoneCall className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-primary" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Most Desk Phones</p>
+                    <p className="text-xs text-gray-500">
+                      {COMMON_DEFAULT_SECONDS} seconds — about {ringCount(COMMON_DEFAULT_SECONDS)}{' '}
+                      rings. Also used as the product fallback default.
+                    </p>
+                  </div>
+                </div>
+                <div className="group flex items-start gap-2.5 rounded-lg border border-gray-300 bg-white p-3 shadow-[0_4px_12px_rgba(17,17,17,0.08),0_1px_3px_rgba(17,17,17,0.05)] transition-all duration-200 hover:border-primary/40 hover:shadow-[0_8px_22px_rgba(17,17,17,0.12),0_2px_6px_rgba(17,17,17,0.07)]">
+                  <Users className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-primary" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Contact Centres</p>
+                    <p className="text-xs text-gray-500">
+                      Use about {CONTACT_CENTRE_SECONDS} seconds. A short ring moves unanswered
+                      calls quickly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-[11px] text-gray-500">
+                Capped at {MAX_SECONDS}s — most callers hang up before a minute anyway.
+              </p>
             </div>
           </SettingCard>
 
@@ -351,7 +361,7 @@ const CompanyRingTime = () => {
           >
             <SettingRow
               label="Use this for people added from now on"
-              description="People already set up keep whatever ring time they have. Turning this off means the number above is recorded as the company's intention but is not offered as a starting point to anyone."
+              description="People already set up keep their ring time either way. Off, this number is just recorded — not offered as a starting point."
               control={
                 <Switch
                   checked={form.apply_to_new_people}
@@ -365,44 +375,28 @@ const CompanyRingTime = () => {
               ringing stops; what happens next is a different setting, in a
               different place, and an admin who changes one and not the other
               gets silence at the end of the call. */}
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="flex flex-wrap items-start gap-3 border-b border-gray-200 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
-                <PhoneCall className="h-5 w-5" />
-              </div>
-              <div className="flex min-w-[220px] flex-1 flex-col gap-1">
-                <p className="text-base font-semibold text-gray-900">
-                  Ring time is only half the answer
-                </p>
-                <p className="text-xs text-gray-500">
-                  It says when the ringing stops. It does not say what the caller gets next.
-                </p>
-              </div>
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ucass-primary-200 text-primary">
+              <PhoneCall className="h-4 w-4" />
             </div>
-            <div className="flex flex-col gap-3 p-4">
-              <p className="text-sm text-gray-700">
-                When the ring time runs out, the call follows the &ldquo;what happens when nobody
-                answers&rdquo; action set on that particular line — voicemail, another person, a
-                menu, a queue, or simply hanging up. That action is not set here. It is part of each
-                number&rsquo;s call handling, on the Business Hours step, and it can be different
-                for every number you own.
+            <div className="min-w-[220px] flex-1">
+              <p className="text-sm font-semibold text-gray-900">
+                Ring time is only half the answer
               </p>
-              <p className="text-sm text-gray-700">
-                So a caller giving up is rarely just the ring time. If people say calls end in
-                silence, check that action first: a line with no action set will stop ringing and
-                then do nothing at all, no matter what number you choose above.
+              <p className="text-xs text-gray-500">
+                What happens next — voicemail, another person, a queue — is set per number, on its
+                Business Hours step, not here.
               </p>
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate(NUMBERS_IN_USE_PATH)}
-                >
-                  Open your numbers to check
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
             </div>
+            <Button
+              type="button"
+              variant="dark"
+              className="shrink-0"
+              onClick={() => navigate(NUMBERS_IN_USE_PATH)}
+            >
+              Check your numbers
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
           </div>
 
           <div className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -411,7 +405,7 @@ const CompanyRingTime = () => {
             </p>
             <Button
               type="button"
-              variant="primary"
+              variant="dark"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

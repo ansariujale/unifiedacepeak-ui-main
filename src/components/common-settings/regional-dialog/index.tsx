@@ -300,10 +300,20 @@ const RegionalModal: FC<RegionalProps> = ({
         </div>
         <DialogFooter>
           <div className="justify-end flex gap-2">
-            <Button variant={'transparent'} type="button" onClick={handleCancel}>
+            <Button
+              variant={'transparent'}
+              type="button"
+              className="rounded-full"
+              onClick={handleCancel}
+            >
               Cancel
             </Button>
-            <Button variant={'dark'} type="button" onClick={() => handleSubmit()}>
+            <Button
+              variant={'dark'}
+              type="button"
+              className="rounded-full"
+              onClick={() => handleSubmit()}
+            >
               Submit
             </Button>
           </div>

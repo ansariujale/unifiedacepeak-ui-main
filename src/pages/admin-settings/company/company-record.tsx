@@ -285,7 +285,7 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
             <Button type="button" variant="transparent" onClick={() => setIsEditing(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={isPending}>
+            <Button type="submit" variant="dark" disabled={isPending}>
               {isPending ? 'Saving...' : 'Save company details'}
             </Button>
           </div>

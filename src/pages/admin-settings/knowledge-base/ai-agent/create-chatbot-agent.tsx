@@ -1,6 +1,4 @@
 import CustomAvatar from '@/components/custom/custom-avatar';
-import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import { formatFileSize, handleAlert } from '@/lib/utils';
 import {
   sanitizeAiPlainText,
@@ -31,21 +29,43 @@ import {
   ArrowLeft,
   ArrowRight,
   Bot,
+  Building2,
   Check,
+  ChevronDown,
+  Clock3,
+  Edit3,
   FileText,
   Folder,
+  Gauge,
   Globe2,
+  Headphones,
   Info,
   Loader2,
+  Lock,
   MessageCircle,
+  MessageSquare,
+  PenLine,
+  PhoneCall,
   Plus,
+  RefreshCcw,
   Search,
   Settings2,
   Sparkles,
+  Target,
+  TrendingUp,
+  User,
   UploadCloud,
+  UserRound,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import CustomTooltip from '@/components/custom/custom-tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useBlocker, useLocation, useNavigate } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { OPERATIONAL_HOURS } from '@/components/common-settings/constants';
@@ -250,6 +270,45 @@ const scrollToFirstValidationError = (errors: Record<string, string | undefined>
     focusable?.focus({ preventScroll: true });
   });
 };
+
+const AGENT_SELECT_STYLE = `
+/* index.css declares these in @layer base with !important, and a layered
+   !important outranks an unlayered one no matter how specific - so these
+   overrides have to join the same layer to land. */
+@layer base {
+  .ai-manager-select.custom-react-select__control,
+  .ai-manager-select.custom-react-select__control:hover,
+  .ai-manager-select.custom-react-select__control--is-focused,
+  .ai-manager-select.custom-react-select__control--menu-is-open {
+    border-color: var(--color-neutral-300) !important;
+    box-shadow: none !important;
+  }
+  .ai-manager-select.custom-react-select__control:hover,
+  .ai-manager-select.custom-react-select__control--is-focused,
+  .ai-manager-select.custom-react-select__control--menu-is-open {
+    border-color: var(--color-neutral-400) !important;
+  }
+  .ai-manager-select.custom-react-select__menu {
+    border-color: var(--color-neutral-200) !important;
+    border-radius: 0.75rem !important;
+    padding: 0.375rem !important;
+  }
+  .ai-manager-select.custom-react-select__option {
+    border-radius: 0.5rem !important;
+    font-weight: 500 !important;
+  }
+  .ai-manager-select.custom-react-select__option:hover,
+  .ai-manager-select.custom-react-select__option--is-focused {
+    background-color: #f3f4f6 !important;
+    color: var(--color-neutral-900) !important;
+  }
+  .ai-manager-select.custom-react-select__option--is-selected {
+    background-color: var(--color-red-50) !important;
+    color: var(--color-neutral-900) !important;
+    font-weight: 600 !important;
+  }
+}
+`;
 
 const wizardSteps = [
   'Identity & Behavior',
@@ -734,10 +793,26 @@ const buildPickPageCategories = (links: string[]): PickPageCategory[] => {
     return a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' });
   });
 };
+const PICK_PAGE_CATEGORY_ICON_MAP: Record<string, typeof Globe2> = {
+  __main__: Globe2,
+  'pricing-plans': TrendingUp,
+  'features-services': Sparkles,
+  'help-contact': Headphones,
+  'company-info': UserRound,
+  blog: MessageSquare,
+  'legal-trust': FileText,
+  'developers-integrations': Settings2,
+  'industries-use-cases': Building2,
+};
+const PICK_PAGE_FALLBACK_ICONS = [Folder, Bot, PhoneCall, Gauge, RefreshCcw];
+const getPickPageCategoryIcon = (categoryId: string, fallbackIndex: number) =>
+  PICK_PAGE_CATEGORY_ICON_MAP[categoryId] ||
+  PICK_PAGE_FALLBACK_ICONS[fallbackIndex % PICK_PAGE_FALLBACK_ICONS.length];
+
 const getPickPageCategoryIconClassName = (index: number) => {
   const colorClasses = [
-    'bg-blue-100 text-blue-700',
-    'bg-emerald-100 text-emerald-700',
+    'bg-neutral-100 text-neutral-700',
+    'bg-red-50 text-red-600',
     'bg-amber-100 text-amber-700',
     'bg-violet-100 text-violet-700',
     'bg-cyan-100 text-cyan-700',
@@ -1524,6 +1599,9 @@ function CreateChatbotAgent() {
   const [extraUrl, setExtraUrl] = useState(initialExtraUrl);
   const [discoveredLinks, setDiscoveredLinks] = useState<string[]>(initialEditableSelectedPages);
   const [selectedLinks, setSelectedLinks] = useState<string[]>(initialEditableSelectedPages);
+  const [expandedPickPageCategoryId, setExpandedPickPageCategoryId] = useState<string | null>(
+    null,
+  );
   const [websiteScanProgressStatus, setWebsiteScanProgressStatus] =
     useState<WebsiteScanProgressStatus>('idle');
   const websiteScanProgressCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1645,6 +1723,7 @@ function CreateChatbotAgent() {
     }
     return true;
   });
+  const [showDataCollectionHelp, setShowDataCollectionHelp] = useState(false);
   const [detailsToCollect, setDetailsToCollect] = useState<DetailField[]>(() => {
     const details = initialDetails || builderState?.advanced?.detailsToCollect;
     return ensureAlwaysAskedDetails(Array.isArray(details) ? details : DEFAULT_DETAILS_TO_COLLECT);
@@ -2463,7 +2542,7 @@ function CreateChatbotAgent() {
     if (activeStep === 1) return 'Identity & Behavior';
     if (activeStep === 2) {
       if (sourceStage === 1) return 'Knowledge — your website';
-      if (sourceStage === 2) return 'Pick pages & add documents';
+      if (sourceStage === 2) return 'Pick pages';
       return 'Review knowledge';
     }
     if (activeStep === 6) return 'Handoff';
@@ -3443,7 +3522,7 @@ function CreateChatbotAgent() {
   const renderStep = () => {
     if (activeStep === 1) {
       return (
-        <div className="mx-auto flex w-full max-w-[880px] flex-col gap-3 px-7">
+        <div className="mx-auto flex w-full max-w-[1140px] flex-col gap-3">
           <SectionHeading
             title={stepTitle}
             subtitle="Who is the bot, what does it sound like, what should it talk about?"
@@ -3465,267 +3544,317 @@ function CreateChatbotAgent() {
             </div>
           )}
 
-          <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-semibold text-gray-950">Identity</h3>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <Field label="Bot name *" error={stepErrors.botName} fieldKey="botName">
-                <input
-                  value={botName}
-                  onChange={(event) => {
-                    setBotName(sanitizeAgentName(event.target.value));
-                    setStepErrors((prev) => ({ ...prev, botName: '' }));
-                  }}
-                  maxLength={MAX_AGENT_NAME_LENGTH}
-                  readOnly={isReadOnly}
-                  disabled={isReadOnly}
-                  placeholder="e.g. Aria"
-                  className={cx(
-                    'h-9 w-full rounded-md border px-3 text-sm outline-none focus:border-primary',
-                    stepErrors.botName ? 'border-red-400' : 'border-gray-300',
-                    isReadOnly && 'cursor-not-allowed bg-gray-50 text-slate-600',
-                  )}
-                />
-                <div className="mt-1 flex min-h-4 items-center justify-between gap-2 text-[11px]">
-                  <span
-                    className={
-                      botName.length === MAX_AGENT_NAME_LENGTH ? 'text-amber-600' : 'text-slate-400'
-                    }
-                  >
-                    {botName.length === MAX_AGENT_NAME_LENGTH
-                      ? 'Maximum name length reached.'
-                      : 'Letters, numbers, and spaces only.'}
-                  </span>
-                  <span
-                    className={
-                      botName.length === MAX_AGENT_NAME_LENGTH
-                        ? 'font-semibold text-amber-600'
-                        : 'text-slate-400'
-                    }
-                  >
-                    {botName.length}/{MAX_AGENT_NAME_LENGTH}
-                  </span>
-                </div>
-              </Field>
-              <Field
-                label="Company / Brand *"
-                error={stepErrors.companyBrand}
-                fieldKey="companyBrand"
-              >
-                <input
-                  value={companyBrand}
-                  onChange={(event) => {
-                    setCompanyBrand(sanitizeAiPlainText(event.target.value));
-                    setStepErrors((prev) => ({ ...prev, companyBrand: '' }));
-                  }}
-                  readOnly={isReadOnly}
-                  disabled={isReadOnly}
-                  placeholder="e.g. Example Business"
-                  className={cx(
-                    'h-9 w-full rounded-md border px-3 text-sm outline-none focus:border-primary',
-                    stepErrors.companyBrand ? 'border-red-400' : 'border-gray-300',
-                    isReadOnly && 'cursor-not-allowed bg-gray-50 text-slate-600',
-                  )}
-                />
-              </Field>
-              <Field label="Primary language">
-                <select
-                  value={selectedLanguage}
-                  onChange={(event) => setSelectedLanguage(event.target.value)}
-                  disabled={isReadOnly}
-                  className={cx(
-                    'h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm outline-none focus:border-primary',
-                    isReadOnly && 'cursor-not-allowed bg-gray-50 text-slate-600',
-                  )}
+          {/* The prompt runs the height of the column while identity,
+              location and greeting stack beside it. */}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-stretch">
+            <div className="flex flex-col gap-3">
+            <div className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]">
+              <h3 className="flex items-center gap-2 text-[17px] font-bold text-neutral-950">
+                <User className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2.25} />
+                Identity
+              </h3>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <Field label="Bot name *" error={stepErrors.botName} fieldKey="botName">
+                  <input
+                    value={botName}
+                    onChange={(event) => {
+                      setBotName(sanitizeAgentName(event.target.value));
+                      setStepErrors((prev) => ({ ...prev, botName: '' }));
+                    }}
+                    maxLength={MAX_AGENT_NAME_LENGTH}
+                    readOnly={isReadOnly}
+                    disabled={isReadOnly}
+                    placeholder="e.g. Aria"
+                    className={cx(
+                      'h-10 w-full rounded-xl border px-3 text-sm outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100',
+                      stepErrors.botName ? 'border-red-400' : 'border-neutral-300',
+                      isReadOnly && 'cursor-not-allowed bg-neutral-50 text-neutral-600',
+                    )}
+                  />
+                  <div className="mt-1 flex min-h-4 items-center justify-between gap-2 text-[11px]">
+                    <span
+                      className={
+                        botName.length === MAX_AGENT_NAME_LENGTH ? 'text-amber-600' : 'text-neutral-400'
+                      }
+                    >
+                      {botName.length === MAX_AGENT_NAME_LENGTH
+                        ? 'Maximum name length reached.'
+                        : 'Letters, numbers, and spaces only.'}
+                    </span>
+                    <span
+                      className={
+                        botName.length === MAX_AGENT_NAME_LENGTH
+                          ? 'font-semibold text-amber-600'
+                          : 'text-neutral-400'
+                      }
+                    >
+                      {botName.length}/{MAX_AGENT_NAME_LENGTH}
+                    </span>
+                  </div>
+                </Field>
+                <Field
+                  label="Company / Brand *"
+                  error={stepErrors.companyBrand}
+                  fieldKey="companyBrand"
                 >
-                  {languageChoices.map((language) => (
-                    <option key={language.value} value={language.value}>
-                      {language.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Role / use case">
-                <select
-                  value={roleUseCase}
-                  onChange={(event) => {
-                    const nextUseCase = event.target.value;
-                    const selectedTemplate = useCaseTemplateOptions.find(
-                      (option) => option.name === nextUseCase,
-                    );
-                    setRoleUseCase(nextUseCase);
-                    if (selectedTemplate?.welcomeGreeting) {
-                      setWelcomeMessage(sanitizeAiPlainText(selectedTemplate.welcomeGreeting));
-                      setSelectedGreetingType('custom');
-                      setStepErrors((prev) => ({ ...prev, welcomeMessage: '' }));
-                    }
-                    setSystemPrompt(
-                      selectedTemplate?.systemPrompt
-                        ? sanitizeAiPromptText(selectedTemplate.systemPrompt)
-                        : '',
-                    );
-                    setStepErrors((prev) => ({ ...prev, systemPrompt: '' }));
-                  }}
-                  disabled={isReadOnly || isLoadingUseCaseTemplates}
-                  className={cx(
-                    'h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm outline-none focus:border-primary',
-                    isReadOnly && 'cursor-not-allowed bg-gray-50 text-slate-600',
-                  )}
-                >
-                  <option value="">
-                    {isLoadingUseCaseTemplates ? 'Loading templates...' : 'Select a template'}
-                  </option>
-                  {useCaseTemplateOptions.map((option) => (
-                    <option key={option.id} value={option.name}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+                  <input
+                    value={companyBrand}
+                    onChange={(event) => {
+                      setCompanyBrand(sanitizeAiPlainText(event.target.value));
+                      setStepErrors((prev) => ({ ...prev, companyBrand: '' }));
+                    }}
+                    readOnly={isReadOnly}
+                    disabled={isReadOnly}
+                    placeholder="e.g. Example Business"
+                    className={cx(
+                      'h-10 w-full rounded-xl border px-3 text-sm outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100',
+                      stepErrors.companyBrand ? 'border-red-400' : 'border-neutral-300',
+                      isReadOnly && 'cursor-not-allowed bg-neutral-50 text-neutral-600',
+                    )}
+                  />
+                </Field>
+                <Field label="Primary language">
+                  {/* The same dropdown the receptionist wizard uses, rather than a
+                      native select the browser styles its own way. */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" disabled={isReadOnly} className="flex h-10 w-full items-center justify-between rounded-xl border! border-neutral-300! bg-white! px-3 text-sm outline-none! transition-colors disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-600">
+                        <span className="truncate text-neutral-900!">
+                          {languageChoices.find((language) => language.value === selectedLanguage)
+                            ?.label || 'Select a language'}
+                        </span>
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none">
+                      {languageChoices.map((language) => {
+                        const isSelected = language.value === selectedLanguage;
+                        return (
+                          <DropdownMenuItem
+                            key={language.value}
+                            onClick={() => setSelectedLanguage(language.value)}
+                            className={cx(
+                              'flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm font-medium',
+                              isSelected
+                                ? 'bg-red-50! text-neutral-900! font-semibold'
+                                : 'text-neutral-900 hover:bg-[#f3f4f6]! focus:bg-[#f3f4f6]!',
+                            )}
+                          >
+                            <span className="truncate">{language.label}</span>
+                            {isSelected && (
+                              <Check className="h-3.5 w-3.5 shrink-0 text-red-600!" />
+                            )}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </Field>
+                <Field label="Role / use case">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        disabled={isReadOnly || isLoadingUseCaseTemplates}
+                        className="flex h-10 w-full items-center justify-between rounded-xl border! border-neutral-300! bg-white! px-3 text-sm outline-none! transition-colors disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-600"
+                      >
+                        <span className={roleUseCase ? 'text-neutral-900!' : 'text-neutral-400!'}>
+                          {roleUseCase ||
+                            (isLoadingUseCaseTemplates
+                              ? 'Loading templates...'
+                              : 'Select a template')}
+                        </span>
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="start"
+                      className="flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
+                    >
+                      {useCaseTemplateOptions.map((option) => {
+                        const isSelected = option.name === roleUseCase;
+                        return (
+                          <DropdownMenuItem
+                            key={option.id}
+                            onClick={() => {
+                              const selectedTemplate = useCaseTemplateOptions.find(
+                                (item) => item.name === option.name,
+                              );
+                              setRoleUseCase(option.name);
+                              if (selectedTemplate?.welcomeGreeting) {
+                                setWelcomeMessage(
+                                  sanitizeAiPlainText(selectedTemplate.welcomeGreeting),
+                                );
+                                setSelectedGreetingType('custom');
+                                setStepErrors((prev) => ({ ...prev, welcomeMessage: '' }));
+                              }
+                              setSystemPrompt(
+                                selectedTemplate?.systemPrompt
+                                  ? sanitizeAiPromptText(selectedTemplate.systemPrompt)
+                                  : '',
+                              );
+                              setStepErrors((prev) => ({ ...prev, systemPrompt: '' }));
+                            }}
+                            className={cx(
+                              'flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm font-medium',
+                              isSelected
+                                ? 'bg-red-50! text-neutral-900! font-semibold'
+                                : 'text-neutral-900 hover:bg-[#f3f4f6]! focus:bg-[#f3f4f6]!',
+                            )}
+                          >
+                            <span className="truncate">{option.name}</span>
+                            {isSelected && (
+                              <Check className="h-3.5 w-3.5 shrink-0 text-red-600!" />
+                            )}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </Field>
+              </div>
             </div>
-          </div>
-
-          <AgentSiteSelection
-            sites={sites}
-            selectedSiteId={selectedLocationId}
-            onChange={(siteId) => {
-              setSelectedLocationId(siteId);
-              setStepErrors((prev) => ({ ...prev, siteLocation: '' }));
-            }}
-            error={stepErrors.siteLocation}
-            disabled={isReadOnly}
-            isLoading={isLoadingSites}
-          />
-
-          <div
-            className="scroll-mt-24 rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
-            data-validation-key="welcomeMessage"
-          >
-            <h3 className="text-sm font-semibold text-gray-950">Greeting line *</h3>
-            <p className="mt-0.5 text-xs text-slate-500">
-              The first thing every visitor sees when they open the widget.
-            </p>
-            <textarea
-              value={welcomeMessage}
-              onChange={(event) => {
-                setWelcomeMessage(sanitizeAiPlainText(event.target.value));
-                setStepErrors((prev) => ({ ...prev, welcomeMessage: '' }));
-                setSelectedGreetingType('custom');
+            <AgentSiteSelection
+              sites={sites}
+              selectedSiteId={selectedLocationId}
+              onChange={(siteId) => {
+                setSelectedLocationId(siteId);
+                setStepErrors((prev) => ({ ...prev, siteLocation: '' }));
               }}
-              readOnly={isReadOnly}
+              error={stepErrors.siteLocation}
               disabled={isReadOnly}
-              className={cx(
-                'mt-4 min-h-[84px] w-full resize-y rounded-md border p-3 text-sm outline-none focus:border-primary',
-                stepErrors.welcomeMessage ? 'border-red-400' : 'border-gray-300',
-                isReadOnly && 'cursor-not-allowed bg-gray-50 text-slate-600',
-              )}
+              isLoading={isLoadingSites}
             />
-            {stepErrors.welcomeMessage && (
-              <p className="mt-1 text-xs font-medium text-red-500">{stepErrors.welcomeMessage}</p>
-            )}
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-              <span className="flex items-center gap-1 text-slate-500 font-medium mr-1">
-                <Sparkles className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                Try:
-              </span>
-              <button
-                type="button"
-                onClick={() => handleSelectGreetingType('friendly')}
+            <div
+              className="scroll-mt-24 rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]"
+              data-validation-key="welcomeMessage"
+            >
+              <h3 className="flex items-center gap-2 text-[17px] font-bold text-neutral-950">
+                <MessageCircle className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2.25} />
+                Greeting line *
+              </h3>
+              <textarea
+                value={welcomeMessage}
+                onChange={(event) => {
+                  setWelcomeMessage(sanitizeAiPlainText(event.target.value));
+                  setStepErrors((prev) => ({ ...prev, welcomeMessage: '' }));
+                  setSelectedGreetingType('custom');
+                }}
+                readOnly={isReadOnly}
                 disabled={isReadOnly}
                 className={cx(
-                  'h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors',
-                  selectedGreetingType === 'friendly' &&
-                    welcomeMessage === getGreetingText('friendly', companyBrand)
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-gray-200 bg-white text-slate-600 hover:border-gray-300',
-                  isReadOnly && 'cursor-not-allowed opacity-70',
+                  'mt-4 min-h-[84px] w-full resize-y rounded-xl border p-3 text-sm outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100',
+                  stepErrors.welcomeMessage ? 'border-red-400' : 'border-neutral-300',
+                  isReadOnly && 'cursor-not-allowed bg-neutral-50 text-neutral-600',
                 )}
-              >
-                Friendly greeting
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSelectGreetingType('professional')}
-                disabled={isReadOnly}
-                className={cx(
-                  'h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors',
-                  selectedGreetingType === 'professional' &&
-                    welcomeMessage === getGreetingText('professional', companyBrand)
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-gray-200 bg-white text-slate-600 hover:border-gray-300',
-                  isReadOnly && 'cursor-not-allowed opacity-70',
-                )}
-              >
-                Professional intro
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSelectGreetingType('triage')}
-                disabled={isReadOnly}
-                className={cx(
-                  'h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors',
-                  selectedGreetingType === 'triage' &&
-                    welcomeMessage === getGreetingText('triage', companyBrand)
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-gray-200 bg-white text-slate-600 hover:border-gray-300',
-                  isReadOnly && 'cursor-not-allowed opacity-70',
-                )}
-              >
-                Quick triage
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSelectGreetingType('promo')}
-                disabled={isReadOnly}
-                className={cx(
-                  'h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors',
-                  selectedGreetingType === 'promo' &&
-                    welcomeMessage === getGreetingText('promo', companyBrand)
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-gray-200 bg-white text-slate-600 hover:border-gray-300',
-                  isReadOnly && 'cursor-not-allowed opacity-70',
-                )}
-              >
-                Promo / offer
-              </button>
-              {customGreetings.map((text, idx) => (
+              />
+              {stepErrors.welcomeMessage && (
+                <p className="mt-1 text-xs font-medium text-red-500">{stepErrors.welcomeMessage}</p>
+              )}
+              <div className="mt-2.5 flex flex-nowrap items-center gap-1.5 overflow-x-auto text-xs">
+                <span className="shrink-0 text-neutral-600 font-semibold mr-0.5">Try:</span>
                 <button
-                  key={idx}
                   type="button"
-                  onClick={() => {
-                    setWelcomeMessage(text);
-                    setSelectedGreetingType('custom');
-                    setStepErrors((prev) => ({ ...prev, welcomeMessage: '' }));
-                  }}
+                  onClick={() => handleSelectGreetingType('friendly')}
                   disabled={isReadOnly}
                   className={cx(
-                    'h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors',
-                    welcomeMessage === text
-                      ? 'border-primary bg-primary/5 text-primary'
-                      : 'border-gray-200 bg-white text-slate-600 hover:border-gray-300',
+                    'h-7 shrink-0 whitespace-nowrap rounded-full border px-2.5 text-[11px] font-semibold cursor-pointer transition-colors',
+                    selectedGreetingType === 'friendly' &&
+                      welcomeMessage === getGreetingText('friendly', companyBrand)
+                      ? 'border-red-600 bg-red-50 text-red-600!'
+                      : 'border-neutral-200 bg-white text-neutral-600 hover:border-red-300 hover:text-red-600!',
                     isReadOnly && 'cursor-not-allowed opacity-70',
                   )}
                 >
-                  Custom {idx + 1}
+                  Friendly greeting
                 </button>
-              ))}
-              {/* {!isReadOnly && (
                 <button
                   type="button"
-                  onClick={handleSaveAsCustomGreeting}
-                  className="h-8 px-3 rounded-full border border-dashed border-primary/40 bg-white text-xs font-semibold text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+                  onClick={() => handleSelectGreetingType('professional')}
+                  disabled={isReadOnly}
+                  className={cx(
+                    'h-7 shrink-0 whitespace-nowrap rounded-full border px-2.5 text-[11px] font-semibold cursor-pointer transition-colors',
+                    selectedGreetingType === 'professional' &&
+                      welcomeMessage === getGreetingText('professional', companyBrand)
+                      ? 'border-red-600 bg-red-50 text-red-600!'
+                      : 'border-neutral-200 bg-white text-neutral-600 hover:border-red-300 hover:text-red-600!',
+                    isReadOnly && 'cursor-not-allowed opacity-70',
+                  )}
                 >
-                  + Save current as Custom
+                  Professional intro
                 </button>
-              )} */}
+                <button
+                  type="button"
+                  onClick={() => handleSelectGreetingType('triage')}
+                  disabled={isReadOnly}
+                  className={cx(
+                    'h-7 shrink-0 whitespace-nowrap rounded-full border px-2.5 text-[11px] font-semibold cursor-pointer transition-colors',
+                    selectedGreetingType === 'triage' &&
+                      welcomeMessage === getGreetingText('triage', companyBrand)
+                      ? 'border-red-600 bg-red-50 text-red-600!'
+                      : 'border-neutral-200 bg-white text-neutral-600 hover:border-red-300 hover:text-red-600!',
+                    isReadOnly && 'cursor-not-allowed opacity-70',
+                  )}
+                >
+                  Quick triage
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectGreetingType('promo')}
+                  disabled={isReadOnly}
+                  className={cx(
+                    'h-7 shrink-0 whitespace-nowrap rounded-full border px-2.5 text-[11px] font-semibold cursor-pointer transition-colors',
+                    selectedGreetingType === 'promo' &&
+                      welcomeMessage === getGreetingText('promo', companyBrand)
+                      ? 'border-red-600 bg-red-50 text-red-600!'
+                      : 'border-neutral-200 bg-white text-neutral-600 hover:border-red-300 hover:text-red-600!',
+                    isReadOnly && 'cursor-not-allowed opacity-70',
+                  )}
+                >
+                  Promo / offer
+                </button>
+                {customGreetings.map((text, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setWelcomeMessage(text);
+                      setSelectedGreetingType('custom');
+                      setStepErrors((prev) => ({ ...prev, welcomeMessage: '' }));
+                    }}
+                    disabled={isReadOnly}
+                    className={cx(
+                      'h-7 shrink-0 whitespace-nowrap rounded-full border px-2.5 text-[11px] font-semibold cursor-pointer transition-colors',
+                      welcomeMessage === text
+                        ? 'border-red-600 bg-red-600/5 text-red-600'
+                        : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300',
+                      isReadOnly && 'cursor-not-allowed opacity-70',
+                    )}
+                  >
+                    Custom {idx + 1}
+                  </button>
+                ))}
+                {/* {!isReadOnly && (
+                  <button
+                    type="button"
+                    onClick={handleSaveAsCustomGreeting}
+                    className="h-8 px-3 rounded-full border border-dashed border-red-600/40 bg-white text-xs font-semibold text-red-600 hover:bg-red-600/5 transition-colors cursor-pointer"
+                  >
+                    + Save current as Custom
+                  </button>
+                )} */}
+              </div>
             </div>
-          </div>
-
+            </div>
           <div
-            className="scroll-mt-24 rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+            className="flex h-full flex-col scroll-mt-24 rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]"
             data-validation-key="systemPrompt"
           >
-            <h3 className="text-sm font-semibold text-gray-950">System prompt</h3>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <h3 className="flex items-center gap-2 text-[17px] font-bold text-neutral-950">
+              <Sparkles className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2.25} />
+              System prompt
+            </h3>
+            <p className="mt-0.5 text-xs text-neutral-500">
               Master instruction. Tell the bot who it is and what rules to follow.
             </p>
             <textarea
@@ -3737,14 +3866,22 @@ function CreateChatbotAgent() {
               readOnly={isReadOnly}
               disabled={isReadOnly}
               className={cx(
-                'mt-4 min-h-[130px] w-full resize-y rounded-md border p-3 text-sm outline-none focus:border-primary',
-                stepErrors.systemPrompt ? 'border-red-400' : 'border-gray-300',
-                isReadOnly && 'cursor-not-allowed bg-gray-50 text-slate-600',
+                'mt-4 min-h-[130px] w-full flex-1 resize-y rounded-xl border p-3 text-sm outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100',
+                stepErrors.systemPrompt ? 'border-red-400' : 'border-neutral-300',
+                isReadOnly && 'cursor-not-allowed bg-neutral-50 text-neutral-600',
               )}
             />
             {stepErrors.systemPrompt && (
               <p className="mt-1 text-xs font-medium text-red-500">{stepErrors.systemPrompt}</p>
             )}
+            <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-red-100 bg-red-50 px-2.5 py-1.5">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600" />
+              <p className="text-xs text-neutral-800">
+                Tip: short prompts work better — tell the AI WHO it is, WHAT it does, and 1–2 hard
+                rules.
+              </p>
+            </div>
+          </div>
           </div>
 
           {!isReadOnly && (
@@ -3767,14 +3904,18 @@ function CreateChatbotAgent() {
       }
       return (
         <div className="mx-auto flex w-full max-w-[880px] flex-col gap-4 px-7">
-          <SectionHeading
-            title={stepTitle}
-            subtitle={
-              sourceStage === 1
-                ? 'Pick an existing knowledge base, or create a new one by scanning your website. AI turns pages and documents into Documents & FAQs.'
-                : 'Choose which pages to use and add any custom content the bot should know.'
-            }
-          />
+          {/* The scan card carries its own title and copy, so the step heading
+              would only repeat it. */}
+          {!(knowledgeWebsiteMode === 'scan' && sourceStage === 1) && (
+            <SectionHeading
+              title={stepTitle}
+              subtitle={
+                sourceStage === 1
+                  ? 'Pick an existing knowledge base, or create a new one by scanning your website. AI turns pages and documents into Documents & FAQs.'
+                  : 'Choose which pages the AI should learn from, or add content and documents manually.'
+              }
+            />
+          )}
           {renderKnowledgeBaseStep()}
         </div>
       );
@@ -3796,14 +3937,14 @@ function CreateChatbotAgent() {
       if (knowledgeWebsiteMode === 'picker') {
         return (
           <div className="flex flex-col gap-5">
-            <div className="flex items-center justify-between gap-4 rounded-[14px] bg-gradient-to-r from-[#2947c9] to-[#2f7df2] px-6 py-5 text-white shadow-sm">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border-2 border-slate-300 bg-white px-6 py-5 text-neutral-950">
               <div className="flex min-w-0 items-center gap-4">
-                <div className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-xl bg-white/15">
+                <div className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-xl bg-red-50 text-red-600">
                   <FileText className="h-7 w-7" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-lg font-bold">Create new knowledge base</h3>
-                  <p className="mt-1 text-sm leading-5 text-white/85">
+                  <h3 className="text-[17px] font-bold text-neutral-950">Create new knowledge base</h3>
+                  <p className="mt-1 text-sm leading-5 text-neutral-500">
                     Scan a website, pick pages, upload docs — AI does the rest.
                   </p>
                 </div>
@@ -3828,7 +3969,7 @@ function CreateChatbotAgent() {
                     setStepErrors((prev) => ({ ...prev, knowledgeBase: '' }));
                     setKnowledgeWebsiteMode('scan');
                   }}
-                  className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-white px-5 text-sm font-bold text-primary shadow-sm transition hover:bg-white/95"
+                  className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-neutral-900! px-5 text-sm font-bold text-white! transition hover:bg-neutral-800!"
                 >
                   Start
                   <ArrowRight className="h-4 w-4" />
@@ -3836,20 +3977,25 @@ function CreateChatbotAgent() {
               )}
             </div>
 
-            <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-              <span className="h-px flex-1 bg-gray-200" />
+            <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-[0.16em] text-neutral-400">
+              <span className="h-px flex-1 bg-neutral-200" />
               <span>Or pick an existing one</span>
-              <span className="h-px flex-1 bg-gray-200" />
+              <span className="h-px flex-1 bg-neutral-200" />
             </div>
 
-            <div className="overflow-hidden rounded-[14px] border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border-[1.5px] border-neutral-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,.03)]">
               <div className="px-5 py-4">
-                <h3 className="text-lg font-bold text-gray-950">Pick a knowledge base</h3>
-                <p className="mt-1 text-sm text-slate-500">
+                <h3 className="flex items-center gap-2 text-[17px] font-bold text-neutral-950">
+                  <Folder className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2.25} />
+                  Pick a knowledge base
+                </h3>
+                <p className="mt-1 text-sm text-neutral-500">
                   Search your existing knowledge bases or create a new one from a website.
                 </p>
-                <div className="relative mt-4">
-                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <div className="mt-4 flex h-10 min-w-0 items-center gap-2 rounded-full border! border-neutral-200! bg-white! pl-2 pr-3 shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-all focus-within:border-neutral-400!">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-red-600">
+                    <Search className="h-3.5 w-3.5" />
+                  </span>
                   <input
                     value={knowledgeBaseSearch}
                     onChange={(event) =>
@@ -3857,13 +4003,13 @@ function CreateChatbotAgent() {
                     }
                     disabled={isReadOnly}
                     placeholder="Search knowledge bases..."
-                    className="h-11 w-full rounded-lg border border-gray-200 bg-white pl-11 pr-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-gray-50"
+                    className="min-w-0 flex-1 border-none bg-transparent text-sm text-neutral-900 outline-none! placeholder:text-neutral-400 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
-              <div className="divide-y divide-gray-100 border-t border-gray-100">
+              <div className="divide-y divide-neutral-100 border-t border-neutral-100">
                 {isFetchingReusableKnowledgeAgents ? (
-                  <div className="flex items-center gap-2 px-5 py-5 text-sm font-medium text-slate-500">
+                  <div className="flex items-center gap-2 px-5 py-5 text-sm font-medium text-neutral-500">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Loading agents...
                   </div>
@@ -3878,41 +4024,47 @@ function CreateChatbotAgent() {
                         onClick={() => handleSelectReusableKnowledgeAgent(agent)}
                         className={cx(
                           'flex w-full items-center gap-4 px-5 py-4 text-left transition-colors',
-                          checked ? 'bg-primary/[0.04]' : 'bg-white',
-                          isReadOnly ? 'cursor-default' : 'hover:bg-slate-50',
+                          checked ? 'bg-red-600/[0.04]' : 'bg-white',
+                          isReadOnly ? 'cursor-default' : 'hover:bg-neutral-50',
                         )}
                       >
                         <span
                           className={cx(
                             'grid h-5 w-5 shrink-0 place-items-center rounded-full border',
-                            checked ? 'border-primary' : 'border-slate-300',
+                            checked ? 'border-red-600' : 'border-neutral-300',
                           )}
                         >
-                          {checked && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                          {checked && <span className="h-2.5 w-2.5 rounded-full bg-red-600" />}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-bold text-gray-950">
+                          <span className="block truncate text-sm font-bold text-neutral-950">
                             {agent.name}
                           </span>
-                          <span className="mt-1 block truncate text-sm text-slate-500">
+                          <span className="mt-1 block truncate text-sm text-neutral-500">
                             {agent.meta}
                           </span>
                         </span>
                         <span
                           className={cx(
-                            'shrink-0 rounded-md px-2.5 py-1 text-xs font-bold uppercase',
+                            'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold',
                             agent.channel === 'chat'
-                              ? 'bg-primary/10 text-primary'
-                              : 'bg-emerald-100 text-emerald-700',
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-violet-50 text-violet-700',
                           )}
                         >
+                          <span
+                            className={cx(
+                              'h-1.5 w-1.5 shrink-0 rounded-full',
+                              agent.channel === 'chat' ? 'bg-emerald-500' : 'bg-violet-500',
+                            )}
+                          />
                           {agent.channel === 'chat' ? 'Chat' : 'Voice'}
                         </span>
                       </button>
                     );
                   })
                 ) : (
-                  <div className="px-5 py-5 text-sm text-slate-500">No created agents found.</div>
+                  <div className="px-5 py-5 text-sm text-neutral-500">No created agents found.</div>
                 )}
               </div>
             </div>
@@ -3935,12 +4087,12 @@ function CreateChatbotAgent() {
 
       return (
         <div className="flex flex-col gap-4">
-          <div className="mx-auto mt-2 w-full max-w-[540px] rounded-[14px] border border-gray-200 bg-white px-7 py-9 text-center shadow-sm">
-            <div className="mx-auto mb-3 grid h-[52px] w-[52px] place-items-center rounded-xl bg-primary/10 text-primary">
+          <div className="mx-auto mt-2 w-full max-w-[540px] rounded-[14px] border border-neutral-200 bg-white px-7 py-9 text-center shadow-sm">
+            <div className="mx-auto mb-3 grid h-[52px] w-[52px] place-items-center rounded-xl bg-red-600/10 text-red-600">
               <Globe2 className="h-[26px] w-[26px]" />
             </div>
-            <h3 className="text-lg font-bold text-gray-950">What's your website?</h3>
-            <p className="mx-auto mt-1 max-w-[420px] text-[13px] leading-5 text-slate-500">
+            <h3 className="text-lg font-bold text-neutral-950">What's your website?</h3>
+            <p className="mx-auto mt-1 max-w-[420px] text-[13px] leading-5 text-neutral-500">
               We'll scan it and group your Product, Service, and Contact pages — you pick what to
               use.
             </p>
@@ -3962,8 +4114,8 @@ function CreateChatbotAgent() {
                 disabled={isReadOnly}
                 placeholder="https://yourcompany.com"
                 className={cx(
-                  'w-full rounded-lg border px-3.5 py-[11px] text-[13px] outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-gray-50',
-                  stepErrors.websiteUrl ? 'border-red-400' : 'border-gray-200',
+                  'w-full rounded-lg border px-3.5 py-[11px] text-[13px] outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100 focus:ring-4 focus:ring-red-200/10 disabled:cursor-not-allowed disabled:bg-neutral-50',
+                  stepErrors.websiteUrl ? 'border-red-400' : 'border-neutral-200',
                 )}
               />
             </div>
@@ -3971,7 +4123,7 @@ function CreateChatbotAgent() {
               <p className="mt-2 text-xs font-medium text-red-500">{stepErrors.websiteUrl}</p>
             )}
             {discoveredLinks.length > 0 && (
-              <p className="mt-3 text-xs font-semibold text-emerald-600">
+              <p className="mt-3 text-xs font-semibold text-red-600">
                 {discoveredLinks.length.toLocaleString()} pages found. Continue to pick the pages to
                 use.
               </p>
@@ -3980,7 +4132,7 @@ function CreateChatbotAgent() {
               <button
                 type="button"
                 onClick={handleUseManualKnowledgeMode}
-                className="mt-3 text-xs font-semibold text-slate-500 underline underline-offset-2 hover:text-primary"
+                className="mt-3 text-xs font-semibold text-neutral-500 underline underline-offset-2 hover:text-red-600"
               >
                 I'll add pages manually
               </button>
@@ -4001,7 +4153,7 @@ function CreateChatbotAgent() {
                   </>
                 ) : (
                   <>
-                    Continue to Pick pages
+                    Continue
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -4023,13 +4175,20 @@ function CreateChatbotAgent() {
     };
     const scannedDomain = formatAgentDomain(initialData, scanWebsiteUrl) || 'your site';
     const pickPageCategories = buildPickPageCategories(discoveredLinks);
+    // One category open at a time, defaulting to the first, so a long crawl
+    // does not open as an unreadable wall of links.
+    const activeExpandedCategoryId =
+      expandedPickPageCategoryId &&
+      pickPageCategories.some((category) => category.id === expandedPickPageCategoryId)
+        ? expandedPickPageCategoryId
+        : pickPageCategories[0]?.id;
 
     return (
       <div className="flex flex-col gap-[14px]">
-        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-medium text-primary">
+        <div className="flex items-center gap-2 rounded-lg border border-red-600/20 bg-red-600/5 px-3 py-2 text-xs font-semibold text-neutral-950">
           {discoveredLinks.length > 0 ? (
             <>
-              <Check className="h-4 w-4 shrink-0 stroke-[3]" />
+              <Check className="h-3.5 w-3.5 shrink-0 stroke-[3] text-red-600" />
               <span>
                 Found {discoveredLinks.length.toLocaleString()} pages on {scannedDomain}. Picked the
                 most useful ones below.
@@ -4037,7 +4196,7 @@ function CreateChatbotAgent() {
             </>
           ) : (
             <>
-              <Info className="h-4 w-4 shrink-0" />
+              <Info className="h-3.5 w-3.5 shrink-0 text-red-600" />
               <span>
                 Manual mode — add content and documents below. The chatbot will use these as its
                 only knowledge base.
@@ -4048,71 +4207,95 @@ function CreateChatbotAgent() {
 
         {discoveredLinks.length > 0 ? (
           <div className="flex flex-col gap-2.5">
-            {pickPageCategories.map((category, index) => (
-              <div
-                key={category.id}
-                className="overflow-hidden rounded-[10px] border border-gray-200 bg-white"
-              >
-                <div className="flex items-center gap-2.5 border-b border-gray-200 bg-slate-50 px-3.5 py-3">
+            {(() => {
+              let fallbackIconCounter = 0;
+              return pickPageCategories.map((category, index) => {
+                const isExpanded = category.id === activeExpandedCategoryId;
+                const contentId = `pick-page-category-${index}`;
+                const isFallbackIcon = !PICK_PAGE_CATEGORY_ICON_MAP[category.id];
+                const CategoryIcon = getPickPageCategoryIcon(category.id, fallbackIconCounter);
+                if (isFallbackIcon) fallbackIconCounter += 1;
+
+                return (
                   <div
-                    className={cx(
-                      'grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[7px]',
-                      getPickPageCategoryIconClassName(index),
-                    )}
+                    key={category.id}
+                    className="overflow-hidden rounded-xl border border-neutral-200 bg-white"
                   >
-                    {category.stripLeadingSegments ? (
-                      <Folder className="h-4 w-4" />
-                    ) : (
-                      <Globe2 className="h-4 w-4" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-sm font-bold text-gray-950">{category.title}</h4>
-                    <p className="mt-0.5 text-xs text-slate-500">{category.subtitle}</p>
-                  </div>
-                </div>
-                <div className="max-h-[320px] overflow-y-auto bg-white">
-                  {category.links.map((link) => {
-                    const selected = selectedLinks.includes(link);
-                    return (
-                      <label
-                        key={link}
+                    <button
+                      type="button"
+                      aria-expanded={isExpanded}
+                      aria-controls={contentId}
+                      onClick={() => setExpandedPickPageCategoryId(category.id)}
+                      className={cx(
+                        'flex w-full items-center gap-2.5 bg-neutral-50 px-3.5 py-3 text-left',
+                        isExpanded && 'border-b border-neutral-200',
+                      )}
+                    >
+                      <div
                         className={cx(
-                          'flex min-h-[34px] items-center gap-2.5 border-b border-gray-100 px-3.5 py-2 transition-colors last:border-b-0',
-                          selected ? 'bg-primary/[0.04]' : 'bg-white',
-                          isReadOnly ? 'cursor-default' : 'cursor-pointer hover:bg-slate-50',
+                          'grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[7px]',
+                          getPickPageCategoryIconClassName(index),
                         )}
                       >
-                        <input
-                          type="checkbox"
-                          checked={selected}
-                          disabled={isReadOnly}
-                          onChange={(event) => togglePickPageLink(link, event.target.checked)}
-                          className="h-[15px] w-[15px] rounded border-gray-300 text-primary focus:ring-primary disabled:cursor-not-allowed"
-                        />
-                        <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-gray-900">
-                          {getPickPageRowLabel(link, category.stripLeadingSegments)}
-                        </span>
-                        <span
-                          title={normalizeUrl(link)}
-                          className="max-w-[420px] shrink truncate text-[11px] text-slate-500"
-                        >
-                          {getPickPageRowPath(link)}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+                        <CategoryIcon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm font-bold text-neutral-950">{category.title}</h4>
+                        <p className="mt-0.5 text-xs text-neutral-500">{category.subtitle}</p>
+                      </div>
+                      <ChevronDown
+                        className={cx(
+                          'h-4 w-4 shrink-0 text-neutral-500 transition-transform',
+                          isExpanded && 'rotate-180',
+                        )}
+                      />
+                    </button>
+                    {isExpanded && (
+                      <div id={contentId} className="max-h-[320px] overflow-y-auto bg-white">
+                        {category.links.map((link) => {
+                          const selected = selectedLinks.includes(link);
+                          return (
+                            <label
+                              key={link}
+                              className={cx(
+                                'flex min-h-[34px] items-center gap-2.5 border-b border-neutral-100 px-3.5 py-2 transition-colors last:border-b-0',
+                                selected ? 'bg-red-600/[0.04]' : 'bg-white',
+                                isReadOnly ? 'cursor-default' : 'cursor-pointer hover:bg-neutral-50',
+                              )}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selected}
+                                disabled={isReadOnly}
+                                onChange={(event) => togglePickPageLink(link, event.target.checked)}
+                                className="h-[15px] w-[15px] rounded border-neutral-300 text-red-600 focus:ring-red-600 disabled:cursor-not-allowed"
+                              />
+                              <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-neutral-900">
+                                {getPickPageRowLabel(link, category.stripLeadingSegments)}
+                              </span>
+                              <span
+                                title={normalizeUrl(link)}
+                                className="max-w-[420px] shrink truncate text-[11px] text-neutral-500"
+                              >
+                                {getPickPageRowPath(link)}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
           </div>
         ) : null}
 
         <div className="flex flex-col gap-4">
           {discoveredLinks.length > 0 && (
-            <div className="rounded-[10px] border border-dashed border-slate-300 bg-white p-3.5">
-              <p className="text-sm font-bold text-gray-950">Add another URL</p>
-              <p className="mt-1 text-xs text-slate-500">Paste any page not auto-detected.</p>
+            <div className="rounded-xl border border-neutral-200 bg-white p-3.5 shadow-[0_1px_2px_rgba(0,0,0,.03)]">
+              <p className="text-sm font-bold text-neutral-950">Add another URL</p>
+              <p className="mt-1 text-xs text-neutral-500">Paste any page not auto-detected.</p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <input
                   value={extraUrl}
@@ -4130,8 +4313,8 @@ function CreateChatbotAgent() {
                   disabled={isReadOnly}
                   placeholder="https://yourcompany.com/page"
                   className={cx(
-                    'h-10 min-w-0 flex-1 rounded-lg border px-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-gray-50',
-                    stepErrors.extraUrl ? 'border-red-400' : 'border-gray-200',
+                    'h-10 min-w-0 flex-1 rounded-lg border px-3 text-sm outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100 focus:ring-4 focus:ring-red-200/10 disabled:cursor-not-allowed disabled:bg-neutral-50',
+                    stepErrors.extraUrl ? 'border-red-400' : 'border-neutral-200',
                   )}
                 />
                 {!isReadOnly && (
@@ -4149,14 +4332,14 @@ function CreateChatbotAgent() {
                   {pendingUrls.map((url) => (
                     <div
                       key={url}
-                      className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-2 text-xs"
+                      className="flex items-center justify-between gap-2 rounded-md bg-neutral-50 px-3 py-2 text-xs"
                     >
-                      <span className="min-w-0 truncate text-slate-600">{url}</span>
+                      <span className="min-w-0 truncate text-neutral-600">{url}</span>
                       {!isReadOnly && (
                         <button
                           type="button"
                           onClick={() => handleRemovePendingUrl(url)}
-                          className="shrink-0 text-slate-400 hover:text-red-500"
+                          className="shrink-0 text-neutral-400 hover:text-red-500"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -4168,14 +4351,22 @@ function CreateChatbotAgent() {
             </div>
           )}
 
-          <div className="rounded-xl border border-gray-200 bg-white p-[22px] shadow-sm">
+          <div className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]">
             <div className="mb-3.5">
-              <h3 className="text-sm font-bold text-gray-950">Add content</h3>
-              <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                Type or paste the facts, policies, and answers your chatbot should know — pricing,
-                hours, addresses, refund rules, FAQs, anything. Write it in plain language; the AI
-                turns it into searchable knowledge. A blank line between topics helps keep things
-                organized.
+              <h3 className="flex items-center gap-1.5 text-[17px] font-bold text-neutral-950">
+                <PenLine className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2.25} />
+                Add content
+                <CustomTooltip
+                  side="top"
+                  text="Write it in plain language — the AI turns it into searchable knowledge. Leave a blank line between topics to keep things organized, with one topic per paragraph. Include exact numbers, dates, and policies so the chatbot answers precisely instead of guessing."
+                  className="w-max max-w-[340px] border-none! bg-[#fdf7f5]! text-black! shadow-[0_6px_20px_rgba(17,17,17,0.18)]! [&_svg]:fill-[#fdf7f5]"
+                >
+                  <Info className="h-4 w-4 cursor-help text-neutral-400" />
+                </CustomTooltip>
+              </h3>
+              <p className="mt-0.5 text-xs leading-5 text-neutral-500">
+                Type or paste the facts, policies, and answers your chatbot should know —
+                pricing, hours, addresses, refund rules, FAQs, anything.
               </p>
             </div>
             <textarea
@@ -4184,19 +4375,18 @@ function CreateChatbotAgent() {
               readOnly={isReadOnly}
               disabled={isReadOnly}
               placeholder={`Type or paste anything your chatbot should know — write naturally, the AI organizes it into searchable answers.\n\nEXAMPLE\nBusiness hours: Monday-Friday, 9:00 AM to 6:00 PM EST. Closed weekends and US public holidays.\nPricing: Growth plan starts at $12 per user / month. Pro is $24 per user / month. Enterprise is custom-quoted - offer to connect the visitor with sales.\nOffice address: 123 Market Street, Suite 400, San Francisco, CA 94105.\nRefund policy: Full refund within 30 days of purchase. No refunds after 30 days.\nSupport contact: support@example.com or +1 (800) 555-0199.`}
-              className="min-h-[220px] w-full resize-y rounded-lg border border-gray-200 p-3 text-sm leading-6 text-gray-800 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-gray-50"
+              className="min-h-[220px] w-full resize-y rounded-xl border border-neutral-300 p-3 text-sm leading-6 text-neutral-800 outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100 disabled:cursor-not-allowed disabled:bg-neutral-50"
             />
-            <p className="mt-1 text-right text-[11px] font-medium text-slate-500">
+            <p className="mt-1 text-right text-[11px] font-medium text-neutral-500">
               {customContentWordCount} {customContentWordCount === 1 ? 'word' : 'words'}
             </p>
-            <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="flex items-start gap-1.5 text-[11px] leading-4 text-slate-500">
-                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                Tip: one topic per paragraph. Include exact numbers, dates, and policies so the
-                chatbot answers precisely instead of guessing.
-              </p>
+            <div className="mt-2 flex justify-end">
               {!isReadOnly && (
-                <PrimaryButton onClick={handleAddCustomContent} disabled={!customContent.trim()}>
+                <PrimaryButton
+                  tone="ghost"
+                  onClick={handleAddCustomContent}
+                  disabled={!customContent.trim()}
+                >
                   <Plus className="h-4 w-4" />
                   Add this content
                 </PrimaryButton>
@@ -4207,17 +4397,17 @@ function CreateChatbotAgent() {
                 {pendingTextItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-start justify-between gap-2 rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-xs"
+                    className="flex items-start justify-between gap-2 rounded-xl border border-slate-100 bg-neutral-50 px-3 py-2 text-xs"
                   >
                     <div className="min-w-0">
-                      <p className="truncate font-semibold text-gray-900">{item.title}</p>
-                      <p className="mt-0.5 line-clamp-2 text-slate-500">{item.text}</p>
+                      <p className="truncate font-semibold text-neutral-900">{item.title}</p>
+                      <p className="mt-0.5 line-clamp-2 text-neutral-500">{item.text}</p>
                     </div>
                     {!isReadOnly && (
                       <button
                         type="button"
                         onClick={() => handleRemovePendingText(item.id)}
-                        className="shrink-0 text-slate-400 hover:text-red-500"
+                        className="shrink-0 text-neutral-400 hover:text-red-500"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -4250,13 +4440,13 @@ function CreateChatbotAgent() {
                 handlePendingFilesSelected(event.dataTransfer.files);
               }}
               disabled={isReadOnly || pendingFiles.length >= 5}
-              className="flex min-h-[96px] w-full cursor-pointer flex-col items-center justify-center rounded-[10px] border-2 border-dashed border-slate-300 bg-white px-5 py-5 text-center transition-colors hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex min-h-[96px] w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-white px-5 py-5 text-center transition-colors hover:border-red-600 hover:bg-red-600/5 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <span className="inline-flex items-center gap-2 text-sm font-bold text-gray-950">
-                <UploadCloud className="h-5 w-5 text-slate-500" />
+              <span className="inline-flex items-center gap-2 text-sm font-bold text-neutral-950">
+                <UploadCloud className="h-5 w-5 text-neutral-500" />
                 Add documents to the knowledge base
               </span>
-              <span className="mt-1 text-xs text-slate-500">
+              <span className="mt-1 text-xs text-neutral-500">
                 Drag & drop or click to browse · PDF up to 25 MB each
               </span>
             </button>
@@ -4266,20 +4456,20 @@ function CreateChatbotAgent() {
                 {pendingFiles.map(({ id, file }) => (
                   <div
                     key={id}
-                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+                    className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm"
                   >
                     <div className="grid h-7 w-7 shrink-0 place-items-center rounded bg-red-50 text-[10px] font-bold text-red-700">
                       PDF
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-gray-950">{file.name}</p>
-                      <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
+                      <p className="truncate font-semibold text-neutral-950">{file.name}</p>
+                      <p className="text-xs text-neutral-500">{formatFileSize(file.size)}</p>
                     </div>
                     {!isReadOnly && (
                       <button
                         type="button"
                         onClick={() => handleRemovePendingFile(id)}
-                        className="shrink-0 p-1 text-slate-400 hover:text-red-500"
+                        className="shrink-0 p-1 text-neutral-400 hover:text-red-500"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -4302,7 +4492,7 @@ function CreateChatbotAgent() {
               Back
             </SecondaryButton>
             <PrimaryButton onClick={handleContinueFromKnowledgeBase}>
-              Continue to Review
+              Continue
               <ArrowRight className="h-4 w-4" />
             </PrimaryButton>
           </div>
@@ -4328,20 +4518,20 @@ function CreateChatbotAgent() {
             event.stopPropagation();
             setOpenReviewKnowledgeMenu(isOpen ? '' : menuKey);
           }}
-          className="inline-flex h-6 w-6 items-center justify-center rounded-[5px] text-lg leading-none text-slate-500 transition-colors hover:bg-slate-100 hover:text-gray-950"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-[5px] text-lg leading-none text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-950"
           aria-label="Knowledge card actions"
         >
           ⋮
         </button>
         {isOpen && (
-          <div className="absolute right-0 top-7 z-30 min-w-[170px] rounded-lg border border-gray-200 bg-white p-1.5 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
+          <div className="absolute right-0 top-7 z-30 min-w-[170px] rounded-lg border border-neutral-200 bg-white p-1.5 shadow-[0_6px_18px_rgba(0,0,0,0.08)]">
             <button
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
                 handleOpenReviewKnowledgeSource(type, item);
               }}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-slate-800 hover:bg-slate-50"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-slate-800 hover:bg-neutral-50"
             >
               📄 View Source Document
             </button>
@@ -4351,7 +4541,7 @@ function CreateChatbotAgent() {
                 event.stopPropagation();
                 handleOpenReviewKnowledgeEdit(type, item);
               }}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-slate-800 hover:bg-slate-50"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-slate-800 hover:bg-neutral-50"
             >
               ✎ Edit
             </button>
@@ -4361,7 +4551,7 @@ function CreateChatbotAgent() {
                 event.stopPropagation();
                 handleDuplicateReviewKnowledgeItem(type, item);
               }}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-slate-800 hover:bg-slate-50"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-slate-800 hover:bg-neutral-50"
             >
               ⎘ Duplicate
             </button>
@@ -4395,8 +4585,8 @@ function CreateChatbotAgent() {
         {reviewKnowledgeSourceModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 px-3 py-6">
             <div className="max-h-[calc(100vh-48px)] w-full max-w-[620px] overflow-y-auto rounded-xl bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-                <h3 className="text-base font-bold text-gray-950">
+              <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
+                <h3 className="text-base font-bold text-neutral-950">
                   {reviewKnowledgeSourceModal.type === 'faq'
                     ? '💬 Source for this FAQ'
                     : '📄 Source Document'}
@@ -4404,38 +4594,38 @@ function CreateChatbotAgent() {
                 <button
                   type="button"
                   onClick={() => setReviewKnowledgeSourceModal(null)}
-                  className="text-slate-400 hover:text-gray-900"
+                  className="text-neutral-400 hover:text-neutral-900"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="p-5">
-                <div className="mb-3 grid gap-1.5 rounded-lg bg-slate-50 px-3.5 py-3 text-xs">
+                <div className="mb-3 grid gap-1.5 rounded-lg bg-neutral-50 px-3.5 py-3 text-xs">
                   <div className="flex gap-3">
-                    <span className="min-w-[120px] font-semibold text-slate-600">Title</span>
-                    <span className="font-semibold text-gray-950">
+                    <span className="min-w-[120px] font-semibold text-neutral-600">Title</span>
+                    <span className="font-semibold text-neutral-950">
                       {reviewKnowledgeSourceModal.title}
                     </span>
                   </div>
                   <div className="flex gap-3">
-                    <span className="min-w-[120px] font-semibold text-slate-600">Source</span>
-                    <span className="min-w-0 break-all text-gray-950">{sourcePath}</span>
+                    <span className="min-w-[120px] font-semibold text-neutral-600">Source</span>
+                    <span className="min-w-0 break-all text-neutral-950">{sourcePath}</span>
                   </div>
                   <div className="flex gap-3">
-                    <span className="min-w-[120px] font-semibold text-slate-600">Imported</span>
-                    <span className="text-gray-950">
+                    <span className="min-w-[120px] font-semibold text-neutral-600">Imported</span>
+                    <span className="text-neutral-950">
                       {reviewKnowledgeSourceModal.status || 'Just now'}
                     </span>
                   </div>
                 </div>
-                <div className="max-h-[320px] overflow-y-auto rounded-lg border border-gray-200 bg-white px-4 py-3 text-[13px] leading-[1.65] text-slate-700">
+                <div className="max-h-[320px] overflow-y-auto rounded-lg border border-neutral-200 bg-white px-4 py-3 text-[13px] leading-[1.65] text-neutral-700">
                   {reviewKnowledgeSourceModal.body ? (
                     <p className="whitespace-pre-line">{reviewKnowledgeSourceModal.body}</p>
                   ) : (
-                    <p className="text-slate-500">No content preview available.</p>
+                    <p className="text-neutral-500">No content preview available.</p>
                   )}
-                  <div className="mt-3 rounded-md border-l-[3px] border-primary bg-primary/5 px-3 py-2 text-xs leading-5 text-slate-700">
-                    <b className="text-gray-950">Full summarized content shown above.</b> This is
+                  <div className="mt-3 rounded-xl border-l-[3px] border-red-600 bg-red-600/5 px-3 py-2 text-xs leading-5 text-neutral-700">
+                    <b className="text-neutral-950">Full summarized content shown above.</b> This is
                     the content the chatbot uses to answer related questions. To revise wording, use
                     Edit on the card.
                   </div>
@@ -4445,7 +4635,7 @@ function CreateChatbotAgent() {
                         href={sourceHref}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-primary hover:underline"
+                        className="text-red-600 hover:underline"
                       >
                         🔗 Read more from the original source →
                       </a>
@@ -4460,20 +4650,20 @@ function CreateChatbotAgent() {
         {reviewKnowledgeEditModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 px-3 py-6">
             <div className="w-full max-w-[540px] rounded-xl bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-                <h3 className="text-base font-bold text-gray-950">
+              <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
+                <h3 className="text-base font-bold text-neutral-950">
                   {reviewKnowledgeEditModal.type === 'faq' ? 'Edit FAQ' : 'Edit document'}
                 </h3>
                 <button
                   type="button"
                   onClick={() => setReviewKnowledgeEditModal(null)}
-                  className="text-slate-400 hover:text-gray-900"
+                  className="text-neutral-400 hover:text-neutral-900"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="p-5">
-                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                <label className="mb-1.5 block text-xs font-semibold text-neutral-700">
                   {reviewKnowledgeEditModal.type === 'faq' ? 'Question' : 'Document title'}
                 </label>
                 <input
@@ -4483,9 +4673,9 @@ function CreateChatbotAgent() {
                       prev ? { ...prev, title: event.target.value } : prev,
                     )
                   }
-                  className="h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-primary"
+                  className="h-10 w-full rounded-lg border border-neutral-200 px-3 text-sm outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
                 />
-                <label className="mb-1.5 mt-3 block text-xs font-semibold text-slate-700">
+                <label className="mb-1.5 mt-3 block text-xs font-semibold text-neutral-700">
                   {reviewKnowledgeEditModal.type === 'faq' ? 'Answer' : 'Document content'}
                 </label>
                 <textarea
@@ -4495,10 +4685,10 @@ function CreateChatbotAgent() {
                       prev ? { ...prev, body: event.target.value } : prev,
                     )
                   }
-                  className="min-h-[150px] w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm leading-6 outline-none focus:border-primary"
+                  className="min-h-[150px] w-full resize-y rounded-lg border border-neutral-200 px-3 py-2 text-sm leading-6 outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
                 />
               </div>
-              <div className="flex justify-end gap-2 border-t border-gray-100 px-5 py-4">
+              <div className="flex justify-end gap-2 border-t border-neutral-100 px-5 py-4">
                 <SecondaryButton onClick={() => setReviewKnowledgeEditModal(null)}>
                   Cancel
                 </SecondaryButton>
@@ -4513,20 +4703,20 @@ function CreateChatbotAgent() {
         {reviewKnowledgeAddModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 px-3 py-6">
             <div className="w-full max-w-[540px] rounded-xl bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-                <h3 className="text-base font-bold text-gray-950">
+              <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
+                <h3 className="text-base font-bold text-neutral-950">
                   {reviewKnowledgeAddModal.type === 'faq' ? 'Add FAQ' : 'Add document'}
                 </h3>
                 <button
                   type="button"
                   onClick={() => setReviewKnowledgeAddModal(null)}
-                  className="text-slate-400 hover:text-gray-900"
+                  className="text-neutral-400 hover:text-neutral-900"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="p-5">
-                <div className="mb-3.5 flex gap-1.5 border-b border-gray-100 pb-2.5">
+                <div className="mb-3.5 flex gap-1.5 border-b border-neutral-100 pb-2.5">
                   {[
                     { value: 'text' as const, label: 'Paste text' },
                     // { value: 'upload' as const, label: 'Upload file' },
@@ -4542,8 +4732,8 @@ function CreateChatbotAgent() {
                       className={cx(
                         'flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
                         reviewKnowledgeAddModal.mode === mode.value
-                          ? 'border-primary bg-primary text-white'
-                          : 'border-gray-200 bg-slate-50 text-slate-700 hover:border-primary hover:text-primary',
+                          ? 'border-red-600 bg-red-600 text-white'
+                          : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-red-600 hover:text-red-600',
                       )}
                     >
                       {mode.label}
@@ -4553,7 +4743,7 @@ function CreateChatbotAgent() {
 
                 {reviewKnowledgeAddModal.mode === 'text' ? (
                   <>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                    <label className="mb-1.5 block text-xs font-semibold text-neutral-700">
                       {reviewKnowledgeAddModal.type === 'faq' ? 'Question' : 'Document title'}
                     </label>
                     <input
@@ -4568,9 +4758,9 @@ function CreateChatbotAgent() {
                           ? 'e.g. How much does it cost?'
                           : 'e.g. Refund policy'
                       }
-                      className="h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-primary"
+                      className="h-10 w-full rounded-lg border border-neutral-200 px-3 text-sm outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
                     />
-                    <label className="mb-1.5 mt-3 block text-xs font-semibold text-slate-700">
+                    <label className="mb-1.5 mt-3 block text-xs font-semibold text-neutral-700">
                       {reviewKnowledgeAddModal.type === 'faq' ? 'Answer' : 'Document content'}
                     </label>
                     <textarea
@@ -4585,7 +4775,7 @@ function CreateChatbotAgent() {
                           ? 'Type the answer the chatbot should give. Short, conversational answers work best.'
                           : 'Type or paste the content the chatbot should learn from. Short, factual paragraphs work best.'
                       }
-                      className="min-h-[150px] w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm leading-6 outline-none focus:border-primary"
+                      className="min-h-[150px] w-full resize-y rounded-lg border border-neutral-200 px-3 py-2 text-sm leading-6 outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
                     />
                   </>
                 ) : (
@@ -4602,24 +4792,24 @@ function CreateChatbotAgent() {
                     <button
                       type="button"
                       onClick={() => reviewKnowledgeFileInputRef.current?.click()}
-                      className="w-full rounded-[10px] border-2 border-dashed border-gray-200 px-7 py-7 text-center text-sm text-slate-600 transition-colors hover:border-primary hover:bg-primary/5"
+                      className="w-full rounded-xl border-2 border-dashed border-neutral-200 px-7 py-7 text-center text-sm text-neutral-600 transition-colors hover:border-red-600 hover:bg-red-600/5"
                     >
-                      <UploadCloud className="mx-auto mb-2 h-8 w-8 text-slate-500" />
-                      <b className="text-gray-950">Choose a file</b>
-                      <span className="mt-1 block text-xs text-slate-500">
+                      <UploadCloud className="mx-auto mb-2 h-8 w-8 text-neutral-500" />
+                      <b className="text-neutral-950">Choose a file</b>
+                      <span className="mt-1 block text-xs text-neutral-500">
                         Upload a document to add it to this knowledge base.
                       </span>
                     </button>
                     {reviewKnowledgeAddModal.file && (
-                      <div className="mt-3 flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2">
-                        <div className="rounded bg-primary px-2 py-1 text-[11px] font-bold text-white">
+                      <div className="mt-3 flex items-center gap-2.5 rounded-lg bg-neutral-50 px-3 py-2">
+                        <div className="rounded bg-red-600 px-2 py-1 text-[11px] font-bold text-white">
                           DOC
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] font-semibold text-gray-950">
+                          <p className="truncate text-[13px] font-semibold text-neutral-950">
                             {reviewKnowledgeAddModal.file.name}
                           </p>
-                          <p className="text-[11px] text-slate-500">
+                          <p className="text-[11px] text-neutral-500">
                             {formatFileSize(reviewKnowledgeAddModal.file.size)}
                           </p>
                         </div>
@@ -4630,7 +4820,7 @@ function CreateChatbotAgent() {
                               prev ? { ...prev, file: null } : prev,
                             )
                           }
-                          className="text-slate-500 hover:text-red-600"
+                          className="text-neutral-500 hover:text-red-600"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -4639,7 +4829,7 @@ function CreateChatbotAgent() {
                   </>
                 )}
               </div>
-              <div className="flex justify-end gap-2 border-t border-gray-100 px-5 py-4">
+              <div className="flex justify-end gap-2 border-t border-neutral-100 px-5 py-4">
                 <SecondaryButton onClick={() => setReviewKnowledgeAddModal(null)}>
                   Cancel
                 </SecondaryButton>
@@ -4688,105 +4878,132 @@ function CreateChatbotAgent() {
     return (
       <div className="mx-auto flex w-full max-w-[880px] flex-col gap-3.5 text-left">
         <div>
-          <h1 className="text-[22px] font-bold leading-7 text-gray-950">Review knowledge</h1>
-          <p className="mt-1 text-sm leading-5 text-slate-500">
-            Review what was generated. Edit, delete, or add Documents and FAQs before continuing.
+          <h2 className="text-lg font-bold tracking-normal text-neutral-950">Review knowledge</h2>
+          <p className="mt-0.5 text-sm leading-5 text-neutral-500">
+            Make sure everything below is accurate before you continue.
           </p>
         </div>
 
-        <div className="rounded-[14px] border border-[#BFDBFE] bg-gradient-to-br from-blue-50 to-emerald-50 px-[22px] py-[22px] text-center">
-          <div className="mx-auto mb-2.5 grid h-12 w-12 place-items-center rounded-full bg-emerald-500 text-white">
-            <Check className="h-[26px] w-[26px] stroke-[3]" />
-          </div>
-          <h2 className="text-[18px] font-bold leading-6 text-gray-950">
-            Here's what your chatbot will know
-          </h2>
-          <p className="mt-0.5 text-[13px] leading-5 text-slate-600">
-            Review what was auto-extracted. You can add more docs, custom text, or FAQs from the
-            tabs below.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
-          {[
-            { label: 'Sources', value: reviewSourceCount },
-            { label: 'Documents', value: knowledgeDocumentSummaries.length },
-            { label: 'FAQs', value: validFaqCount },
-            { label: 'Training', value: '~3 min', valueClassName: 'text-sm' },
-          ].map((item) => (
-            <div key={item.label} className="rounded-[10px] border border-gray-200 bg-white p-3">
-              <p className="text-[11px] font-medium leading-4 text-slate-500">{item.label}</p>
-              <p
-                className={cx(
-                  'mt-0.5 text-xl font-bold leading-6 text-gray-950',
-                  item.valueClassName,
-                )}
-              >
-                {item.value}
-              </p>
+        {/* Summary and counts share one row, the way the receptionist wizard
+            reads: the status on the left, the numbers ruled off to its right. */}
+        <div className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
+                <Check
+                  className="h-5 w-5 animate-in zoom-in-50 spin-in-45 duration-300 ease-out"
+                  strokeWidth={2.5}
+                />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-neutral-950">
+                  Here's what your chatbot will know
+                </p>
+                <p className="mt-0.5 text-xs leading-5 text-neutral-500">
+                  Add more from the tabs below if anything is missing.
+                </p>
+              </div>
             </div>
-          ))}
+
+            {[
+              { label: 'Sources', value: reviewSourceCount },
+              { label: 'Documents', value: knowledgeDocumentSummaries.length },
+              { label: 'FAQs', value: validFaqCount },
+              { label: 'Training', value: '~3 min', valueClassName: 'text-sm' },
+            ].map((item, index) => (
+              <div
+                key={item.label}
+                className={cx('shrink-0 pl-5', index > 0 && 'border-l border-neutral-200')}
+              >
+                <p className="text-[11px] font-medium uppercase tracking-wide leading-4 text-neutral-500">
+                  {item.label}
+                </p>
+                <p
+                  className={cx(
+                    'mt-0.5 text-xl font-bold leading-6 text-neutral-950',
+                    item.valueClassName,
+                  )}
+                >
+                  {item.value}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="mt-1">
-          <h2 className="text-[18px] font-bold leading-6 text-gray-950">Knowledge Base Summary</h2>
-          <p className="mt-1 text-[13px] leading-5 text-slate-600">
+          <h2 className="text-[18px] font-bold leading-6 text-neutral-950">Knowledge Base Summary</h2>
+          <p className="mt-1 text-[13px] leading-5 text-neutral-600">
             Here's what the AI chatbot will use. Edit anything, delete what shouldn't be there, add
             anything missing.
           </p>
         </div>
 
-        <div className="inline-flex w-fit gap-[3px] rounded-lg bg-slate-100 p-1">
-          {[
-            {
-              key: 'documents' as const,
-              label: 'Documents',
-              count: knowledgeDocumentSummaries.length,
-              icon: <span className="text-sm leading-none">📄</span>,
-            },
-            {
-              key: 'faqs' as const,
-              label: 'FAQs',
-              count: validFaqCount,
-              icon: <span className="text-sm leading-none">💬</span>,
-            },
-          ].map((tab) => {
-            const isSelected = reviewKnowledgeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => {
-                  setReviewKnowledgeTab(tab.key);
-                  setReviewKnowledgeSearch('');
-                }}
-                className={cx(
-                  'inline-flex items-center gap-1.5 rounded-md border border-transparent px-3.5 py-1.5 text-xs font-semibold transition-colors',
-                  isSelected
-                    ? 'bg-white text-gray-950 shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
-                    : 'bg-transparent text-slate-600 hover:bg-white hover:text-gray-950',
-                )}
-              >
-                {tab.icon}
-                {tab.label}
-                <span className="ml-1 rounded-full bg-slate-200/80 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-slate-600">
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
         <div className="mb-0.5 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative grid w-fit shrink-0 grid-cols-2 rounded-full bg-neutral-200 p-1">
+            {/* One pill that slides between the two tabs, rather than two that
+                pop on and off - the movement shows which way the selection went. */}
+            <span
+              aria-hidden="true"
+              className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-full bg-white shadow-sm transition-transform duration-200 ease-out"
+              style={{
+                transform:
+                  reviewKnowledgeTab === 'faqs' ? 'translateX(100%)' : 'translateX(0)',
+              }}
+            />
+            {[
+              {
+                key: 'documents' as const,
+                label: 'Documents',
+                count: knowledgeDocumentSummaries.length,
+                icon: <FileText className="h-3.5 w-3.5" />,
+              },
+              {
+                key: 'faqs' as const,
+                label: 'FAQs',
+                count: validFaqCount,
+                icon: <MessageCircle className="h-3.5 w-3.5" />,
+              },
+            ].map((tab) => {
+              const isSelected = reviewKnowledgeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setReviewKnowledgeTab(tab.key);
+                    setReviewKnowledgeSearch('');
+                  }}
+                  className={cx(
+                    'relative z-10 flex cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3.5 py-1.5 text-xs font-semibold transition-colors',
+                    isSelected ? 'text-neutral-950' : 'text-neutral-500 hover:text-neutral-800',
+                  )}
+                >
+                  {tab.icon}
+                  {tab.label}
+                  <span
+                    className={cx(
+                      'ml-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none',
+                      isSelected
+                        ? 'bg-neutral-100 text-neutral-950'
+                        : 'bg-neutral-300/70 text-neutral-600',
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-600" />
             <input
               value={reviewKnowledgeSearch}
               onChange={(event) =>
                 setReviewKnowledgeSearch(sanitizeAiSearchText(event.target.value))
               }
               placeholder={searchPlaceholder}
-              className="h-[38px] w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-[13px] outline-none focus:border-primary"
+              className="h-9 w-full rounded-full border border-neutral-300 bg-white pl-9 pr-3 text-sm shadow-sm outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
             />
           </div>
           {!readOnly && (
@@ -4794,10 +5011,10 @@ function CreateChatbotAgent() {
               type="button"
               onClick={() => handleOpenReviewKnowledgeAdd(isDocumentsTab ? 'document' : 'faq')}
               disabled={isKnowledgeSummaryNavigationLocked}
-              className="inline-flex h-[34px] items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-[34px] shrink-0 items-center justify-center gap-1.5 rounded-full border! border-red-200! bg-red-50! px-3.5 text-xs font-bold text-red-600! transition-colors hover:bg-red-100! disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Plus className="h-3.5 w-3.5" />
-              {isDocumentsTab ? 'Add document' : 'Add FAQ'}
+              Add
             </button>
           )}
         </div>
@@ -4805,7 +5022,7 @@ function CreateChatbotAgent() {
         {isDocumentsTab ? (
           <div className="flex flex-col gap-2.5">
             {isSummarizingKnowledgeBase ? (
-              <div className="flex items-center justify-center gap-2 rounded-[10px] border border-gray-200 bg-white px-4 py-8 text-sm font-semibold text-primary">
+              <div className="flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-8 text-sm font-semibold text-red-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Generating summary...
               </div>
@@ -4822,20 +5039,20 @@ function CreateChatbotAgent() {
                     return (
                       <div
                         key={document.id}
-                        className="rounded-[10px] border border-gray-200 bg-white px-[22px] py-[18px] shadow-sm transition-colors hover:border-gray-300 hover:shadow-[0_2px_6px_rgba(0,0,0,0.04)]"
+                        className="rounded-xl border border-neutral-200 bg-white px-[22px] py-[18px] shadow-sm transition-colors hover:border-neutral-300 hover:shadow-[0_2px_6px_rgba(0,0,0,0.04)]"
                       >
                         <div className="flex items-start justify-between gap-2.5">
-                          <h3 className="min-w-0 flex-1 break-words text-[15px] font-bold leading-5 text-gray-950">
+                          <h3 className="min-w-0 flex-1 break-words text-[15px] font-bold leading-5 text-neutral-950">
                             {document.title}
                           </h3>
                           {renderReviewKnowledgeMenu('document', document)}
                         </div>
                         {copy && (
-                          <p className="mt-3 whitespace-pre-line break-words text-[13px] leading-[1.6] text-slate-700">
+                          <p className="mt-3 whitespace-pre-line break-words text-[13px] leading-[1.6] text-neutral-700">
                             {copy}
                           </p>
                         )}
-                        <div className="mt-3 flex flex-col gap-2 border-t border-gray-100 pt-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mt-3 flex flex-col gap-2 border-t border-neutral-100 pt-3 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
                           <span className="min-w-0 truncate">
                             From {document.source || 'selected source'}
                           </span>
@@ -4845,7 +5062,7 @@ function CreateChatbotAgent() {
                     );
                   })
                 ) : (
-                  <div className="rounded-[10px] border border-gray-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
+                  <div className="rounded-xl border border-neutral-200 bg-white px-4 py-8 text-center text-sm text-neutral-500">
                     No documents found.
                   </div>
                 )}
@@ -4855,7 +5072,7 @@ function CreateChatbotAgent() {
         ) : (
           <div className="flex flex-col gap-2.5">
             {isGeneratingKnowledgeFaqs ? (
-              <div className="flex items-center justify-center gap-2 rounded-[10px] border border-gray-200 bg-white px-4 py-8 text-sm font-semibold text-primary">
+              <div className="flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-8 text-sm font-semibold text-red-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Generating FAQs...
               </div>
@@ -4870,18 +5087,18 @@ function CreateChatbotAgent() {
                   filteredFaqs.map((faq) => (
                     <div
                       key={faq.id}
-                      className="rounded-[10px] border border-gray-200 bg-white px-[22px] py-[18px] shadow-sm transition-colors hover:border-gray-300 hover:shadow-[0_2px_6px_rgba(0,0,0,0.04)]"
+                      className="rounded-xl border border-neutral-200 bg-white px-[22px] py-[18px] shadow-sm transition-colors hover:border-neutral-300 hover:shadow-[0_2px_6px_rgba(0,0,0,0.04)]"
                     >
                       <div className="mb-3 flex items-start justify-between gap-3">
-                        <h3 className="min-w-0 flex-1 break-words text-[15px] font-bold leading-5 text-gray-950">
+                        <h3 className="min-w-0 flex-1 break-words text-[15px] font-bold leading-5 text-neutral-950">
                           {faq.question || 'Untitled FAQ'}
                         </h3>
                         {renderReviewKnowledgeMenu('faq', faq)}
                       </div>
-                      <p className="whitespace-pre-line break-words text-[13px] leading-[1.6] text-slate-700">
+                      <p className="whitespace-pre-line break-words text-[13px] leading-[1.6] text-neutral-700">
                         {faq.answer || 'No answer added yet.'}
                       </p>
-                      <div className="mt-3 flex flex-col gap-2 border-t border-gray-100 pt-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="mt-3 flex flex-col gap-2 border-t border-neutral-100 pt-3 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
                         <span className="min-w-0 truncate">
                           {faq.source ? `From ${faq.source}` : 'Manual'}
                         </span>
@@ -4890,7 +5107,7 @@ function CreateChatbotAgent() {
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-[10px] border border-gray-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
+                  <div className="rounded-xl border border-neutral-200 bg-white px-4 py-8 text-center text-sm text-neutral-500">
                     No FAQs found. Add a custom FAQ to create knowledge manually.
                   </div>
                 )}
@@ -4919,7 +5136,7 @@ function CreateChatbotAgent() {
               onClick={() => void handleStepperChange(6, 1)}
               disabled={isKnowledgeSummaryNavigationLocked}
             >
-              Continue to Handoff
+              Continue
               <ArrowRight className="h-4 w-4" />
             </PrimaryButton>
           </div>
@@ -4935,194 +5152,242 @@ function CreateChatbotAgent() {
         : getWeeklyScheduleName(operationalHours?.value) || 'Not configured';
 
     return (
-      <div className="mx-auto flex w-full max-w-[860px] flex-col gap-4 text-left">
+      <div className="mx-auto flex w-full max-w-[1140px] flex-col gap-4 text-left">
+        <style>{AGENT_SELECT_STYLE}</style>
         <SectionHeading
           title="Handoff & availability"
           subtitle="When the bot can't help, when is your team available, and where should the conversation go?"
         />
 
-        {/* Section 1: Business hours */}
-        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex items-baseline gap-1.5">
-            <h3 className="text-sm font-bold text-gray-950">Business hours</h3>
-            <span className="text-xs text-slate-400 font-normal">(optional)</span>
-          </div>
-          <p className="mt-1 text-xs text-slate-500">
-            Set when your{' '}
-            <span className="font-semibold text-slate-700">human agents are online</span> to take
-            over a chat. During these hours the bot can hand off to a live agent.
-          </p>
-
-          <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 p-4 text-xs text-primary leading-normal">
-            <span className="text-sm shrink-0">ℹ</span>
-            <p>
-              <span className="font-bold">After hours are handled automatically.</span> Outside the
-              hours you set, the assistant tells visitors you're closed and offers to schedule a
-              callback with the assigned manager.
-            </p>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between gap-4">
-            <div className="inline-flex h-10 items-center rounded-md border border-primary/20 bg-primary/10 px-4 text-sm font-semibold text-primary">
-              {bussinessHourError || displayHours}
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsBusinessHoursModalOpen(true)}
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-gray-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
-            >
-              <span className="text-sm">⏰</span>
-              Set business hours
-            </button>
-          </div>
-        </div>
-
-        {/* Section 2: Business hours behavior */}
-        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-bold text-gray-950">Business hours behavior</h3>
-          <p className="mt-1 text-xs text-slate-500">
-            What should happen when visitors reach you{' '}
-            <span className="font-semibold text-slate-700">during</span> business hours? The bot
-            tries to answer; pick the live-agent fallback below.
-          </p>
-
-          <div className="mt-4 flex items-start justify-between gap-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <div className="flex-1 text-left">
-              <p className="text-sm font-semibold text-gray-900">Enable human handoff</p>
-              <p className="mt-1 text-xs text-slate-500 leading-normal">
-                When ON, the bot can transfer business-hours chats to a live queue.
-              </p>
-            </div>
-            <Switch
-              checked={enableHumanHandoff}
-              onCheckedChange={(checked) => {
-                const enabled = checked === true;
-                setEnableHumanHandoff(enabled);
-                if (!enabled) {
-                  setStepErrors((prev) => ({ ...prev, queue: '' }));
-                }
-              }}
-              disabled={isReadOnly}
-              className="shrink-0 mt-1"
-            />
-          </div>
-
-          {enableHumanHandoff && (
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Forward type
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  value="Forward to Chat Queue"
-                  className="mt-2 h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-sm text-slate-500 cursor-not-allowed outline-none"
-                />
-                <p className="mt-1.5 text-[11px] text-slate-400 leading-normal">
-                  Chatbot agents only hand off to a chat queue. Use an AI Receptionist for
-                  phone-based forwarding.
-                </p>
+        {/* Hours and how the bot behaves in them belong together on the
+            left; who owns the escalation sits beside them. */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
+          <div className="flex flex-col gap-4">
+            {/* Section 1: Business hours */}
+            <div className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]">
+              <div className="flex items-baseline gap-1.5">
+                <h3 className="flex items-center gap-2 text-[17px] font-bold text-neutral-950">
+                  <Clock3 className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2.25} />
+                  Business hours
+                </h3>
+                <span className="text-xs text-neutral-400 font-normal">(optional)</span>
+                <CustomTooltip
+                  side="top"
+                  text="After hours are handled automatically. Outside the hours you set, the assistant tells visitors you're closed and offers to schedule a callback with the assigned manager."
+                  className="w-max max-w-[340px] border-none! bg-[#fdf7f5]! text-black! shadow-[0_6px_20px_rgba(17,17,17,0.18)]! [&_svg]:fill-[#fdf7f5]"
+                >
+                  <Info className="h-4 w-4 cursor-help text-neutral-400" />
+                </CustomTooltip>
               </div>
-
-              <div className="scroll-mt-24" data-validation-key="queue">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Chat queue
-                </label>
-                <div className="mt-2">
-                  <CustomSelect
-                    isDisabled={isReadOnly}
-                    value={selectedQueueOption}
-                    handleChange={(option: any) => {
-                      const val = option?.value || '';
-                      setSelectedQueueId(val);
-                      setSelectedQueueLabel(option?.label || '');
-                      setStepErrors((prev) => ({ ...prev, queue: '' }));
-                    }}
-                    options={queueOptions}
-                    placeholder="Select a queue..."
-                    error={stepErrors.queue}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Section 3: Manager Configuration */}
-        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-bold text-gray-950">Manager Configuration</h3>
-          <p className="mt-1 text-xs text-slate-500">
-            Select the manager who owns callback & escalation requests. The chosen manager receives
-            the schedule details and may handle it personally or reassign it.
-          </p>
-
-          <div className="mt-4 flex items-start justify-between gap-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <div className="flex-1 text-left">
-              <p className="text-sm font-semibold text-gray-900">Enable scheduled callbacks</p>
-              <p className="mt-1 text-xs text-slate-500 leading-normal">
-                When ON, the bot can offer to schedule a callback and pass the request to a manager.
-                When OFF, the selected manager still owns escalations, but the bot will not offer a
-                callback.
+              <p className="mt-1 text-xs text-neutral-500">
+                Set when your{' '}
+                <span className="font-semibold text-neutral-700">human agents are online</span> to take
+                over a chat. During these hours the bot can hand off to a live agent.
               </p>
-            </div>
-            <Switch
-              checked={enableCallbackScheduling}
-              onCheckedChange={(checked) => setEnableCallbackScheduling(checked === true)}
-              disabled={isReadOnly}
-              className="shrink-0 mt-1"
-            />
-          </div>
 
-          <div className="mt-4 scroll-mt-24" data-validation-key="manager">
-            <span className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
-              <span className="text-sm">👤</span>
-              Manager who owns callbacks & escalations
-            </span>
-            <div className="mt-2">
-              <CustomSelect
-                isDisabled={isReadOnly}
-                value={selectedManagerOption}
-                handleChange={(option: any) => {
-                  setSelectedManagerId(option?.value || '');
-                  setStepErrors((prev) => ({ ...prev, manager: '' }));
-                }}
-                options={managerOptions}
-                placeholder="Select a manager"
-                error={stepErrors.manager}
-                isLoading={isLoadingManagerUsers || isFetchingNextManagerPage}
-                onInputChange={setManagerSearch}
-                onMenuScrollToBottom={() => {
-                  if (hasNextManagerPage && !isFetchingNextManagerPage) {
-                    void fetchNextManagerPage();
-                  }
-                }}
-                FormatOptionLabel={({ option }: any) => (
-                  <div className="flex w-full items-center justify-between">
-                    <div>{option?.label}</div>
-                    {option?.extension && (
-                      <div className="flex items-center gap-1">
-                        <Grid className="w-4 h-4" />
-                        {option?.extension || ''}
-                      </div>
-                    )}
-                  </div>
+              {/* The schedule reads as a labelled summary with its own edit
+                  affordance, the same shape the receptionist uses. */}
+              <div
+                className={cx(
+                  'mt-3 flex items-center justify-between gap-4 rounded-lg border p-3',
+                  bussinessHourError
+                    ? 'border-red-200 bg-red-50/60'
+                    : 'border-neutral-200 bg-neutral-50/60',
                 )}
-              />
-              {stepErrors.manager && (
-                <p className="mt-1.5 text-xs font-medium text-red-500" role="alert">
-                  {stepErrors.manager}
-                </p>
+              >
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                    {bussinessHourError ? 'Needs attention' : 'Current schedule'}
+                  </p>
+                  <p
+                    className={cx(
+                      'truncate text-sm font-bold',
+                      bussinessHourError ? 'text-red-600' : 'text-neutral-900',
+                    )}
+                  >
+                    {bussinessHourError || displayHours}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsBusinessHoursModalOpen(true)}
+                  className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border! border-neutral-300! bg-white! px-3.5 text-xs font-semibold text-neutral-700 outline-none! transition-all duration-150 hover:-translate-y-0.5 hover:border-red-300! hover:text-neutral-900"
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                  {operationalHours?.type ? 'Edit' : 'Set business hours'}
+                </button>
+              </div>
+            </div>
+            {/* Section 2: Business hours behavior */}
+            <div className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]">
+              <h3 className="flex items-center gap-2 text-[17px] font-bold text-neutral-950">
+                <PhoneCall className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2.25} />
+                Business hours behavior
+              </h3>
+              <p className="mt-1 text-xs text-neutral-500">
+                Choose what happens when visitors reach you during business hours.
+              </p>
+
+              <div className="mt-3 flex items-start justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-semibold text-neutral-900">Enable human handoff</p>
+                  <p className="mt-1 text-xs text-neutral-500 leading-normal">
+                    When ON, the bot can transfer business-hours chats to a live queue.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={enableHumanHandoff}
+                  disabled={isReadOnly}
+                  onClick={() => {
+                    const enabled = !enableHumanHandoff;
+                    setEnableHumanHandoff(enabled);
+                    if (!enabled) {
+                      setStepErrors((prev) => ({ ...prev, queue: '' }));
+                    }
+                  }}
+                  className={cx(
+                    'relative mt-1 inline-flex h-6 w-11 shrink-0 items-center rounded-full outline-none! transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                    enableHumanHandoff ? 'bg-red-600!' : 'bg-neutral-200!',
+                  )}
+                >
+                  <span
+                    className={cx(
+                      'inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                      enableHumanHandoff ? 'translate-x-[22px]' : 'translate-x-0.5',
+                    )}
+                  />
+                </button>
+              </div>
+
+              {enableHumanHandoff && (
+                <div className="mt-4 flex flex-col gap-3">
+                  {/* There is only ever one forward type here, so it reads as a
+                      stated fact with the caveat tucked into a tooltip. */}
+                  <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-500">
+                    Forward type:{' '}
+                    <span className="text-neutral-900">Chat queue</span>
+                    <CustomTooltip
+                      side="top"
+                      text="Chatbot agents only hand off to a chat queue. Use an AI Receptionist for phone-based forwarding."
+                      className="w-max max-w-[340px] border-none! bg-[#fdf7f5]! text-black! shadow-[0_6px_20px_rgba(17,17,17,0.18)]! [&_svg]:fill-[#fdf7f5]"
+                    >
+                      <Info className="h-4 w-4 cursor-help text-neutral-400" />
+                    </CustomTooltip>
+                  </p>
+
+                  <div className="scroll-mt-24" data-validation-key="queue">
+                    <div>
+                      <CustomSelect
+                        className="neutral-focus-select"
+                        inputClass="ai-manager-select"
+                        isDisabled={isReadOnly}
+                        value={selectedQueueOption}
+                        handleChange={(option: any) => {
+                          const val = option?.value || '';
+                          setSelectedQueueId(val);
+                          setSelectedQueueLabel(option?.label || '');
+                          setStepErrors((prev) => ({ ...prev, queue: '' }));
+                        }}
+                        options={queueOptions}
+                        placeholder="Select a queue."
+                        error={stepErrors.queue}
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>
-
-          <div className="mt-4 flex items-start gap-2 text-xs text-slate-500">
-            <span className="text-sm shrink-0">📝</span>
-            <p className="leading-normal">
-              The selected manager receives visitor name, email, preferred callback time, and the
-              chat transcript for every scheduled callback.
+          {/* Section 3: Manager Configuration */}
+          <div className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]">
+            <h3 className="flex items-center gap-2 text-[17px] font-bold text-neutral-950">
+              <UserRound className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2.25} />
+              Manager configuration
+            </h3>
+            <p className="mt-1 text-xs text-neutral-500">
+              Choose who receives visitor details for every scheduled callback.
             </p>
+
+            <div className="mt-3 flex items-start justify-between gap-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+              <div className="flex-1 text-left">
+                <p className="text-sm font-semibold text-neutral-900">Enable scheduled callbacks</p>
+                <p className="mt-1 text-xs text-neutral-500 leading-normal">
+                  When ON, the bot offers a callback and passes the request to a manager.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={enableCallbackScheduling}
+                disabled={isReadOnly}
+                onClick={() => setEnableCallbackScheduling(!enableCallbackScheduling)}
+                className={cx(
+                  'relative mt-1 inline-flex h-6 w-11 shrink-0 items-center rounded-full outline-none! transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                  enableCallbackScheduling ? 'bg-red-600!' : 'bg-neutral-200!',
+                )}
+              >
+                <span
+                  className={cx(
+                    'inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                    enableCallbackScheduling ? 'translate-x-[22px]' : 'translate-x-0.5',
+                  )}
+                />
+              </button>
+            </div>
+
+            <div className="mt-4 scroll-mt-24" data-validation-key="manager">
+              <span className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-500">
+                <UserRound className="h-3.5 w-3.5" />
+                Manager who owns callbacks & escalations
+              </span>
+              <div className="mt-2">
+                <CustomSelect
+                  className="neutral-focus-select"
+                  inputClass="ai-manager-select"
+                  isDisabled={isReadOnly}
+                  value={selectedManagerOption}
+                  handleChange={(option: any) => {
+                    setSelectedManagerId(option?.value || '');
+                    setStepErrors((prev) => ({ ...prev, manager: '' }));
+                  }}
+                  options={managerOptions}
+                  placeholder="Select a manager"
+                  error={stepErrors.manager}
+                  isLoading={isLoadingManagerUsers || isFetchingNextManagerPage}
+                  onInputChange={setManagerSearch}
+                  onMenuScrollToBottom={() => {
+                    if (hasNextManagerPage && !isFetchingNextManagerPage) {
+                      void fetchNextManagerPage();
+                    }
+                  }}
+                  FormatOptionLabel={({ option }: any) => (
+                    <div className="flex w-full items-center justify-between">
+                      <div>{option?.label}</div>
+                      {option?.extension && (
+                        <div className="flex items-center gap-1">
+                          <Grid className="w-4 h-4" />
+                          {option?.extension || ''}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                />
+                {stepErrors.manager && (
+                  <p className="mt-1.5 text-xs font-medium text-red-500" role="alert">
+                    {stepErrors.manager}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-start gap-2 text-xs text-neutral-500">
+              <span className="text-sm shrink-0">📝</span>
+              <p className="leading-normal">
+                The manager gets the visitor's name, email, preferred time, and the transcript.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -5133,7 +5398,7 @@ function CreateChatbotAgent() {
               Back
             </SecondaryButton>
             <PrimaryButton onClick={() => void handleStepperChange(7, 1)}>
-              Continue to Advanced Settings
+              Continue
               <ArrowRight className="h-4 w-4" />
             </PrimaryButton>
           </div>
@@ -5144,209 +5409,206 @@ function CreateChatbotAgent() {
 
   const renderAdvancedStep = () => {
     return (
-      <div className="mx-auto flex w-full max-w-[800px] flex-col gap-4 text-left">
+      <div className="flex w-full flex-col gap-4 text-left">
+        {/* react-select portals its menu, so these rules are stamped on every
+            sub-component through inputClass rather than a wrapper class. */}
+        <style>{AGENT_SELECT_STYLE}</style>
         <SectionHeading
           title={stepTitle}
-          subtitle="Configure what the assistant collects from visitors and fine-tune its conversational behavior."
+          subtitle="Configure data collection, routing, language preferences, and behavioral parameters."
         />
 
-        {/* Card 1: Data Collection */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm flex flex-col gap-4">
-          <div>
-            <h3 className="text-sm font-bold text-gray-950">Data Collection</h3>
-            <p className="mt-1 text-xs text-slate-500">
-              Choose what visitor details the bot politely asks for during the chat. Captured fields
-              are saved on the conversation record.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            {/* Enable Data Collection Toggle */}
-            <div className="flex items-start justify-between gap-4">
+        {/* What the bot collects on the left; what happens with it on the right.
+            Both columns stretch so the two sides finish level. */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+          {/* Card 1: Data Collection */}
+          <div className="flex h-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+            <div className="flex items-start justify-between gap-4 px-5 pt-5 pb-4">
               <div>
-                <h4 className="text-sm font-semibold text-gray-950">Enable Data Collection</h4>
-                <p className="mt-1 text-xs text-slate-500 leading-normal">
-                  Turn off to collect only the visitor name.
+                <div className="flex items-center gap-1.5">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-neutral-950">
+                    <FileText className="h-4 w-4 shrink-0 text-red-600" strokeWidth={2.25} />
+                    Data Collection
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowDataCollectionHelp((prev) => !prev)}
+                    aria-expanded={showDataCollectionHelp}
+                    className="inline-flex h-4 w-4 items-center justify-center rounded-full text-neutral-400 transition-colors hover:text-neutral-900"
+                    aria-label='When should I mark a field "Mandatory" vs "Optional"?'
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-neutral-500">
+                  When enabled, the bot politely asks visitors for the details below and stores them
+                  on the conversation record.
                 </p>
               </div>
-              <Switch
-                checked={isDataCollectionEnabled}
-                onCheckedChange={(checked) => setIsDataCollectionEnabled(checked === true)}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isDataCollectionEnabled}
                 disabled={isReadOnly}
-              />
+                onClick={() => setIsDataCollectionEnabled(!isDataCollectionEnabled)}
+                className={cx(
+                  'relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full outline-none! transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                  isDataCollectionEnabled ? 'bg-red-600!' : 'bg-neutral-200!',
+                )}
+              >
+                <span
+                  className={cx(
+                    'inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                    isDataCollectionEnabled ? 'translate-x-[22px]' : 'translate-x-0.5',
+                  )}
+                />
+              </button>
             </div>
 
-            {/* Info Callout Tip */}
-            {isDataCollectionEnabled && (
-              <div className="mt-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
-                <p className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                  <span>💡</span>
-                  Mandatory vs Optional — when to use each?
+            {isDataCollectionEnabled && showDataCollectionHelp && (
+              <div className="mx-5 mb-4 rounded-lg border border-neutral-200/60 bg-neutral-100 p-4">
+                <p className="flex items-center gap-2 text-xs font-bold text-neutral-700">
+                  <Info className="h-3.5 w-3.5 shrink-0 text-neutral-600" />
+                  When should I mark a field "Mandatory" vs "Optional"?
                 </p>
-                <div className="mt-2 text-xs leading-5 text-slate-600 flex flex-col gap-1.5">
-                  <p>
-                    <strong>Mandatory</strong> = the bot keeps politely re-asking until the visitor
-                    answers. Use for must-haves like{' '}
-                    <span className="font-semibold text-primary font-medium">Email</span> for
-                    follow-up.
-                  </p>
-                  <p>
-                    <strong>Optional</strong> = the bot asks once and moves on if skipped. Best for
-                    nice-to-have data like{' '}
-                    <span className="font-semibold text-primary font-medium">Date of birth</span> or{' '}
-                    <span className="font-semibold text-primary font-medium">Address</span>.
-                  </p>
-                </div>
+                <p className="mt-2 text-xs leading-5 text-neutral-600">
+                  <strong className="text-neutral-950">Mandatory</strong> — the bot keeps politely
+                  re-asking until the visitor answers. Use for fields you really need (e.g.{' '}
+                  <span className="font-semibold text-neutral-600">Email</span> for follow-ups).
+                </p>
+                <p className="mt-2 text-xs leading-5 text-neutral-600">
+                  <strong className="text-neutral-950">Optional</strong> — the bot asks once and moves
+                  on if declined. Use for nice-to-have data (e.g.{' '}
+                  <span className="font-semibold text-neutral-600">Date of birth</span>).
+                </p>
+                <p className="mt-2 text-xs leading-5 text-neutral-600">
+                  <strong className="text-neutral-950">Disabled</strong> — the bot never asks for this
+                  field at all.
+                </p>
               </div>
             )}
 
-            {/* Fields List Checklist */}
-            <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white">
-              {[
-                {
-                  key: 'name' as DetailField,
-                  label: 'Name',
-                  badge: 'Always asked',
-                  disabled: true,
-                },
-                ...(isDataCollectionEnabled
-                  ? [
-                      { key: 'email' as DetailField, label: 'Email', badge: '', disabled: false },
-                      {
-                        key: 'phone' as DetailField,
-                        label: 'Phone',
-                        badge: 'Always asked',
-                        disabled: true,
-                      },
-                      { key: 'dob' as DetailField, label: 'DOB', badge: '', disabled: false },
-                      {
-                        key: 'address' as DetailField,
-                        label: 'Address',
-                        badge: '',
-                        disabled: false,
-                      },
-                    ]
-                  : []),
-              ].map(({ key, label, badge, disabled }) => {
-                const isAlwaysAsked = disabled || ALWAYS_ASKED_DETAIL_FIELDS.has(key);
-                const isChecked = isAlwaysAsked || detailsToCollect.includes(key);
-                const mandatory = isAlwaysAsked ? 'mandatory' : detailsMandatory[key];
-                return (
-                  <div
-                    key={key}
-                    className={cx(
-                      'flex items-center gap-4 border-b border-gray-100 px-5 py-3 last:border-b-0 transition-colors',
-                      key === 'phone' && 'bg-amber-50/60',
-                      key !== 'phone' && isChecked && 'bg-white',
-                      key !== 'phone' && !isChecked && 'opacity-60 bg-white',
-                    )}
-                  >
-                    <Checkbox
-                      checked={isChecked}
-                      disabled={isAlwaysAsked || isReadOnly}
-                      onCheckedChange={(checked) => {
-                        if (isAlwaysAsked) return;
-                        toggleSingleDetail(key, checked === true);
-                      }}
-                      className="shrink-0"
-                    />
-                    <span
+            <div className="flex flex-1 flex-col border-t border-neutral-100">
+                {[
+                  { key: 'name' as DetailField, label: 'Name', disabled: true },
+                  { key: 'phone' as DetailField, label: 'Phone', disabled: true },
+                  { key: 'email' as DetailField, label: 'Email', disabled: false },
+                  { key: 'dob' as DetailField, label: 'Date of Birth', disabled: false },
+                  { key: 'address' as DetailField, label: 'Address', disabled: false },
+                ].map(({ key, label, disabled }) => {
+                  const isAlwaysAsked = disabled || ALWAYS_ASKED_DETAIL_FIELDS.has(key);
+                  const isChecked = isAlwaysAsked || detailsToCollect.includes(key);
+                  const mandatory = isAlwaysAsked ? 'mandatory' : detailsMandatory[key];
+                  const fieldState: 'disabled' | 'optional' | 'mandatory' = !isChecked
+                    ? 'disabled'
+                    : mandatory === 'mandatory'
+                      ? 'mandatory'
+                      : 'optional';
+
+                  return (
+                    <div
+                      key={key}
+                      /* Switching data collection off greys the optional fields rather
+                         than removing them - name and phone are collected either way,
+                         so they stay live. */
                       className={cx(
-                        'flex-1 text-sm font-semibold',
-                        isChecked ? 'text-gray-900' : 'text-slate-400',
+                        'flex flex-1 flex-wrap items-center justify-between gap-3 border-b border-neutral-100 px-5 py-4 transition-colors last:border-b-0',
+                        !isDataCollectionEnabled &&
+                          !isAlwaysAsked &&
+                          'pointer-events-none bg-neutral-50/70 opacity-60',
                       )}
+                      aria-disabled={!isDataCollectionEnabled && !isAlwaysAsked}
                     >
-                      {label}
-                      {badge && (
-                        <span className="ml-2 inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
-                          {badge}
-                        </span>
-                      )}
-                    </span>
-                    {isAlwaysAsked ? (
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                        Mandatory
+                      <span
+                        className={cx(
+                          'text-sm font-semibold',
+                          isChecked ? 'text-neutral-900' : 'text-neutral-400',
+                        )}
+                      >
+                        {label}
                       </span>
-                    ) : (
-                      <div className="flex items-center gap-5">
-                        <label
-                          className={cx(
-                            'flex items-center gap-1.5 cursor-pointer',
-                            !isChecked && 'pointer-events-none',
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name={`field-mode-${key}`}
-                            value="mandatory"
-                            checked={mandatory === 'mandatory'}
-                            disabled={!isChecked || isReadOnly}
-                            onChange={() => {
-                              setDetailsMandatory((prev) => ({ ...prev, [key]: 'mandatory' }));
-                            }}
-                            className="h-4 w-4 accent-primary cursor-pointer"
-                          />
+                      {isAlwaysAsked ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-neutral-500">
+                          <Lock className="h-2.5 w-2.5" />
+                          Always Collected
+                        </span>
+                      ) : (
+                        <div className="relative grid w-[288px] shrink-0 grid-cols-3 rounded-full bg-neutral-100 p-0.5">
+                          {/* One pill that slides between the three options, rather than
+                              three that pop on and off - the movement shows which way the
+                              setting travelled. */}
                           <span
-                            className={cx(
-                              'text-xs font-semibold',
-                              isChecked ? 'text-gray-700' : 'text-slate-450',
-                            )}
-                          >
-                            Mandatory
-                          </span>
-                        </label>
-                        <label
-                          className={cx(
-                            'flex items-center gap-1.5 cursor-pointer',
-                            !isChecked && 'pointer-events-none',
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name={`field-mode-${key}`}
-                            value="optional"
-                            checked={mandatory === 'optional'}
-                            disabled={!isChecked || isReadOnly}
-                            onChange={() => {
-                              setDetailsMandatory((prev) => ({ ...prev, [key]: 'optional' }));
+                            aria-hidden="true"
+                            className="absolute top-0.5 bottom-0.5 w-[calc((100%-4px)/3)] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.08)] transition-all duration-200 ease-out"
+                            style={{
+                              left: `calc(2px + ${['disabled', 'optional', 'mandatory'].indexOf(
+                                fieldState,
+                              )} * ((100% - 4px) / 3))`,
                             }}
-                            className="h-4 w-4 accent-primary cursor-pointer"
                           />
-                          <span
-                            className={cx(
-                              'text-xs font-semibold',
-                              isChecked ? 'text-gray-700' : 'text-slate-450',
-                            )}
-                          >
-                            Optional
-                          </span>
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                          {(['disabled', 'optional', 'mandatory'] as const).map((state) => (
+                            <button
+                              key={state}
+                              type="button"
+                              disabled={isReadOnly || !isDataCollectionEnabled}
+                              onClick={() => {
+                                if (state === 'disabled') {
+                                  toggleSingleDetail(key, false);
+                                  return;
+                                }
+                                if (!isChecked) toggleSingleDetail(key, true);
+                                setDetailsMandatory((prev) => ({ ...prev, [key]: state }));
+                              }}
+                              className={cx(
+                                'relative z-10 rounded-full px-2.5 py-1 text-[11px] font-bold capitalize transition-colors',
+                                fieldState === state
+                                  ? state === 'mandatory'
+                                    ? 'text-red-600!'
+                                    : 'text-neutral-900!'
+                                  : 'text-neutral-400 hover:text-neutral-700',
+                              )}
+                            >
+                              {state}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            {/* Push to CRM Yellow Container */}
-            <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50/20 p-5">
+          <div className="flex h-full flex-col gap-4">
+            <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-2.5">
-                  <span className="text-base mt-0.5">🎯</span>
+                  <Target className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
                   <div>
-                    <p className="text-sm font-bold text-gray-950">Push captured data to CRM</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                    <p className="text-sm font-bold text-neutral-950">Push captured data to CRM</p>
+                    <p className="mt-1 text-xs leading-5 text-neutral-500">
                       When enabled, the bot auto-creates a contact in your CRM using the fields
                       collected above, with the full chat transcript attached.
                     </p>
                   </div>
                 </div>
-                <Switch
-                  checked={enableCallMonitoring}
-                  onCheckedChange={(checked) =>
-                    setEnableCallMonitoring(isDataCollectionEnabled && checked === true)
-                  }
-                  disabled={isReadOnly || !isDataCollectionEnabled}
-                />
+                <button
+              type="button"
+              role="switch"
+              aria-checked={enableCallMonitoring}
+              disabled={isReadOnly || !isDataCollectionEnabled}
+              onClick={() => setEnableCallMonitoring(isDataCollectionEnabled && !enableCallMonitoring)}
+              className={cx(
+                'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full outline-none! transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                enableCallMonitoring ? 'bg-red-600!' : 'bg-neutral-200!',
+              )}
+            >
+              <span
+                className={cx(
+                  'inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform',
+                  enableCallMonitoring ? 'translate-x-[22px]' : 'translate-x-0.5',
+                )}
+              />
+            </button>
               </div>
               {!isDataCollectionEnabled && (
                 <p className="mt-3 text-xs font-medium text-amber-700">
@@ -5361,7 +5623,7 @@ function CreateChatbotAgent() {
                     disabled={
                       isReadOnly || isFetchingConnectedCrms || connectedCrmOptions.length === 0
                     }
-                    className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    className="h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm font-medium text-neutral-800 outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100 disabled:bg-neutral-50 disabled:cursor-not-allowed"
                   >
                     <option value="" disabled>
                       {isFetchingConnectedCrms
@@ -5385,114 +5647,115 @@ function CreateChatbotAgent() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Card 2: Advanced behavior */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm flex flex-col gap-4">
-          <div>
-            <h3 className="text-sm font-bold text-gray-950">Advanced behavior</h3>
-            <p className="mt-1 text-xs text-slate-500">
-              Configure session limits and idle handling.
-            </p>
-          </div>
+            {/* Card 2: Advanced behavior */}
+            <div className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)] flex flex-col gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-neutral-950">Advanced behavior</h3>
+                <p className="mt-1 text-xs text-neutral-500">
+                  Configure session limits and idle handling.
+                </p>
+              </div>
 
-          <div className="flex flex-col gap-3">
-            <SettingsRow
-              title="Max Session Duration"
-              copy="End the chat automatically after this much total time."
-              trailing={
-                <div
-                  className={cx(
-                    'flex h-9 w-[180px] items-center rounded-md border border-gray-300 bg-white focus-within:border-primary',
-                    isReadOnly && 'cursor-not-allowed bg-gray-50 text-slate-600',
-                  )}
-                >
-                  <input
-                    type="number"
-                    value={maxSessionDuration}
-                    min={1}
-                    max={MAX_DURATION_SECONDS}
-                    step={1}
-                    aria-label="Maximum session duration in minutes"
-                    onChange={(event) =>
-                      setMaxSessionDuration(
-                        normalizeBoundedIntegerInput(event.target.value, MAX_DURATION_SECONDS),
-                      )
-                    }
-                    onBlur={() => setMaxSessionDuration((value) => (value === '' ? 1 : value))}
-                    disabled={isReadOnly}
-                    className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none disabled:cursor-not-allowed"
-                  />
-                  <span className="pr-3 text-xs text-slate-500" aria-hidden="true">
-                    sec
-                  </span>
-                </div>
-              }
-            />
-
-            <SettingsRow
-              title="Idle Reminder"
-              copy="How long to wait in silence before the bot nudges the visitor."
-              trailing={
-                <div
-                  className={cx(
-                    'flex h-9 w-[180px] items-center rounded-md border border-gray-300 bg-white focus-within:border-primary',
-                    isReadOnly && 'cursor-not-allowed bg-gray-50 text-slate-655',
-                  )}
-                >
-                  <input
-                    type="number"
-                    value={idleReminder}
-                    min={1}
-                    max={MAX_DURATION_SECONDS}
-                    step={1}
-                    aria-label="Idle reminder delay in minutes"
-                    onChange={(event) =>
-                      setIdleReminder(
-                        normalizeBoundedIntegerInput(event.target.value, MAX_DURATION_SECONDS),
-                      )
-                    }
-                    onBlur={() => setIdleReminder((value) => (value === '' ? 1 : value))}
-                    disabled={isReadOnly}
-                    className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none disabled:cursor-not-allowed"
-                  />
-                  <span className="pr-3 text-xs text-slate-500" aria-hidden="true">
-                    sec
-                  </span>
-                </div>
-              }
-            />
-
-            <SettingsRow
-              title="Idle Reminder Retry"
-              copy="How many reminders to send before closing the chat."
-              trailing={
-                <input
-                  type="number"
-                  value={idleReminderRetry}
-                  min={1}
-                  max={MAX_IDLE_REMINDER_RETRIES}
-                  step={1}
-                  aria-label="Idle reminder retry count"
-                  onChange={(event) =>
-                    setIdleReminderRetry(
-                      normalizeBoundedIntegerInput(event.target.value, MAX_IDLE_REMINDER_RETRIES),
-                    )
+              <div className="flex flex-col gap-3">
+                <SettingsRow
+                  title="Max Session Duration"
+                  copy="End the chat automatically after this much total time."
+                  trailing={
+                    <div
+                      className={cx(
+                        'flex h-9 w-[180px] items-center rounded-xl border border-neutral-300 bg-white focus-within:border-red-600',
+                        isReadOnly && 'cursor-not-allowed bg-neutral-50 text-neutral-600',
+                      )}
+                    >
+                      <input
+                        type="number"
+                        value={maxSessionDuration}
+                        min={1}
+                        max={MAX_DURATION_SECONDS}
+                        step={1}
+                        aria-label="Maximum session duration in minutes"
+                        onChange={(event) =>
+                          setMaxSessionDuration(
+                            normalizeBoundedIntegerInput(event.target.value, MAX_DURATION_SECONDS),
+                          )
+                        }
+                        onBlur={() => setMaxSessionDuration((value) => (value === '' ? 1 : value))}
+                        disabled={isReadOnly}
+                        className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none disabled:cursor-not-allowed"
+                      />
+                      <span className="pr-3 text-xs text-neutral-500" aria-hidden="true">
+                        sec
+                      </span>
+                    </div>
                   }
-                  onBlur={() => setIdleReminderRetry((value) => (value === '' ? 1 : value))}
-                  disabled={isReadOnly}
-                  className={cx(
-                    'h-9 w-[180px] rounded-md border border-gray-300 bg-white px-3 text-sm outline-none focus:border-primary',
-                    isReadOnly && 'cursor-not-allowed bg-gray-50 text-slate-655',
-                  )}
                 />
-              }
-            />
+
+                <SettingsRow
+                  title="Idle Reminder"
+                  copy="How long to wait in silence before the bot nudges the visitor."
+                  trailing={
+                    <div
+                      className={cx(
+                        'flex h-9 w-[180px] items-center rounded-xl border border-neutral-300 bg-white focus-within:border-red-600',
+                        isReadOnly && 'cursor-not-allowed bg-neutral-50 text-slate-655',
+                      )}
+                    >
+                      <input
+                        type="number"
+                        value={idleReminder}
+                        min={1}
+                        max={MAX_DURATION_SECONDS}
+                        step={1}
+                        aria-label="Idle reminder delay in minutes"
+                        onChange={(event) =>
+                          setIdleReminder(
+                            normalizeBoundedIntegerInput(event.target.value, MAX_DURATION_SECONDS),
+                          )
+                        }
+                        onBlur={() => setIdleReminder((value) => (value === '' ? 1 : value))}
+                        disabled={isReadOnly}
+                        className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none disabled:cursor-not-allowed"
+                      />
+                      <span className="pr-3 text-xs text-neutral-500" aria-hidden="true">
+                        sec
+                      </span>
+                    </div>
+                  }
+                />
+
+                <SettingsRow
+                  title="Idle Reminder Retry"
+                  copy="How many reminders to send before closing the chat."
+                  trailing={
+                    <input
+                      type="number"
+                      value={idleReminderRetry}
+                      min={1}
+                      max={MAX_IDLE_REMINDER_RETRIES}
+                      step={1}
+                      aria-label="Idle reminder retry count"
+                      onChange={(event) =>
+                        setIdleReminderRetry(
+                          normalizeBoundedIntegerInput(event.target.value, MAX_IDLE_REMINDER_RETRIES),
+                        )
+                      }
+                      onBlur={() => setIdleReminderRetry((value) => (value === '' ? 1 : value))}
+                      disabled={isReadOnly}
+                      className={cx(
+                        'h-9 w-[180px] rounded-xl border border-neutral-300 bg-white px-3 text-sm outline-none! transition-colors focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100',
+                        isReadOnly && 'cursor-not-allowed bg-neutral-50 text-slate-655',
+                      )}
+                    />
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Navigation Buttons */}
           </div>
         </div>
 
-        {/* Navigation Buttons */}
         {!isReadOnly && (
           <div className="mt-2 flex items-center justify-between">
             <SecondaryButton onClick={() => void handleStepperChange(6, 1)}>
@@ -5580,39 +5843,29 @@ function CreateChatbotAgent() {
 
   return (
     <FormProvider {...formInstance}>
-      <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#f3f4f6] text-[#07142f]">
-        <div className="flex min-h-[72px] items-center border-b border-gray-200 bg-white px-3 py-3 sm:px-6">
-          <div className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium text-slate-500">
-            <button
-              type="button"
-              onClick={() => requestWizardLeave('/admin-settings/knowledge/ai-agent')}
-              className="transition-colors hover:text-primary"
+      <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#efefef] text-neutral-900">
+        <div className="border-b border-neutral-200 bg-white">
+          <div className="px-6 pt-4 pb-1">
+            <div
+              style={{
+                fontFamily: '"Instrument Serif", Georgia, serif',
+                fontStyle: 'italic',
+                fontWeight: 400,
+                fontSize: '27px',
+                lineHeight: '41px',
+                color: 'rgb(23, 23, 23)',
+              }}
             >
-              AI Agents
-            </button>
-            <span className="text-slate-400">/</span>
-            <button
-              type="button"
-              onClick={() => requestWizardLeave('/admin-settings/knowledge/ai-agent')}
-              className="transition-colors hover:text-primary"
-            >
-              AI Chatbot Agents
-            </button>
-            <span className="text-slate-400">/</span>
-            <span className="font-semibold text-gray-950">
-              {isEdit ? 'Update Agent' : 'New Agent'}
-            </span>
+              {isEdit ? 'Edit Chat Agent' : 'New Chat Agent'}
+            </div>
           </div>
-          <SecondaryButton onClick={() => requestWizardLeave('/admin-settings/knowledge/ai-agent')}>
-            Cancel
-          </SecondaryButton>
+          <WizardStepper
+            activeStep={activeStep}
+            sourceStage={sourceStage}
+            onChange={handleStepperChange}
+            disabled={isKnowledgeSummaryNavigationLocked}
+          />
         </div>
-        <WizardStepper
-          activeStep={activeStep}
-          sourceStage={sourceStage}
-          onChange={handleStepperChange}
-          disabled={isKnowledgeSummaryNavigationLocked}
-        />
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-5">
           {renderStep()}
         </div>
@@ -5673,52 +5926,44 @@ function WizardStepper({
   ];
 
   return (
-    <div className="border-b border-gray-200 bg-white px-6 py-[22px]">
-      <div className="relative mx-auto max-w-[1200px]">
-        {/* Progress Line */}
-        <div className="absolute left-[13%] right-[13%] top-[18px] z-0 h-0.5 -translate-y-1/2 bg-[#EAECF0]" />
+    <div className="px-6 pt-1 pb-3.5">
+      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-x-4 gap-y-1">
+        {wizardSteps.map((label, index) => {
+          const isActive = index === currentVisual;
+          // Steps already walked through stay black so the trail behind you is
+          // readable; the ones still ahead sit back in grey.
+          const isVisited = index < currentVisual;
+          const target = stepMappings[index];
 
-        <div className="relative flex justify-between items-start z-10">
-          {wizardSteps.map((label, index) => {
-            const isComplete = index < currentVisual;
-            const isActive = index === currentVisual;
-            const target = stepMappings[index];
-
-            return (
+          return (
+            <Fragment key={label}>
+              {index > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="shrink-0 select-none text-sm! font-medium! text-neutral-400!"
+                >
+                  &gt;
+                </span>
+              )}
               <button
-                key={label}
                 type="button"
                 onClick={() => onChange(target.step, target.stage)}
                 disabled={disabled}
                 className={cx(
-                  'flex flex-col items-center gap-2 group focus:outline-none flex-1',
+                  'shrink-0 text-sm! transition-colors focus:outline-none',
                   disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+                  isActive
+                    ? 'font-semibold! text-red-600!'
+                    : isVisited
+                      ? 'font-medium! text-neutral-900!'
+                      : 'font-medium! text-neutral-400!',
                 )}
               >
-                <div
-                  className={cx(
-                    'flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-200',
-                    isComplete && 'border-emerald-500 bg-[#10b981] text-white',
-                    isActive && 'border-primary bg-primary text-white',
-                    !isComplete &&
-                      !isActive &&
-                      'border-gray-200 bg-white text-slate-400 group-hover:border-gray-300',
-                  )}
-                >
-                  {isComplete ? <Check className="h-4 w-4 stroke-[3.5]" /> : index + 1}
-                </div>
-                <span
-                  className={cx(
-                    'px-1 text-center text-[13px] font-semibold transition-colors',
-                    isActive ? 'text-primary' : 'text-slate-650 group-hover:text-slate-900',
-                  )}
-                >
-                  {label}
-                </span>
+                {label}
               </button>
-            );
-          })}
-        </div>
+            </Fragment>
+          );
+        })}
       </div>
     </div>
   );
@@ -5768,14 +6013,14 @@ function EditChatbotAgentWorkspace({
 
   return (
     <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#f3f4f6] text-[#07142f]">
-      <div className="border-b border-gray-200 bg-white px-4 pt-4 sm:px-4">
+      <div className="border-b border-neutral-200 bg-white px-4 pt-4 sm:px-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-medium text-neutral-500">
               <button
                 type="button"
                 onClick={onBack}
-                className="transition-colors hover:text-primary cursor-pointer"
+                className="transition-colors hover:text-red-600 cursor-pointer"
               >
                 AI Agents
               </button>
@@ -5783,7 +6028,7 @@ function EditChatbotAgentWorkspace({
               <button
                 type="button"
                 onClick={onBack}
-                className="transition-colors hover:text-primary cursor-pointer"
+                className="transition-colors hover:text-red-600 cursor-pointer"
               >
                 AI Chatbot Agents
               </button>
@@ -5801,12 +6046,12 @@ function EditChatbotAgentWorkspace({
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="truncate text-lg font-bold text-gray-950">{agentName}</h1>
-                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">
+                  <h1 className="truncate text-lg font-bold text-neutral-950">{agentName}</h1>
+                  <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-bold text-red-600">
                     Live
                   </span>
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-neutral-500">
                   {domain && <span>{domain}</span>}
                 </div>
               </div>
@@ -5833,9 +6078,9 @@ function EditChatbotAgentWorkspace({
               className={cx(
                 'flex h-11 shrink-0 items-center gap-2 border-b-2 px-4 text-sm font-semibold transition-colors',
                 activeTab === tab.key
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-slate-600 hover:text-primary',
-                navigationDisabled && 'cursor-not-allowed opacity-60 hover:text-slate-600',
+                  ? 'border-red-600 text-red-600'
+                  : 'border-transparent text-neutral-600 hover:text-red-600',
+                navigationDisabled && 'cursor-not-allowed opacity-60 hover:text-neutral-600',
               )}
             >
               {tab.icon}
@@ -5878,17 +6123,17 @@ function EditAgentOverview({
     {
       label: 'FAQs',
       value: faqs.length,
-      icon: <MessageCircle className="h-4 w-4 text-primary" />,
+      icon: <MessageCircle className="h-4 w-4 text-red-600" />,
     },
     {
       label: 'Custom answers',
       value: companyDetailsCount,
-      icon: <Settings2 className="h-4 w-4 text-slate-500" />,
+      icon: <Settings2 className="h-4 w-4 text-neutral-500" />,
     },
     {
       label: 'Website sources',
       value: websiteSourceCount,
-      icon: <Globe2 className="h-4 w-4 text-emerald-500" />,
+      icon: <Globe2 className="h-4 w-4 text-red-600" />,
     },
     {
       label: 'Uploaded docs',
@@ -5917,11 +6162,11 @@ function EditAgentOverview({
               <div className="flex flex-col divide-y divide-gray-100">
                 {faqs.slice(0, 5).map((faq) => (
                   <div key={faq.id} className="py-3">
-                    <p className="text-sm font-semibold text-gray-950">{faq.question}</p>
-                    <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-600">
+                    <p className="text-sm font-semibold text-neutral-950">{faq.question}</p>
+                    <p className="mt-1 line-clamp-2 text-sm leading-5 text-neutral-600">
                       {faq.answer}
                     </p>
-                    <p className="mt-2 text-xs text-slate-400">From {faq.source}</p>
+                    <p className="mt-2 text-xs text-neutral-400">From {faq.source}</p>
                   </div>
                 ))}
               </div>
@@ -5935,17 +6180,17 @@ function EditAgentOverview({
               <div className="flex flex-col divide-y divide-gray-100">
                 {documents.slice(0, 5).map((document) => (
                   <div key={document.id} className="flex items-start gap-3 py-3">
-                    <FileText className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <FileText className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-gray-950">
+                      <p className="truncate text-sm font-semibold text-neutral-950">
                         {document.title}
                       </p>
-                      <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-600">
+                      <p className="mt-1 line-clamp-2 text-sm leading-5 text-neutral-600">
                         {document.copy}
                       </p>
-                      <p className="mt-2 text-xs text-slate-400">From {document.source}</p>
+                      <p className="mt-2 text-xs text-neutral-400">From {document.source}</p>
                     </div>
-                    <span className="shrink-0 text-xs font-semibold text-emerald-600">
+                    <span className="shrink-0 text-xs font-semibold text-red-600">
                       {document.status}
                     </span>
                   </div>
@@ -5958,16 +6203,16 @@ function EditAgentOverview({
         </div>
 
         <div className="flex flex-col gap-4">
-          <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-bold text-gray-950">Knowledge base overview</h3>
+          <div className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]">
+            <h3 className="text-base font-bold text-neutral-950">Knowledge base overview</h3>
             <div className="mt-4 flex flex-col divide-y divide-gray-100 text-sm">
               {knowledgeRows.map((row) => (
                 <div key={row.label} className="flex items-center justify-between gap-3 py-3">
-                  <span className="flex min-w-0 items-center gap-2 text-slate-700">
+                  <span className="flex min-w-0 items-center gap-2 text-neutral-700">
                     {row.icon}
                     <span className="truncate">{row.label}</span>
                   </span>
-                  <strong className="text-gray-950">{row.value}</strong>
+                  <strong className="text-neutral-950">{row.value}</strong>
                 </div>
               ))}
             </div>
@@ -5975,7 +6220,7 @@ function EditAgentOverview({
               <button
                 type="button"
                 onClick={onManageKnowledge}
-                className="mt-4 h-9 w-full rounded-md border border-gray-300 text-sm font-bold text-slate-700 transition-colors hover:border-primary hover:text-primary"
+                className="mt-4 h-10 w-full rounded-xl border border-neutral-300 text-sm font-bold text-neutral-700 transition-colors hover:border-red-600 hover:text-red-600"
               >
                 Manage knowledge
               </button>
@@ -5991,7 +6236,7 @@ function EditAgentOverview({
               <button
                 type="button"
                 onClick={onManageFaqs}
-                className="mt-4 h-9 w-full rounded-md bg-primary text-sm font-bold text-white transition-colors hover:bg-primary/90"
+                className="mt-4 h-9 w-full rounded-md bg-red-600 text-sm font-bold text-white transition-colors hover:bg-red-700"
               >
                 Review FAQs
               </button>
@@ -6015,14 +6260,14 @@ function OverviewPanel({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-base font-bold text-gray-950">{title}</h3>
+        <h3 className="text-base font-bold text-neutral-950">{title}</h3>
         {actionLabel && onAction && (
           <button
             type="button"
             onClick={onAction}
-            className="h-9 rounded-md border border-gray-300 px-4 text-sm font-bold text-slate-700 transition-colors hover:border-primary hover:text-primary"
+            className="h-10 rounded-xl border border-neutral-300 px-4 text-sm font-bold text-neutral-700 transition-colors hover:border-red-600 hover:text-red-600"
           >
             {actionLabel}
           </button>
@@ -6035,17 +6280,30 @@ function OverviewPanel({
 
 function NoDataAvailable() {
   return (
-    <div className="rounded-lg border border-dashed border-gray-300 bg-white px-5 py-10 text-center text-sm font-medium text-slate-500">
+    <div className="rounded-lg border border-dashed border-neutral-300 bg-white px-5 py-10 text-center text-sm font-medium text-neutral-500">
       No data Available
     </div>
   );
 }
 
-function SectionHeading({ title, subtitle }: { title: string; subtitle: string }) {
+function SectionHeading({
+  title,
+  subtitle,
+  icon,
+}: {
+  title: string;
+  subtitle: string;
+  icon?: ReactNode;
+}) {
   return (
     <div>
-      <h2 className="text-[22px] font-bold leading-7 tracking-normal text-gray-950">{title}</h2>
-      <p className="mt-1 text-sm leading-5 text-slate-500">{subtitle}</p>
+      <h2 className="flex items-center gap-2 text-lg font-bold tracking-normal text-neutral-950">
+        {icon && (
+          <span className="shrink-0 text-red-600 [&_svg]:h-[18px] [&_svg]:w-[18px]">{icon}</span>
+        )}
+        {title}
+      </h2>
+      <p className="mt-1 text-sm leading-5 text-neutral-500">{subtitle}</p>
     </div>
   );
 }
@@ -6067,8 +6325,8 @@ function Field({
 }) {
   return (
     <label className={cx('block scroll-mt-24', className)} data-validation-key={fieldKey}>
-      <span className="mb-1.5 block text-sm font-semibold text-gray-950">{label}</span>
-      {helper && <span className="mb-2 block text-xs text-slate-500">{helper}</span>}
+      <span className="mb-1.5 block text-sm font-medium text-neutral-950">{label}</span>
+      {helper && <span className="mb-2 block text-xs text-neutral-500">{helper}</span>}
       {children}
       {error && <span className="mt-1 block text-xs text-red-500">{error}</span>}
     </label>
@@ -6087,10 +6345,10 @@ function Metric({
   valueClassName?: string;
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 text-center shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className={cx('text-2xl font-bold leading-7 text-gray-950', valueClassName)}>{value}</p>
-      {note && <p className="mt-1 text-xs text-slate-400">{note}</p>}
+    <div className="rounded-lg border border-neutral-200 bg-white p-4 text-center shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{label}</p>
+      <p className={cx('text-2xl font-bold leading-7 text-neutral-950', valueClassName)}>{value}</p>
+      {note && <p className="mt-1 text-xs text-neutral-400">{note}</p>}
     </div>
   );
 }
@@ -6099,10 +6357,12 @@ function PrimaryButton({
   children,
   onClick,
   disabled = false,
+  tone = 'dark',
 }: {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  tone?: 'dark' | 'ghost';
 }) {
   return (
     <button
@@ -6110,8 +6370,12 @@ function PrimaryButton({
       onClick={onClick}
       disabled={disabled}
       className={cx(
-        'inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-primary/90',
-        disabled && 'cursor-not-allowed opacity-60 hover:bg-primary',
+        'inline-flex h-10 items-center justify-center whitespace-nowrap gap-1.5 rounded-full px-5 text-sm font-semibold transition-colors',
+        disabled
+          ? 'cursor-not-allowed bg-neutral-100! text-neutral-400! shadow-none!'
+          : tone === 'ghost'
+            ? 'border! border-neutral-200! bg-neutral-100! text-neutral-700! shadow-none! hover:border-red-200! hover:bg-red-50! hover:text-red-600!'
+            : 'bg-neutral-900! text-white! shadow-[0_2px_10px_rgba(0,0,0,.2)]! hover:bg-neutral-800!',
       )}
     >
       {children}
@@ -6134,8 +6398,8 @@ function SecondaryButton({
       onClick={onClick}
       disabled={disabled}
       className={cx(
-        'inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 text-sm font-bold text-slate-700 transition-colors hover:border-gray-400',
-        disabled && 'cursor-not-allowed opacity-60 hover:border-gray-300',
+        'inline-flex h-10 items-center justify-center gap-1.5 rounded-full border-2! border-neutral-200! bg-white! px-5 text-sm font-semibold text-neutral-950! transition-colors hover:border-neutral-300! hover:bg-neutral-50!',
+        disabled && 'cursor-not-allowed opacity-60 hover:border-neutral-200!',
       )}
     >
       {children}
@@ -6153,10 +6417,10 @@ function SettingsRow({
   trailing: ReactNode;
 }) {
   return (
-    <div className="flex min-h-[52px] items-center gap-3 rounded-lg bg-gray-50 px-3 py-2">
+    <div className="flex min-h-[52px] items-center gap-3 rounded-lg bg-neutral-50 px-3 py-2">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold leading-4 text-gray-950">{title}</p>
-        <p className="mt-0.5 text-xs text-slate-500">{copy}</p>
+        <p className="text-sm font-bold leading-4 text-neutral-950">{title}</p>
+        <p className="mt-0.5 text-xs text-neutral-500">{copy}</p>
       </div>
       {trailing}
     </div>

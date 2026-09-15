@@ -41,8 +41,15 @@ function TooltipContent({
   className,
   sideOffset = 4,
   children,
+  /* Every existing caller keeps the stock `balance` behaviour untouched.
+     `pretty` is opt-in only, for callers whose copy is a full sentence
+     rather than a short label — `balance` deliberately shortens lines to
+     make them even, which for a sentence means wrapping well before the
+     tooltip's own width is used and leaving the box looking too narrow for
+     its content. */
+  textWrap = 'balance',
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: React.ComponentProps<typeof TooltipPrimitive.Content> & { textWrap?: 'balance' | 'pretty' }) {
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content

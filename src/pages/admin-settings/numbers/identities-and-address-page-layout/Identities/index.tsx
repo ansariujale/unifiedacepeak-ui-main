@@ -228,9 +228,12 @@ const Identities = ({
       ),
     },
     {
-      /* Indented to clear the flag icon (roughly 15px) plus the gap next to
-         it (gap-1.5 = 6px), same reasoning as the Name column's indent. */
-      header: () => <span className="pl-[21px]">Phone Number</span>,
+      /* No longer indented to clear the flag icon — that offset was for
+         when this header sat left-aligned over a left-aligned value. Both
+         are centered now (see the column's own centering below), so the
+         plain header text and the value's own centered content line up
+         without it. */
+      header: 'Phone Number',
       accessorKey: 'exp_year',
       cell: ({ row }: any) => {
         const data = row?.original || {};
@@ -244,7 +247,12 @@ const Identities = ({
           // Keep the plain prefix + digits fallback above.
         }
         return (
-          <span className="flex items-center gap-1.5 text-[var(--ink)]">
+          /* inline-flex, not flex: a block-level flex span ignores the
+             td's text-align: center entirely (block boxes don't respond
+             to an ancestor's text-align for their own position), which is
+             why this value stayed pinned left while the now-centered
+             header floated off to the right of it. */
+          <span className="inline-flex items-center gap-1.5 text-[var(--ink)]">
             <Flag phoneNumber={phone} svg />
             {formatted}
           </span>
@@ -441,7 +449,7 @@ const Identities = ({
                 aria-label="Close"
                 className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-full text-gray-500 hover:bg-red-50 hover:text-black"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-4" />
               </button>
             </DialogHeader>
             <form

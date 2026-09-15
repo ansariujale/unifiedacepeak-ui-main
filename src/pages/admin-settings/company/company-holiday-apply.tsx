@@ -41,12 +41,14 @@ import {
   ChevronUp,
   Info,
   MinusCircle,
+  PenLine,
   XCircle,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Loader from '@/components/custom/loader';
 import { getHolidaysPayload, handleAlert } from '@/lib/utils';
 import { fetchAllPages } from '@/lib/fetch-all-pages';
@@ -681,21 +683,32 @@ const CompanyHolidayApply = () => {
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
             <CalendarCheck2 className="h-5 w-5" />
           </div>
-          <div className="min-w-0">
-            <p className="text-base font-semibold text-gray-900">
-              Put these holidays on your lines
-            </p>
-            <p className="mt-0.5 text-xs text-gray-600">
-              Put the {companyHolidays.length} holiday
-              {companyHolidays.length === 1 ? '' : 's'} above onto your queues, IVR menus, people
-              and numbers in one go, instead of opening each one.
-            </p>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <p className="text-base font-semibold text-gray-900">Put these holidays on your lines</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                style={{
+                  background: '#fdf7f5',
+                  border: 'none',
+                  color: '#000',
+                  boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                }}
+              >
+                Applies all {companyHolidays.length} holidays above to your queues, IVRs, people
+                and numbers at once.
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
         <Button
           type="button"
-          variant="outline"
+          variant="dark"
           size="sm"
           onClick={() => setOpen((previous) => !previous)}
           disabled={running}
@@ -705,14 +718,14 @@ const CompanyHolidayApply = () => {
         </Button>
       </div>
 
-      <div className="mt-3 flex items-start gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
-        <p className="text-xs text-gray-700">
-          <span className="font-semibold text-gray-900">What this writes.</span> Each holiday is
-          added to the line with the action that line already uses when it is closed — a holiday
-          does not have its own separate action, it borrows the closed-hours one. Holidays already
-          on a line are left exactly as they are, and a line that has no closed-hours action set is
-          skipped and named rather than saved with a broken one.
+      <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
+          <PenLine className="h-3.5 w-3.5 shrink-0 text-gray-500" />
+          What this writes
+        </p>
+        <p className="mt-1 text-xs text-gray-700">
+          Each holiday borrows the line&apos;s existing closed-hours action. Lines with no
+          closed-hours action are skipped, not saved broken.
         </p>
       </div>
 
@@ -733,15 +746,28 @@ const CompanyHolidayApply = () => {
               onCheckedChange={(checked) => setPersonalFallback(!!checked)}
               disabled={running}
             />
-            <span className="min-w-0">
-              <span className="block text-xs font-semibold text-gray-900">
+            <span className="flex min-w-0 items-center gap-1.5">
+              <span className="text-xs font-semibold text-gray-900">
                 For people with no closed-hours action, use their own voicemail
               </span>
-              <span className="mt-0.5 block text-xs text-gray-600">
-                Off by default. A person&apos;s own mailbox is the one fallback that means what it
-                says; queues, menus and numbers are always skipped instead, because choosing what
-                they do on a holiday is a routing decision, not a default.
-              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+                </TooltipTrigger>
+                <TooltipContent
+                  side="right"
+                  className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                  style={{
+                    background: '#fdf7f5',
+                    border: 'none',
+                    color: '#000',
+                    boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                  }}
+                >
+                  Off by default. Queues, menus and numbers are skipped instead — their holiday
+                  behaviour is a routing decision, not a default.
+                </TooltipContent>
+              </Tooltip>
             </span>
           </label>
 
@@ -757,7 +783,13 @@ const CompanyHolidayApply = () => {
                 const allOn = groupLines.length > 0 && chosen === groupLines.length;
 
                 return (
-                  <div key={group.type} className="rounded-lg border border-gray-200">
+                  <div
+                    key={group.type}
+                    className="rounded-lg border border-gray-200 bg-white"
+                    style={{
+                      boxShadow: '0 6px 18px rgba(17, 17, 17, 0.1), 0 1px 4px rgba(17, 17, 17, 0.06)',
+                    }}
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 p-3">
                       <label className="flex cursor-pointer items-center gap-2">
                         <Checkbox
@@ -787,7 +819,7 @@ const CompanyHolidayApply = () => {
                           return (
                             <label
                               key={line.key}
-                              className="flex cursor-pointer items-center justify-between gap-3 border-b border-gray-100 p-2.5 last:border-b-0 hover:bg-gray-50"
+                              className="flex cursor-pointer items-center justify-between gap-3 border-b border-gray-100 px-3 py-2.5 last:border-b-0 hover:bg-gray-50"
                             >
                               <span className="flex min-w-0 items-center gap-2">
                                 <Checkbox
@@ -839,7 +871,7 @@ const CompanyHolidayApply = () => {
               {running && (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="dark"
                   size="sm"
                   onClick={() => {
                     stopped.current = true;
@@ -850,7 +882,7 @@ const CompanyHolidayApply = () => {
               )}
               <Button
                 type="button"
-                variant="primary"
+                variant="dark"
                 size="sm"
                 onClick={start}
                 disabled={running || loadingLines || !companyHolidays.length}

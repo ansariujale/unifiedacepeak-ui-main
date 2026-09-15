@@ -47,7 +47,7 @@ const PillSelect = ({
     </DropdownMenuTrigger>
     <DropdownMenuContent
       align="start"
-      className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-[280px] overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
+      className="flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[280px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
     >
       {options.length === 0 ? (
         <div className="px-3 py-2.5 text-sm text-neutral-400">No options available</div>
@@ -59,8 +59,10 @@ const PillSelect = ({
               key={String(option.value)}
               onClick={() => onChange(option)}
               className={cx(
-                'flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-red-50! focus:bg-red-50!',
-                isSelected ? 'bg-red-50! text-red-600! font-semibold' : 'text-neutral-900',
+                'flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm font-medium',
+                isSelected
+                        ? 'bg-red-50! text-neutral-900! font-semibold'
+                        : 'text-neutral-900 hover:bg-[#f3f4f6]! focus:bg-[#f3f4f6]!',
               )}
             >
               <span className="truncate">{option.label}</span>
@@ -385,7 +387,7 @@ const ForwardActionAllAi: React.FC<ForwardActionAiProps> = ({
                   <RadioGroupItem
                     value="true"
                     id={`${forwardType}-my-voicemail`}
-                    className="cursor-pointer w-4 h-4 accent-neutral-700 data-[state=checked]:border-neutral-500! data-[state=checked]:bg-neutral-100! data-[state=checked]:ring-neutral-300/50! [&_svg]:fill-neutral-700!"
+                    className="cursor-pointer w-4 h-4 accent-red-600 data-[state=checked]:border-red-600! data-[state=checked]:bg-white! data-[state=checked]:ring-2! data-[state=checked]:ring-red-100! [&_svg]:fill-red-500! [&_svg]:text-red-500!"
                   />
                   <Label htmlFor={`${forwardType}-my-voicemail`} className="cursor-pointer">
                     My Voicemail
@@ -393,7 +395,7 @@ const ForwardActionAllAi: React.FC<ForwardActionAiProps> = ({
                   <RadioGroupItem
                     value="false"
                     id={`${forwardType}-another-voicemail`}
-                    className="cursor-pointer w-4 h-4 accent-neutral-700 data-[state=checked]:border-neutral-500! data-[state=checked]:bg-neutral-100! data-[state=checked]:ring-neutral-300/50! [&_svg]:fill-neutral-700!"
+                    className="cursor-pointer w-4 h-4 accent-red-600 data-[state=checked]:border-red-600! data-[state=checked]:bg-white! data-[state=checked]:ring-2! data-[state=checked]:ring-red-100! [&_svg]:fill-red-500! [&_svg]:text-red-500!"
                   />
                   <Label htmlFor={`${forwardType}-another-voicemail`} className="cursor-pointer">
                     Another Voicemail

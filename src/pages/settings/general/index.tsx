@@ -26,6 +26,12 @@ export const General: FC<GeneralProps> = ({ heading = 'General' }) => {
   // const breadcrumbData = [{ label: 'Settings' }, { label: 'General' }];
   const queryClient: any = useQueryClient();
   const [schemaContext, setSchemaContext] = useState<any>(null);
+  /* react-select portals its open dropdown menu to document.body by
+     default — outside this page's own DOM subtree, so page-scoped CSS
+     (ancestor selectors) can never reach it. Giving it this node as its
+     portal target instead keeps it a real descendant of the page. Same
+     technique already used by My Phone's own selectPortalNode. */
+  const [selectPortalNode, setSelectPortalNode] = useState<HTMLDivElement | null>(null);
   /* Briefly self-reveals on load, the same as the other My Account pages'
      own info tooltip, so the icon reads as interactive before anyone
      hovers it. */
@@ -228,6 +234,10 @@ export const General: FC<GeneralProps> = ({ heading = 'General' }) => {
   return (
     <>
       <section className="acepeak-preferences w-full h-full min-h-0 flex flex-col overflow-hidden bg-gray-200/15">
+        {/* The dropdown menu portal target — see the comment on
+            selectPortalNode above. Zero-size and unstyled; it exists only
+            as an attachment point. */}
+        <div ref={setSelectPortalNode} />
         {/* <Breadcrumb breadcrumbs={breadcrumbData} /> */}
         {/* Same brand tokens and header/tooltip/card conventions as the
             Profile / My Phone / Notifications / Greetings pages' own style
@@ -253,13 +263,43 @@ export const General: FC<GeneralProps> = ({ heading = 'General' }) => {
             line-height: 41px;
             color: #171717;
           }
+          .acepeak-preferences [data-slot='button'] {
+            border-radius: 9999px !important;
+          }
+          /* index.css's own .custom-react-select__option--is-selected rule
+             is itself !important inside @layer base — an unlayered
+             !important here (this page's usual technique) would still lose
+             to it regardless of specificity, since a layered !important
+             always outranks an unlayered one. Joining the same layer name
+             puts this back on normal specificity terms, where the page
+             scope here wins. Only the text colour changes; the pink
+             background/weight that mark a selected row stay as they are
+             everywhere else. */
+          @layer base {
+            .acepeak-preferences .custom-react-select__option--is-selected,
+            .acepeak-preferences .custom-react-select__option--is-selected:hover,
+            .acepeak-preferences .custom-react-select__option--is-selected.custom-react-select__option--is-focused {
+              color: #171717 !important;
+            }
+          }
+          /* Matches the Numbers page's own coral eyebrow (mcm-page.css's
+             .ident-coral-theme .mcm-adminpage-eyebrow) without pulling in
+             that whole theme class — reusing mcm-adminpage-eyebrow for its
+             family/case/tracking, only the 4 properties that variant
+             changes are restated here, scoped to this page. */
+          .acepeak-preferences .mcm-adminpage-eyebrow {
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 18px;
+            color: #DC2626;
+          }
           .acepeak-tooltip-content {
             background: #fdf7f5 !important;
             color: #000 !important;
             border: none !important;
-            width: max-content !important;
-            max-width: 340px !important;
+            width: 395px !important;
             white-space: normal !important;
+            text-wrap: normal !important;
             line-height: 1.5 !important;
             box-shadow: 0 6px 20px rgba(17, 17, 17, 0.18) !important;
           }
@@ -520,23 +560,36 @@ export const General: FC<GeneralProps> = ({ heading = 'General' }) => {
             /* Absolute (not fixed) so the panel scrolls with the page
                instead of staying pinned to the viewport — it moves with
                everything else inside the scroll container above, which is
-               the positioned ancestor this is relative to. The 100px top
-               is banner height (56px, fixed above) + the wrapper's own
-               16px gap before the cards grid + the real "Regional" header
-               that now leads that grid (~20px tall + its own 8px
-               margin-bottom) — i.e. approximately where the Regional
-               Settings card's own top edge is, as long as the banner is
-               actually showing. If a given account has no company-locked
-               fields the banner doesn't render at all, and this offset
-               would then sit about 72px lower than the Regional card — a
-               known gap with no way to close in pure CSS without
-               measuring the banner at runtime. */
+               the positioned ancestor this is relative to.
+
+               The top offset has to land the panel level with the
+               Regional Settings card specifically, skipping past whatever
+               sits above it in column 1 — and what sits above it depends
+               on whether the company-locked banner is showing. A single
+               fixed guess (previously 100px, always) was wrong on any
+               account with no company-locked fields — the common case —
+               landing the panel ~72px too low, because it assumed the
+               banner's height was always there to skip past. :has() picks
+               the right value for each case instead of guessing at one:
+                 - no banner (default below): just the "Regional" eyebrow
+                   heading — its own ~20px line plus the 8px margin-bottom
+                   set on .acepeak-section-header above = 28px.
+                 - banner showing (overridden below): its own fixed 56px
+                   height, plus the inner grid's 16px row gap before the
+                   heading, plus the heading's own 28px = 100px. */
             .acepeak-preferences .acepeak-dn-panel {
               position: absolute;
-              top: 100px;
+              top: 28px;
               right: 16px;
               left: auto;
               width: 300px;
+            }
+            .acepeak-preferences
+              .min-h-0.flex-1.overflow-y-auto.pr-1:has(
+                > div.gap-4.pr-1 > .rounded-md.border-gray-200.bg-gray-50
+              )
+              .acepeak-dn-panel {
+              top: 100px;
             }
           }
           /* Display Number panel text, 14px -> 13px only. "Incoming
@@ -627,10 +680,68 @@ export const General: FC<GeneralProps> = ({ heading = 'General' }) => {
             background-color: #1a1a1a !important;
             border-color: #1a1a1a !important;
           }
+          /* Accounts-only compact toggle (38x22, red, white knob, no
+             overflow). Opt-in via .accounts-switch-compact, passed down
+             from common-settings/index.tsx only when isOwnSettingsPage is
+             true (i.e. only on this page) — the shared Switch component
+             and every other caller of common-settings are untouched, so a
+             future main-branch change to the default Switch has nothing
+             here to collide with. !important is enough to win: the component's
+             own classes (and mcm-page.css's [data-slot='switch'] rules)
+             are plain, non-!important utilities, so this beats them
+             regardless of source order. Kept identical to the same rule
+             on Notifications/My Phone on purpose so all three read as one
+             system. */
+          .acepeak-preferences .accounts-switch-compact {
+            position: relative !important;
+            display: inline-block !important;
+            width: 38px !important;
+            height: 22px !important;
+            min-width: 38px !important;
+            border-width: 0 !important;
+            border-radius: 9999px !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+          }
+          .acepeak-preferences .accounts-switch-compact[data-state='checked'] {
+            background-color: #dc2626 !important;
+          }
+          .acepeak-preferences .accounts-switch-compact[data-state='unchecked'] {
+            background-color: #d1d5db !important;
+          }
+          .acepeak-preferences .accounts-switch-compact:disabled {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+          }
+          .acepeak-preferences .accounts-switch-compact [data-slot='switch-thumb'] {
+            position: absolute !important;
+            top: 50% !important;
+            left: 2px !important;
+            width: 18px !important;
+            height: 18px !important;
+            border-radius: 50% !important;
+            transform: translateY(-50%) !important;
+            translate: none !important;
+            background-color: #fff !important;
+            box-shadow: 0 1px 2px rgba(13, 21, 38, 0.25) !important;
+            transition: left 0.15s ease !important;
+          }
+          .acepeak-preferences .accounts-switch-compact[data-state='checked'] [data-slot='switch-thumb'] {
+            /* Anchored from the right edge with the same 2px inset the
+               unchecked state uses from the left, so both states are
+               inset by construction — no track/thumb arithmetic to keep
+               in sync if either size ever changes. */
+            left: auto !important;
+            right: 2px !important;
+            transform: translateY(-50%) !important;
+            translate: none !important;
+          }
         `}</style>
         <div className="flex items-center justify-between p-3 border-b border-gray-200 min-h-[65px] bg-white">
-          <div className="flex items-center gap-1.5">
-            <p className="acepeak-page-title text-gray-900 font-semibold text-xl">{heading}</p>
+          <div>
+            <p className="mcm-adminpage-eyebrow">My Account</p>
+            <div className="flex items-center gap-1.5">
+              <p className="acepeak-page-title text-gray-900 font-semibold text-xl">{heading}</p>
             <Tooltip open={showHeaderHint || undefined}>
               <TooltipTrigger asChild>
                 <button
@@ -641,11 +752,12 @@ export const General: FC<GeneralProps> = ({ heading = 'General' }) => {
                   <Info className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="acepeak-tooltip-content" side="right" align="center">
+              <TooltipContent className="acepeak-tooltip-content" side="right" align="center" textWrap="pretty">
                 Your own regional settings, business hours and call handling. Company-wide rules
                 live under Phone System → Preferences.
               </TooltipContent>
             </Tooltip>
+            </div>
           </div>
         </div>
         <div className="flex min-h-0 flex-1 flex-col p-3">
@@ -662,6 +774,7 @@ export const General: FC<GeneralProps> = ({ heading = 'General' }) => {
                   origin={'general_settings'}
                   company_info={userInfoData?.company_info}
                   isChooseTemplate={false}
+                  selectMenuPortalTarget={selectPortalNode}
                   /* These are the person's own settings — their timezone, their
                      hours, their recording preference — so they may edit them.
                      This used to be `isEditable={IS_ADMIN}`, which greyed out the
@@ -680,6 +793,14 @@ export const General: FC<GeneralProps> = ({ heading = 'General' }) => {
                      means the page grows and scrolls naturally instead. */
                   customClass="w-full"
                   selectedUserExt={userInfoData?.user_info?.extension}
+                  /* Powers the Display Number card's own "Save changes"
+                     checkbox (replacing its Submit button) — the checkbox
+                     has no separate save endpoint to call, so it runs this
+                     same page-level submit, which already saves the whole
+                     settings object display_number included. The page's
+                     own Submit button below is untouched and still submits
+                     everything the normal way. */
+                  onDisplayNumberSave={() => handleSubmit(onSubmit)()}
                 />
                 {/* Moved inside the scrollable region above (it used to be
                    a sibling of it, pinned outside via the form's own
@@ -688,7 +809,7 @@ export const General: FC<GeneralProps> = ({ heading = 'General' }) => {
                    Now it's just the last thing in the same scroll flow as
                    everything else, so it scrolls away with the page
                    instead of staying anchored at the bottom. */}
-                <div className="flex justify-end acepeak-submitbar">
+                <div className="flex justify-start acepeak-submitbar">
                   {/* Saving before the company rule has arrived could write a value the
                       company does not allow, so the button waits for it. The query has
                       no retry, so this is one request long either way. */}

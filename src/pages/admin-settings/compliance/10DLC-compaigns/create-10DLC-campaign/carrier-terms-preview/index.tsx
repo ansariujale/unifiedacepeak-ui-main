@@ -52,54 +52,55 @@ const CarrierTermsPreview = ({ formInstance }: { formInstance: UseFormReturn<any
   }, [previewData, setValue]);
 
   return (
-    <div className="flex min-h-0 flex-col gap-2 w-full overflow-y-auto pr-1">
-      <h3 className="text-gray-900 font-semibold text-md">Carrier Terms Preview</h3>
-      <p className="text-gray-500 text-sm">
-        The below list shows campaign qualification results and terms for each MNO.
+    <div className="dlc-wizard-step-scroll h-full w-full overflow-auto pr-1">
+      {/* Section rule and lede, as on the steps either side of it -- this was
+          a semibold heading over a grey sentence, a third heading style in a
+          four-step form. */}
+      <div className="dlc-wizard-section">Carrier terms</div>
+      <p className="mcm-modal-lede dlc-terms-para">
+        Qualification results and terms for each mobile network operator. Untick any carrier this
+        campaign should not be registered with.
       </p>
-      <div className="w-full grid overflow-x-auto gap-2 mt-1">
+
+      <div className="w-full grid gap-2 mt-3">
         {errors?.mnoIds?.message ? (
-          <div className="text-red-500">{errors?.mnoIds?.message as any}</div>
+          <p className="dlc-wizard-blocked">{errors?.mnoIds?.message as any}</p>
         ) : null}
 
         {getObjectLength(previewData) &&
           Object.entries(previewData)?.map(([key, item]: any) => {
+            /* The six terms, as data. They were six copies of the same
+               three-element div, which is how "Message Class" ended up
+               deriving its Yes from a different expression than its
+               neighbours without anything drawing attention to it. */
+            const terms = [
+              { label: 'Qualify', on: Boolean(item?.qualify) },
+              { label: 'MNO review', on: Boolean(item?.mnoReview) },
+              { label: 'TPM scope', on: Boolean(item?.tpmScope) },
+              { label: 'SMS TPM', on: Boolean(item?.tpm) },
+              { label: 'MMS TPM', on: Boolean(item?.mmsTpm) },
+              { label: 'Message class', on: item?.msgClass !== 'N' },
+            ];
+
             return (
-              <div className="flex w-full flex-col lg:flex-row" key={key}>
-                <div className="bg-gray-100 border border-b-0 lg:border-b lg:border-r-0 border-gray-200 p-4 rounded-t-lg lg:rounded-t-none lg:rounded-l-lg lg:h-full lg:min-w-[172px]">
-                  <div className="flex items-center gap-2 whitespace-nowrap h-full">
-                    <Checkbox
-                      checked={selectedMnoIds?.includes(Number(key))}
-                      onCheckedChange={() => handleMnoToggle(key)}
-                    />
-                    <Label>{item?.mno || ''}</Label>
-                  </div>
-                </div>
-                <div className="border border-gray-200 p-4 rounded-b-lg lg:rounded-b-none lg:rounded-r-lg w-full grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-                  <div className="flex items-center flex-col gap-1 text-center">
-                    <h3 className="text-gray-900 font-medium text-sm">Qualify</h3>
-                    <p className="text-gray-500 text-sm">{item?.qualify ? 'Yes' : 'No'}</p>
-                  </div>
-                  <div className="flex items-center flex-col gap-1 text-center">
-                    <h3 className="text-gray-900 font-medium text-sm">MNO Review</h3>
-                    <p className="text-gray-500 text-sm">{item?.mnoReview ? 'Yes' : 'No'}</p>
-                  </div>
-                  <div className="flex items-center flex-col gap-1 text-center">
-                    <h3 className="text-gray-900 font-medium text-sm">TPM Scope</h3>
-                    <p className="text-gray-500 text-sm">{item?.tpmScope ? 'Yes' : 'No'}</p>
-                  </div>
-                  <div className="flex items-center flex-col gap-1 text-center">
-                    <h3 className="text-gray-900 font-medium text-sm">SMS TPM</h3>
-                    <p className="text-gray-500 text-sm">{item?.tpm ? 'Yes' : 'No'}</p>
-                  </div>
-                  <div className="flex items-center flex-col gap-1 text-center">
-                    <h3 className="text-gray-900 font-medium text-sm">MMS TPM</h3>
-                    <p className="text-gray-500 text-sm">{item?.mmsTpm ? 'Yes' : 'No'}</p>
-                  </div>
-                  <div className="flex items-center flex-col gap-1 text-center">
-                    <h3 className="text-gray-900 font-medium text-sm">Message Class</h3>
-                    <p className="text-gray-500 text-sm">{item?.msgClass !== 'N' ? 'Yes' : 'No'}</p>
-                  </div>
+              <div className="dlc-mno" key={key}>
+                {/* The whole band is the target, not just the box. */}
+                <label className="dlc-mno-head">
+                  <Checkbox
+                    checked={selectedMnoIds?.includes(Number(key))}
+                    onCheckedChange={() => handleMnoToggle(key)}
+                  />
+                  <Label className="dlc-mno-name">{item?.mno || ''}</Label>
+                </label>
+                <div className="dlc-mno-terms">
+                  {terms.map(({ label, on }) => (
+                    <div className="dlc-mno-term" key={label}>
+                      <span className="dlc-mno-term-label">{label}</span>
+                      <span className={`dlc-mno-term-val ${on ? 'is-yes' : 'is-no'}`}>
+                        {on ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             );

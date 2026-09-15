@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Globe, Mic, PhoneOutgoing, Voicemail, Archive } from 'lucide-react';
+import { Globe, Info, Mic, PhoneOutgoing, Voicemail, Archive } from 'lucide-react';
 
 import CustomSelect from '@/components/custom/custom-select';
 import Loader from '@/components/custom/loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { handleAlert } from '@/lib/utils';
 import {
   COMPLIANT_RECORDING_ANNOUNCEMENTS,
@@ -267,7 +268,7 @@ const StatusBadge = ({ enforced }: { enforced: boolean }) =>
       In effect now
     </span>
   ) : (
-    <span className="rounded-sm bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700">
+    <span className="rounded-sm bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700">
       Saved, not enforced yet
     </span>
   );
@@ -290,25 +291,37 @@ const PolicyCard = ({
   children,
 }: PolicyCardProps) => (
   <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-    <div className="flex flex-wrap items-start gap-3 border-b border-gray-200 p-4">
+    <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 p-4">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
         {icon}
       </div>
-      <div className="flex min-w-[220px] flex-1 flex-col gap-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-base font-semibold text-gray-900">{title}</p>
-          <StatusBadge enforced={enforced} />
-        </div>
-        <p className="text-xs text-gray-500">{summary}</p>
+      <div className="flex min-w-[220px] flex-1 items-center gap-1.5">
+        <p className="text-base font-semibold text-gray-900">{title}</p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+            style={{
+              background: '#fdf7f5',
+              border: 'none',
+              color: '#000',
+              boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+            }}
+          >
+            {summary}
+          </TooltipContent>
+        </Tooltip>
+        <StatusBadge enforced={enforced} />
       </div>
     </div>
     <div className="flex flex-col gap-4 p-4">
       {children}
       <p
-        className={`rounded-lg border px-3 py-2 text-xs ${
-          enforced
-            ? 'border-green-200 bg-green-50 text-green-800'
-            : 'border-amber-200 bg-amber-50 text-amber-800'
+        className={`rounded-lg border px-3 py-2 text-xs text-black ${
+          enforced ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
         }`}
       >
         {enforcementNote}
@@ -399,19 +412,21 @@ const CompanyPolicies = () => {
       <div className="flex flex-col gap-2">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
-            <CustomSelect
-              label={label}
-              options={RETENTION_MODE_OPTIONS}
-              value={selectedOption(RETENTION_MODE_OPTIONS, value.mode)}
-              handleChange={(option: any) =>
-                updateForm({
-                  [key]: {
-                    ...value,
-                    mode: (option?.value || 'indefinite') as RetentionMode,
-                  },
-                } as Partial<PoliciesForm>)
-              }
-            />
+            <div className="max-w-[220px]">
+              <CustomSelect
+                label={label}
+                options={RETENTION_MODE_OPTIONS}
+                value={selectedOption(RETENTION_MODE_OPTIONS, value.mode)}
+                handleChange={(option: any) =>
+                  updateForm({
+                    [key]: {
+                      ...value,
+                      mode: (option?.value || 'indefinite') as RetentionMode,
+                    },
+                  } as Partial<PoliciesForm>)
+                }
+              />
+            </div>
             <p className="text-xs text-gray-500">{helper}</p>
           </div>
           {value.mode === 'days' && (
@@ -450,16 +465,28 @@ const CompanyPolicies = () => {
 
   return (
     <section className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-gray-200/15">
-      <div className="flex min-h-[65px] flex-col justify-center border-b border-gray-200 bg-white px-4 py-3">
-        <p className="text-lg font-semibold text-gray-900">Company policies</p>
-        <p className="text-xs text-gray-500">
-          One set of rules for the whole company — prompt language, voicemail, call recording, how
-          long we keep files and who may dial abroad.
-        </p>
-      </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-3 sm:px-4">
         <div className="mx-auto flex w-full max-w-[1040px] min-h-0 flex-col gap-4">
+          <div className="flex items-center gap-1.5 px-1">
+            <p className="text-lg font-semibold text-gray-900">Company policies</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                style={{
+                  background: '#fdf7f5',
+                  border: 'none',
+                  color: '#000',
+                  boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                }}
+              >
+                Prompt language, voicemail, call recording, retention and who may dial abroad.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           {isError && (
             <div className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-6 text-center">
               <p className="text-sm font-semibold text-gray-900">
@@ -487,23 +514,25 @@ const CompanyPolicies = () => {
             title="Default language"
             summary="The language used for voicemail prompts and IVR menus when nothing more specific is set."
             enforced={false}
-            enforcementNote="Saved only. Prompts and IVR menus still play in whatever language their own recording or voice was built in — this choice does not change them. It gives the platform a company answer for when prompt language becomes selectable."
+            enforcementNote="Saved only for now — recordings still play in their own language until this setting takes effect."
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
-                <CustomSelect
-                  label="Prompt language"
-                  options={LANGUAGE_OPTIONS}
-                  value={selectedOption(LANGUAGE_OPTIONS, form.default_language)}
-                  handleChange={(option: any) =>
-                    updateForm({ default_language: option?.value || DEFAULT_FORM.default_language })
-                  }
-                />
+                <div className="max-w-[220px]">
+                  <CustomSelect
+                    label="Prompt language"
+                    options={LANGUAGE_OPTIONS}
+                    value={selectedOption(LANGUAGE_OPTIONS, form.default_language)}
+                    handleChange={(option: any) =>
+                      updateForm({
+                        default_language: option?.value || DEFAULT_FORM.default_language,
+                      })
+                    }
+                  />
+                </div>
                 <p className="text-xs text-gray-500">
-                  Ten languages, not twenty. These are the ones this account can actually be given a
-                  recorded prompt set or a voice for — English, Spanish and Hindi already have AI
-                  voices here. A shorter list beats a long one where most choices quietly fall back
-                  to English.
+                  Ten languages, not twenty — the ones this account can actually give a prompt set
+                  or voice to. English, Spanish and Hindi already have AI voices here.
                 </p>
               </div>
             </div>
@@ -514,7 +543,7 @@ const CompanyPolicies = () => {
             title="Voicemail policy"
             summary="PIN strength, how long a caller may talk, and whether messages are transcribed for new users."
             enforced={false}
-            enforcementNote="Saved only. Voicemail PINs are not checked against this minimum anywhere yet, and a caller can still record for as long as the carrier allows. Transcription is set per user under User settings today; this value is the intended default for new users, not a switch that turns transcription on for anyone."
+            enforcementNote="Saved only — PINs aren't checked against this minimum yet, and recording length is still up to the carrier. Transcription stays per-user; this is just the default for new users."
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
@@ -528,8 +557,7 @@ const CompanyPolicies = () => {
                   onChange={(event) => updateForm({ voicemail_min_pin_length: event.target.value })}
                 />
                 <p className="text-xs text-gray-500">
-                  Between {PIN_MIN} and {PIN_MAX} digits. Six or more is the usual advice, because a
-                  four-digit PIN is guessable by hand.
+                  {PIN_MIN}–{PIN_MAX} digits. 6+ recommended — 4 is guessable by hand.
                 </p>
               </div>
               <div className="flex flex-col gap-1">
@@ -545,12 +573,15 @@ const CompanyPolicies = () => {
                   }
                 />
                 <p className="text-xs text-gray-500">
-                  Between {MESSAGE_MIN_MINUTES} and {MESSAGE_MAX_MINUTES} minutes. Longer messages
-                  cost more storage and are rarely listened to in full.
+                  {MESSAGE_MIN_MINUTES}–{MESSAGE_MAX_MINUTES} min. Longer costs more, gets listened
+                  to less.
                 </p>
               </div>
             </div>
-            <div className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
+            <div
+              className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3"
+              style={{ boxShadow: '0 6px 18px rgba(17, 17, 17, 0.1), 0 1px 4px rgba(17, 17, 17, 0.06)' }}
+            >
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-semibold text-gray-900">
                   Transcribe voicemail by default
@@ -574,25 +605,30 @@ const CompanyPolicies = () => {
             title="Call recording policy"
             summary="Whether calls are recorded across the company, and whether callers are told."
             enforced={false}
-            enforcementNote="Saved only — and this is the one to be careful with. Setting this to Off does NOT stop any recording: recording is still driven entirely by the per-user and per-template Automatic Call Recording settings, and by anyone pressing record during a call. Do not treat this card as proof that recording is off. The announcement toggle likewise plays nothing yet."
+            enforcementNote="Careful: Off does NOT stop recording — that's still driven by per-user/template settings and manual recording. The announcement toggle plays nothing yet either."
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
-                <CustomSelect
-                  label="Recording mode"
-                  options={RECORDING_MODE_OPTIONS}
-                  value={selectedOption(RECORDING_MODE_OPTIONS, form.recording_mode)}
-                  handleChange={(option: any) =>
-                    updateForm({ recording_mode: option?.value || DEFAULT_FORM.recording_mode })
-                  }
-                />
+                <div className="max-w-[220px]">
+                  <CustomSelect
+                    className="gap-2.5"
+                    label={<span className="underline decoration-gray-300">Recording mode</span>}
+                    options={RECORDING_MODE_OPTIONS}
+                    value={selectedOption(RECORDING_MODE_OPTIONS, form.recording_mode)}
+                    handleChange={(option: any) =>
+                      updateForm({ recording_mode: option?.value || DEFAULT_FORM.recording_mode })
+                    }
+                  />
+                </div>
                 <p className="text-xs text-gray-500">
-                  Off, record everything, or let agents start a recording themselves during a call.
-                  Per-user exceptions are not part of this record yet.
+                  Off, record all, or let agents start it themselves — no per-user exceptions yet.
                 </p>
               </div>
             </div>
-            <div className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
+            <div
+              className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3"
+              style={{ boxShadow: '0 6px 18px rgba(17, 17, 17, 0.1), 0 1px 4px rgba(17, 17, 17, 0.06)' }}
+            >
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-semibold text-gray-900">Announce recording to callers</p>
                 <p className="text-xs text-gray-500">
@@ -613,13 +649,27 @@ const CompanyPolicies = () => {
                 than coming back as a compliance problem later. */}
             {form.recording_announcement && (
               <div className="mt-3 flex flex-col gap-2 border-t border-gray-100 pt-3">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-semibold text-gray-900">Announcement wording</p>
-                  <p className="text-xs text-gray-500">
-                    It must say two things: that the call is recorded or transcribed,{' '}
-                    <strong>and</strong> that a third party may be doing it. Saying only the first
-                    is the most common mistake.
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-gray-900 underline decoration-gray-300">
+                    Announcement wording
                   </p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="right"
+                      className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                      style={{
+                        background: '#fdf7f5',
+                        border: 'none',
+                        color: '#000',
+                        boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                      }}
+                    >
+                      Mention both: recording/transcription, and that a third party may do it.
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
 
                 <textarea
@@ -667,7 +717,7 @@ const CompanyPolicies = () => {
             title="Data retention"
             summary="How long call recordings and voicemail messages are kept before deletion."
             enforced={false}
-            enforcementNote="Saved only. Nothing deletes recordings or voicemails on this schedule today — there is no retention job behind it, so files stay until someone removes them by hand. Do not rely on this card to answer a compliance or data-deletion question."
+            enforcementNote="Saved only — nothing auto-deletes yet. Files stay until removed by hand; don't rely on this for compliance."
           >
             {renderRetention(
               'retention_recordings',
@@ -686,24 +736,29 @@ const CompanyPolicies = () => {
             title="International calling"
             summary="Whether a newly created user may dial abroad before an admin says otherwise."
             enforced={false}
-            enforcementNote="Saved only. There is no international-dialling check in the product yet, so a new user can dial abroad regardless of what this says. Blocked is the safer value to record, and it matches the way Dialpad ships: off by default, because toll fraud usually shows up as international calls."
+            enforcementNote="Saved only — nothing checks international dialing yet. Blocked is the safer default, matching how toll fraud usually shows up."
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1">
-                <CustomSelect
-                  label="Default for new users"
-                  options={INTERNATIONAL_OPTIONS}
-                  value={selectedOption(INTERNATIONAL_OPTIONS, form.international_new_user_default)}
-                  handleChange={(option: any) =>
-                    updateForm({
-                      international_new_user_default:
-                        option?.value || DEFAULT_FORM.international_new_user_default,
-                    })
-                  }
-                />
+                <div className="max-w-[320px]">
+                  <CustomSelect
+                    label="Default for new users"
+                    options={INTERNATIONAL_OPTIONS}
+                    value={selectedOption(
+                      INTERNATIONAL_OPTIONS,
+                      form.international_new_user_default,
+                    )}
+                    handleChange={(option: any) =>
+                      updateForm({
+                        international_new_user_default:
+                          option?.value || DEFAULT_FORM.international_new_user_default,
+                      })
+                    }
+                  />
+                </div>
                 <p className="text-xs text-gray-500">
-                  Applies to users created after you save. It is a starting point per user, so an
-                  admin can still allow or block any individual later.
+                  Only for new users going forward — each one can still be changed individually
+                  later.
                 </p>
               </div>
             </div>
@@ -717,7 +772,7 @@ const CompanyPolicies = () => {
             </p>
             <Button
               type="button"
-              variant="primary"
+              variant="dark"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

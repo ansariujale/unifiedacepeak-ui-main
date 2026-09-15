@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, ShieldCheck, Timer, Network, Info, UserMinus } from 'lucide-react';
+import { KeyRound, ShieldCheck, Timer, Network, Info, UserMinus, Search } from 'lucide-react';
 
 import Loader from '@/components/custom/loader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { handleAlert } from '@/lib/utils';
 import { getUserList } from '@/services/api';
 import {
@@ -296,7 +297,7 @@ const SecurityCard = ({
   children,
 }: SecurityCardProps) => (
   <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-    <div className="flex flex-wrap items-start gap-3 border-b border-gray-200 p-4">
+    <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 p-4">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
         {icon}
       </div>
@@ -537,12 +538,26 @@ const CompanySecurity = () => {
 
   return (
     <section className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-gray-200/15">
-      <div className="flex min-h-[65px] flex-col justify-center border-b border-gray-200 bg-white px-4 py-3">
+      <div className="flex items-center gap-1.5 px-4 pt-3">
         <p className="text-lg font-semibold text-gray-900">Company security</p>
-        <p className="text-xs text-gray-500">
-          Security rules for everyone in the company. The Security &amp; Privacy page under My
-          Account covers only your own password and devices — this one is company-wide.
-        </p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+            style={{
+              background: '#fdf7f5',
+              border: 'none',
+              color: '#000',
+              boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+            }}
+          >
+            Company-wide security rules. Your own password and devices are under My Account
+            instead.
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-3 sm:px-4">
@@ -646,6 +661,9 @@ const CompanySecurity = () => {
 
             <Input
               placeholder="Search people by name, extension, email or role"
+              className="mcm-pill-input pl-8"
+              Icon={<Search className="h-3.5 w-3.5 text-gray-500" />}
+              IconPosition="left-0 pl-3 inset-y-0"
               value={peopleSearch}
               disabled={!form.mfa_required}
               onChange={(event) => setPeopleSearch(event.target.value)}
@@ -922,7 +940,7 @@ const CompanySecurity = () => {
           </SecurityCard>
 
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="flex flex-wrap items-start gap-3 border-b border-gray-200 p-4">
+            <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 p-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-600">
                 <Info className="h-5 w-5" />
               </div>
@@ -976,7 +994,7 @@ const CompanySecurity = () => {
             </p>
             <Button
               type="button"
-              variant="primary"
+              variant="dark"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

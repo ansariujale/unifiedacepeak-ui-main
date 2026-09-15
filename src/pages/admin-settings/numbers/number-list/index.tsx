@@ -104,7 +104,7 @@ const VIEWS: Record<ViewKey, NumberView> = {
     title: 'All numbers',
     description: 'Every number on the account, whether it is assigned, routed or sitting unused.',
     fetcherKey: 'allNumbersList',
-    showFeatures: true,
+    showFeatures: false,
     showAddNumber: true,
   },
   'by-line': {
@@ -497,7 +497,13 @@ const NumberList = () => {
         cell: ({ row }: any) => {
           const data = row?.original || {};
           return (
-            <div className="flex items-center gap-2">
+            /* The FAX badge used to sit beside the number (inline, then
+               absolute-positioned over it) — either way it fought the
+               number for the same horizontal space, cramping or clipping
+               the digits on a narrow column. Stacking the badge under the
+               number instead gives each its own row, so neither has to
+               shrink to fit the other. */
+            <div className="flex w-full flex-col items-center justify-center gap-0.5">
               <NumberWithFlag number={data?.did_number} />
               {data?.is_fax_enabled && (
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
@@ -836,9 +842,18 @@ const NumberList = () => {
           <CustomTooltip
             text={view.description}
             side="right"
-            className="w-[280px] whitespace-normal text-balance border-0 bg-[#fdf7f5] text-black shadow-[0_6px_20px_rgba(17,17,17,0.18)] [&_svg]:fill-[#fdf7f5]"
+            /* `w-fit` sizes this to its widest wrapped LINE, but that
+               measurement happens before text-balance (in the base
+               TooltipContent's own classes) redistributes the line
+               breaks — so the box ends up sized for one wrapping and
+               filled with another, leaving empty space on shorter lines.
+               `[text-wrap:wrap]!` cancels the base class's balance so
+               fit-content's own natural wrapping is what actually renders,
+               which is what fit-content sized the box for in the first
+               place. */
+            className="w-fit max-w-[280px] whitespace-normal [text-wrap:wrap]! border-0 bg-[#fdf7f5] text-black shadow-[0_6px_20px_rgba(17,17,17,0.18)] [&_svg]:fill-[#fdf7f5]"
           >
-            <Info className="h-5 w-5 text-gray-500 transition-colors hover:text-red-600 active:text-red-600 data-[state=delayed-open]:text-red-600 data-[state=instant-open]:text-red-600" />
+            <Info className="h-4 w-4 text-gray-500! transition-colors hover:text-red-600! active:text-red-600! data-[state=delayed-open]:text-red-600! data-[state=instant-open]:text-red-600!" />
           </CustomTooltip>
         }
         headerTabs={
@@ -941,8 +956,10 @@ const NumberList = () => {
           ) : (
             <div
               className={`ident-table-card ident-table-card--plain w-full flex flex-col ${
-                view.key === 'all' ? '-mt-2' : ''
-              }`}
+                view.key === 'all' ? '-mt-2 ident-table--all-numbers' : ''
+              } ${
+                view.key === 'in-use' || view.key === 'inventory' ? 'ident-table--numbers-list' : ''
+              } ${view.isArchive ? 'ident-table--released' : ''}`}
             >
               <TableManager
                 {...{
@@ -1016,7 +1033,7 @@ const NumberList = () => {
                     aria-label="Close"
                     className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-full text-gray-500 hover:bg-red-50 hover:text-black"
                   >
-                    <Icon name="CloseIcon" className="h-4 w-4" />
+                    <Icon name="CloseIcon" className="h-3 w-4" />
                   </button>
                 </DialogHeader>
                 {/* Must itself be a flex column, not just a sized box: AddNumber's
@@ -1053,7 +1070,7 @@ const NumberList = () => {
                 aria-label="Close"
                 className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-full text-gray-500 hover:bg-red-50 hover:text-black"
               >
-                <Icon name="CloseIcon" className="h-4 w-4" />
+                <Icon name="CloseIcon" className="h-3 w-4" />
               </button>
             </DialogHeader>
             <div className="min-h-0 flex-1 overflow-y-auto">

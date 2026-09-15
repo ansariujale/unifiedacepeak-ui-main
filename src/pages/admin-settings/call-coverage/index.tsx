@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Icon } from '@/assets/icons/icon';
 import NumberWithFlag from '@/components/custom/number-with-flag';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { allNumbersList, callForwarding, getGreetings, getUserList } from '@/services/api';
@@ -30,7 +31,6 @@ import { invalidateNumberLists } from '@/lib/number-list-cache';
 import {
   Info,
   Voicemail,
-  X,
   Wrench,
   KeyRound,
   Phone,
@@ -335,9 +335,9 @@ const CallCoverage = () => {
           <CustomTooltip
             text={PAGE_DESCRIPTION}
             side="right"
-            className="w-[260px] whitespace-normal text-balance border-0 bg-[#fdf7f5] text-black shadow-[0_6px_20px_rgba(17,17,17,0.18)] [&_svg]:fill-[#fdf7f5]"
+            className="w-fit max-w-[260px] whitespace-normal [text-wrap:wrap]! border-0 bg-[#fdf7f5] text-black shadow-[0_6px_20px_rgba(17,17,17,0.18)] [&_svg]:fill-[#fdf7f5]"
           >
-            <Info className="h-5 w-5 text-gray-500 transition-colors hover:text-red-600 active:text-red-600 data-[state=delayed-open]:text-red-600 data-[state=instant-open]:text-red-600" />
+            <Info className="h-4 w-4 text-gray-500! transition-colors hover:text-red-600! active:text-red-600! data-[state=delayed-open]:text-red-600! data-[state=instant-open]:text-red-600!" />
           </CustomTooltip>
         }
         headerTabs={
@@ -503,11 +503,17 @@ const CallCoverage = () => {
           <table>
             <thead>
               <tr>
-                <th style={{ width: '22%' }}>Number</th>
-                <th style={{ width: '20%' }}>Assigned to</th>
-                <th style={{ width: '18%' }}>Coverage</th>
-                <th style={{ width: '24%' }}>What a caller gets</th>
-                <th className="fix-col" style={{ width: '16%' }}>
+                <th className="num num-left" style={{ width: '20%' }}>
+                  Number
+                </th>
+                <th className="assigned-col" style={{ width: '20%' }}>
+                  Assigned to
+                </th>
+                <th style={{ width: '20%' }}>Coverage</th>
+                <th className="caller-gets-col" style={{ width: '20%' }}>
+                  What a caller gets
+                </th>
+                <th className="fix-col" style={{ width: '20%' }}>
                   Fix
                 </th>
               </tr>
@@ -516,7 +522,7 @@ const CallCoverage = () => {
               {visibleNumbers.length ? (
                 pagedNumbers.map(({ did, coverage }) => (
                   <tr key={did?.uuid || did?.did_number}>
-                    <td className="num">
+                    <td className="num num-left">
                       <span style={{ display: 'block', fontWeight: 500 }}>
                         <NumberWithFlag number={did?.did_number} />
                       </span>
@@ -524,7 +530,7 @@ const CallCoverage = () => {
                         <span style={{ fontSize: 11, color: 'var(--ink-4)' }}>{did.did_name}</span>
                       ) : null}
                     </td>
-                    <td>
+                    <td className="assigned-col">
                       {assignedNameOf(did) ? (
                         <>
                           <span style={{ display: 'block' }}>{assignedNameOf(did)}</span>
@@ -542,7 +548,9 @@ const CallCoverage = () => {
                         {coverage.headline}
                       </span>
                     </td>
-                    <td style={{ maxWidth: 380 }}>{coverage.detail}</td>
+                    <td className="caller-gets-col" style={{ maxWidth: 380 }}>
+                      {coverage.detail}
+                    </td>
                     <td className="fix-col">
                       {coverage.fixable ? (
                         <button
@@ -583,11 +591,17 @@ const CallCoverage = () => {
           <table>
             <thead>
               <tr>
-                <th style={{ width: '18%' }}>Extension</th>
-                <th style={{ width: '22%' }}>Name</th>
-                <th style={{ width: '18%' }}>Coverage</th>
-                <th style={{ width: '26%' }}>What a caller gets</th>
-                <th className="fix-col" style={{ width: '16%' }}>
+                <th className="num" style={{ width: '15%' }}>
+                  Extension
+                </th>
+                <th className="name-col" style={{ width: '20%' }}>
+                  Name
+                </th>
+                <th style={{ width: '14%' }}>Coverage</th>
+                <th className="ext-caller-gets-col" style={{ width: '31%' }}>
+                  What a caller gets
+                </th>
+                <th className="fix-col" style={{ width: '20%' }}>
                   Fix
                 </th>
               </tr>
@@ -597,7 +611,7 @@ const CallCoverage = () => {
                 pagedUsers.map(({ user, coverage }) => (
                   <tr key={user?.uuid}>
                     <td className="num">{user?.extension || '—'}</td>
-                    <td>
+                    <td className="name-col">
                       {`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Unknown'}
                     </td>
                     <td>
@@ -640,11 +654,21 @@ const CallCoverage = () => {
           <table>
             <thead>
               <tr>
-                <th style={{ width: '18%' }}>Person</th>
-                <th style={{ width: '14%' }}>Extension</th>
-                <th style={{ width: '14%' }}>Greeting</th>
-                <th style={{ width: '46%' }}>What the caller will hear</th>
-                <th style={{ width: '8%', textAlign: 'left' }}>Generate</th>
+                <th className="person-col" style={{ width: '13%' }}>
+                  Person
+                </th>
+                <th className="extension-col" style={{ width: '11%' }}>
+                  Extension
+                </th>
+                <th className="greeting-col" style={{ width: '12%' }}>
+                  Greeting
+                </th>
+                <th className="hear-col" style={{ width: '49%' }}>
+                  What the caller will hear
+                </th>
+                <th className="fix-col" style={{ width: '15%' }}>
+                  Generate
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -656,9 +680,11 @@ const CallCoverage = () => {
                     const busy = generating === person.uuid;
                     return (
                       <tr key={person.uuid}>
-                        <td style={{ fontWeight: 600 }}>{personName(person)}</td>
+                        <td className="person-col" style={{ fontWeight: 600 }}>
+                          {personName(person)}
+                        </td>
                         <td className="num">{person?.extension || '—'}</td>
-                        <td>
+                        <td className="greeting-col">
                           {has ? (
                             <span className="tag pos">Ready</span>
                           ) : failure ? (
@@ -667,18 +693,21 @@ const CallCoverage = () => {
                             <span className="tag warn">Just a tone</span>
                           )}
                         </td>
-                        <td style={{ maxWidth: 420, color: 'var(--ink-3)', fontSize: 12.5 }}>
+                        <td
+                          className="hear-col"
+                          style={{ maxWidth: 420, color: 'var(--ink-3)', fontSize: 12.5 }}
+                        >
                           {failure ||
                             voicemailScriptFor(personName(person), spokenCompany || undefined)}
                         </td>
-                        <td>
+                        <td className="fix-col">
                           <CustomTooltip
                             text={busy ? 'Generating…' : has ? 'Regenerate' : 'Generate'}
                             side="top"
                           >
                             <button
                               type="button"
-                              className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-500 hover:text-white disabled:pointer-events-none disabled:opacity-50"
+                              className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-500 hover:text-white disabled:pointer-events-none disabled:opacity-50"
                               disabled={Boolean(generating)}
                               onClick={() => runGeneration([person])}
                             >
@@ -773,7 +802,7 @@ const CallCoverage = () => {
                 aria-label="Close"
                 className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-full text-gray-500 hover:bg-red-50 hover:text-black"
               >
-                <X className="h-4 w-4" />
+                <Icon name="CloseIcon" className="h-3 w-4" />
               </button>
             </DialogHeader>
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -805,7 +834,7 @@ const CallCoverage = () => {
                 aria-label="Close"
                 className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-full text-gray-500 hover:bg-red-50 hover:text-black"
               >
-                <X className="h-4 w-4" />
+                <Icon name="CloseIcon" className="h-3 w-4" />
               </button>
             </DialogHeader>
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-0.5">

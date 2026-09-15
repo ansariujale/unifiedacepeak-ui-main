@@ -279,9 +279,9 @@ const CompanyInfo = () => {
             <div className="rounded-lg border border-gray-200 bg-white p-3">
               <p className="text-sm font-semibold text-gray-900">What a location decides</p>
               <p className="mt-1 text-xs text-gray-600">
-                Each location — London, Dubai, Singapore, all under one billing account — sets its
-                own opening hours by timezone, the caller ID shown on outbound calls, and the
-                address on record for local numbers and regulatory checks.
+                Each location — London, Dubai, Singapore — sets its own opening hours, outbound
+                caller ID, and address for numbers and regulatory checks, all under one billing
+                account.
               </p>
             </div>
             <div id="setup-locations" className="flex items-center gap-3 rounded-xl">
@@ -425,22 +425,22 @@ const CompanyInfo = () => {
                 <div className="w-full sm:min-w-[240px]">
                   <Input
                     placeholder="Search sites..."
-                    className="pl-10"
-                    IconPosition="left-0 pl-2 inset-y-0"
+                    className="mcm-pill-input pl-8"
+                    IconPosition="left-0 pl-3 inset-y-0"
                     value={search}
                     onChange={(e) => {
                       const value = e.target.value;
                       if (value.startsWith(' ')) return;
                       setSearch(e.target.value);
                     }}
-                    Icon={<SearchLine className="h-4 w-4 text-gray-700" />}
+                    Icon={<SearchLine className="h-3.5 w-3.5 text-gray-700" />}
                   />
                 </div>
                 {/* Comparing locations is a different job from reading one, and
                     it needs a table rather than a column of cards. */}
                 <Button
-                  className="rounded-xl"
-                  variant={'outline'}
+                  className="rounded-full"
+                  variant={'dark'}
                   onClick={() => navigate('/admin-settings/company/location-management')}
                 >
                   <Settings className="mr-1 h-4 w-4" />
@@ -448,8 +448,8 @@ const CompanyInfo = () => {
                 </Button>
                 {!isTrial && canViewSites && canAddSites && (
                   <Button
-                    className="rounded-xl"
-                    variant={'outline'}
+                    className="rounded-full"
+                    variant={'dark'}
                     onClick={() => handleNewSite()}
                   >
                     <Icon name="Plus" className="mr-1 h-4 w-4" />
@@ -668,7 +668,7 @@ const CompanyInfo = () => {
         />
       )}
       <Dialog open={drawerState2} onOpenChange={(open) => !open && setDrawerState2(false)}>
-        <DialogContent className="mcm-company-theme flex max-h-[75vh] w-full max-w-[760px] flex-col overflow-hidden p-4 shadow-2xl sm:p-6">
+        <DialogContent className="mcm-company-theme flex max-h-[75vh] w-full max-w-[760px] flex-col overflow-hidden bg-white p-4 shadow-2xl sm:p-6">
           <NewSiteSteps data={rowData} handleClose={() => setDrawerState2(false)} />
         </DialogContent>
       </Dialog>

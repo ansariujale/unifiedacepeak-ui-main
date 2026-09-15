@@ -10,13 +10,13 @@ const ContactDetails = ({ formMethods }: { formMethods: UseFormReturn<any> }) =>
 
   return (
     <>
-      <div className="flex flex-col gap-4 h-[calc(100vh_-_16rem)] overflow-auto pr-1 ten-dlc-brand-step-scroll">
+      <div className="flex flex-col gap-4 h-[calc(100vh_-_16rem)] overflow-auto pr-1 dlc-wizard-step-scroll">
         {/* Support Contact Details */}
         <h3 className="text-primary flex items-center gap-1.5 font-medium mb-1">
           Support Contact Details
         </h3>
 
-        <div className="grid grid-cols-2 w-full gap-4 ten-dlc-brand-two-col-grid">
+        <div className="grid grid-cols-2 w-full gap-4 dlc-wizard-two-col-grid">
           {/* Support Email */}
           <Controller
             name="email"
@@ -57,7 +57,7 @@ const ContactDetails = ({ formMethods }: { formMethods: UseFormReturn<any> }) =>
               Business Contact Details
             </h3>
 
-            <div className="grid grid-cols-2 w-full gap-4 ten-dlc-brand-two-col-grid">
+            <div className="grid grid-cols-2 w-full gap-4 dlc-wizard-two-col-grid">
               <Controller
                 name="businessContactEmail"
                 control={control}

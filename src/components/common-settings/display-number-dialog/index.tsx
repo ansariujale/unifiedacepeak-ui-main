@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ISELECTVALUE } from '@/interfaces/api-interfaces';
 import { ModalProps } from '@/interfaces/common-interface';
-import { FC } from 'react';
+import { Check } from 'lucide-react';
+import { FC, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 type MaskingType = 'S' | 'R' | 'P' | 'E' | 'N';
@@ -40,7 +41,9 @@ const maskingOptions: ISELECTVALUE[] = [
   { label: 'None', value: 'N' },
 ];
 
-const DisplayNumberModal: FC<ModalProps & { anchorRight?: boolean }> = ({
+const DisplayNumberModal: FC<
+  ModalProps & { anchorRight?: boolean; onQuickSave?: () => void; selectMenuPortalTarget?: any }
+> = ({
   modalState,
   setModalState,
   data,
@@ -50,6 +53,19 @@ const DisplayNumberModal: FC<ModalProps & { anchorRight?: boolean }> = ({
      position overrides below, so a narrow screen still gets the normal
      centered modal either way. */
   anchorRight = false,
+  /** Runs the Preferences page's own full-form save — only ever set for
+   * the anchorRight panel (see common-settings/index.tsx), which uses it
+   * to back the "Save changes" checkbox in place of a Submit button.
+   * Undefined for every other caller, which keeps the original Submit
+   * button untouched below. */
+  onQuickSave,
+  /** Undefined by default, in which case CustomSelect falls back to its own
+   * default (document.body). Only passed for the anchorRight panel (the
+   * Preferences page), so its two selects stay real DOM descendants of the
+   * page and its page-scoped CSS (selected-option colour) can reach them —
+   * this panel already renders inline rather than through a Dialog portal,
+   * so it just needed the same treatment as its own selects. */
+  selectMenuPortalTarget,
 }) => {
   const { settings = {} } = data || {};
   const {
@@ -65,18 +81,46 @@ const DisplayNumberModal: FC<ModalProps & { anchorRight?: boolean }> = ({
   const maskingValue = (displayNumber?.masking?.type?.value ?? 'N') as MaskingType;
   const incomingValue = displayNumber?.incoming?.value;
 
-  const handleSubmit = async () => {
+  /** A snapshot of the Display Number fields taken at the moment "Save
+   * changes" last succeeded, or null if it hasn't been used yet (or the
+   * page just loaded). "Saved" is derived by comparing this snapshot
+   * against the form's live current values on every render — not a
+   * one-shot flag toggled by a change *event* — so it survives the
+   * onSuccess → query-invalidation → refetch round trip that follows a
+   * save: that refetch re-applies the exact values just saved via
+   * setValue (see the sync effect in general/index.tsx), which fires
+   * react-hook-form's change events same as a real edit would, but
+   * leaves the values themselves identical to the snapshot, so the
+   * comparison still holds and the tag correctly stays "Saved". Only a
+   * genuine value change — the user picking a different option, typing a
+   * different mask value, flipping the toggle — makes the live value
+   * diverge from the snapshot, which is what brings the checkbox back.
+   * Only ever used by the anchorRight panel. */
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
+  const isSaved = savedSnapshot !== null && savedSnapshot === JSON.stringify(displayNumber);
+
+  const validateMasking = async () => {
     const value = watch('settings.display_number.masking.value');
     if (maskingValue && maskingValue !== 'N' && (!value || value.toString().trim() === '')) {
       setError('settings.display_number.masking.value', {
         type: 'manual',
         message: 'Value is required',
       });
-      return;
+      return false;
     }
-    const isValid = await trigger(['settings.display_number.masking.value']);
-    if (!isValid) return;
+    return trigger(['settings.display_number.masking.value']);
+  };
+
+  const handleSubmit = async () => {
+    if (!(await validateMasking())) return;
     setModalState(false);
+  };
+
+  const handleQuickSave = async (checked: boolean) => {
+    if (!checked) return;
+    if (!(await validateMasking())) return;
+    onQuickSave?.();
+    setSavedSnapshot(JSON.stringify(displayNumber));
   };
   const handleCancel = () => {
     setValue(
@@ -139,6 +183,15 @@ const DisplayNumberModal: FC<ModalProps & { anchorRight?: boolean }> = ({
                 <CustomSelect
                   options={incomingNumberOptions}
                   isSearchable={false}
+                  /* CustomSelect's own 'auto' default was still choosing to
+                     open upward here — this panel's own bounds (fixed,
+                     limited height) apparently read as too little room
+                     below to react-select's measurement, even though the
+                     page itself has plenty. Forced down only for the
+                     anchorRight (Preferences) panel; every other caller of
+                     this dialog keeps 'auto'. */
+                  menuPlacement={anchorRight ? 'bottom' : undefined}
+                  menuPortalTarget={selectMenuPortalTarget}
                   value={{
                     label: displayNumber?.incoming?.label || '',
                     value: displayNumber?.incoming?.value?.toString() || '',
@@ -180,6 +233,8 @@ const DisplayNumberModal: FC<ModalProps & { anchorRight?: boolean }> = ({
                   <CustomSelect
                     options={maskingOptions}
                     isSearchable={false}
+                    menuPlacement={anchorRight ? 'bottom' : undefined}
+                    menuPortalTarget={selectMenuPortalTarget}
                     value={displayNumber?.masking?.type}
                     handleChange={(e) => {
                       setValue('settings.display_number.masking.type', e);
@@ -293,6 +348,7 @@ const DisplayNumberModal: FC<ModalProps & { anchorRight?: boolean }> = ({
               </Label>
 
               <Switch
+                className={anchorRight ? 'accounts-switch-compact' : undefined}
                 onCheckedChange={(checked) => {
                   setValue(
                     'settings.display_number.show_number_if_blocked',
@@ -306,7 +362,7 @@ const DisplayNumberModal: FC<ModalProps & { anchorRight?: boolean }> = ({
         </ul>
 
       <DialogFooter>
-        <div className="justify-end flex gap-2">
+        <div className="justify-end flex items-center gap-2">
           {/* Same reasoning as the close icon above — nothing to cancel out
              of on the always-visible Preferences panel. Every other
              caller keeps Cancel exactly as before. */}
@@ -315,9 +371,34 @@ const DisplayNumberModal: FC<ModalProps & { anchorRight?: boolean }> = ({
               Cancel
             </Button>
           )}
-          <Button type="button" variant={'dark'} onClick={() => handleSubmit()}>
-            Submit
-          </Button>
+          {/* anchorRight (Preferences page only): no separate "submit this
+             one card" endpoint exists — onQuickSave runs the page's own
+             full-form save instead, which already includes these fields —
+             so a subtle checkbox reads more honestly than a second Submit
+             button next to the page's real one. Every other caller keeps
+             the original Submit button, untouched, below. */}
+          {anchorRight ? (
+            isSaved ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                <Check className="h-3 w-3" />
+                Saved
+              </span>
+            ) : (
+              <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={(e) => handleQuickSave(e.target.checked)}
+                  className="h-3.5 w-3.5 cursor-pointer rounded border-gray-300 accent-gray-500"
+                />
+                Save changes
+              </label>
+            )
+          ) : (
+            <Button type="button" variant={'dark'} onClick={() => handleSubmit()}>
+              Submit
+            </Button>
+          )}
         </div>
       </DialogFooter>
     </>

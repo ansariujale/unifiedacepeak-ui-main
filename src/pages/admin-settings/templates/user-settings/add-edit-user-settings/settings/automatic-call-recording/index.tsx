@@ -21,25 +21,36 @@ const AutomaticCallRecordingModal: FC<ModalProps> = ({ modalState, setModalState
   const { watch, setValue } = useFormContext();
   return (
     <Dialog open={modalState} onOpenChange={(val) => setModalState(val)}>
-      <DialogContent className="sm:w-1/2  md:w-1/4 w-full p-3" showCloseButton={false}>
+      <DialogContent
+        className="sm:w-1/2 lg:w-1/4 p-3 max-h-[85vh] overflow-hidden flex flex-col"
+        showCloseButton={false}
+      >
         <div className="flex flex-col gap-1.5  text-900/80">
-          <div className="font-semibold truncate text-md flex items-center justify-between">
-            Automatic & On Demand Call Recording
+          <div className="flex items-start justify-between gap-2">
+            <span className="font-bold text-[20px]">Automatic & On Demand Call Recording</span>
             <div
               onClick={() => setModalState(false)}
-              className="cursor-pointer ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
+              className="shrink-0 cursor-pointer ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
             >
               <CloseIcon className="w-3 h-3" />
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col border border-gray-200 rounded-xl max-h-[calc(100vh-250px)] overflow-auto">
+        {/* The rounded box clips its own scrollbar: the outer layer only
+            clips (rounded + overflow-hidden), the inner layer only scrolls
+            (overflow-y-auto, no radius of its own) and fills it exactly, so
+            the scrollbar sits flush against this box's edge instead of
+            floating further out in the dialog's own padding. A concrete
+            `max-h` (not `flex-1`/`h-full`) so the scroll reliably kicks in
+            regardless of how the surrounding flex layout resolves. */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden">
+        <div className="flex flex-col max-h-[55vh] overflow-y-auto">
           <div
             className={`flex justify-between p-3 cursor-pointer ${watch('settings.recording.automatic.enabled') ? 'items-start' : 'items-center'}`}
           >
-            <div className="flex flex-col gap-3">
-              <p className="font-semibold text-md text-gray-900">Automatic Call Recording</p>
+            <div className="flex flex-col gap-3 w-full">
+              <p className="font-semibold text-[16px] text-gray-900">Automatic Call Recording</p>
               <div className="flex flex-col gap-4">
                 <Label>Enable Automatic Call Recording</Label>
                 <Switch
@@ -67,9 +78,9 @@ const AutomaticCallRecordingModal: FC<ModalProps> = ({ modalState, setModalState
                   />
                 )}
               </div>
-              <p className="text-gray-900 text-sm">
-                Turn on this feature to automatically record all calls made to a particular user or
-                group extension.The recording will be accessible in your call log.{' '}
+              <p className="text-gray-900 text-[12px]">
+                Automatically records calls for this user or group extension. Recordings appear in
+                your call log.
               </p>
 
               <div className="flex flex-col gap-3 mt-2">
@@ -89,7 +100,7 @@ const AutomaticCallRecordingModal: FC<ModalProps> = ({ modalState, setModalState
             className={`flex justify-between p-3 cursor-pointer ${watch('settings.recording.on_demand.enabled') ? 'items-start' : 'items-center'}`}
           >
             <div className="flex flex-col gap-3 w-full">
-              <p className="font-semibold text-md text-gray-900">On-demand Call Recording</p>
+              <p className="font-semibold text-[16px] text-gray-900">On-demand Call Recording</p>
               <div className="flex items-center gap-2">
                 <Switch
                   onCheckedChange={(checked) => {
@@ -103,7 +114,7 @@ const AutomaticCallRecordingModal: FC<ModalProps> = ({ modalState, setModalState
                   checked={watch('settings.recording.on_demand.enabled')}
                 />
               </div>
-              <p className="text-gray-900 text-sm">
+              <p className="text-gray-900 text-[12px]">
                 Enable your users to record call at any time on a phone dial pad.
               </p>
               <div className="flex flex-col gap-3">
@@ -127,13 +138,24 @@ const AutomaticCallRecordingModal: FC<ModalProps> = ({ modalState, setModalState
             </div>
           </div>
         </div>
+        </div>
 
         <DialogFooter>
           <div className="justify-end flex gap-2">
-            <Button type="button" variant={'transparent'} onClick={() => setModalState(false)}>
+            <Button
+              type="button"
+              variant={'transparent'}
+              className="rounded-full"
+              onClick={() => setModalState(false)}
+            >
               Cancel
             </Button>
-            <Button type="button" variant={'dark'} onClick={() => setModalState(false)}>
+            <Button
+              type="button"
+              variant={'dark'}
+              className="rounded-full"
+              onClick={() => setModalState(false)}
+            >
               Submit
             </Button>
           </div>

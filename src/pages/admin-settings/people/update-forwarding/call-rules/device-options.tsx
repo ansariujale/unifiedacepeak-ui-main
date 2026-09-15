@@ -38,7 +38,7 @@ const SortableItem: FC<any> = ({
   const statusCell = (
     <p className={compactDescriptions ? 'flex w-full justify-end' : 'w-full font-medium text-sm'}>
       <Switch
-        className="cursor-pointer"
+        className={compactDescriptions ? 'accounts-switch-compact cursor-pointer' : 'cursor-pointer'}
         onCheckedChange={(checked: boolean) => {
           setValue(`callRules.incomingCall.deviceOptions.${objKey}.status`, checked);
           if (!checked) {

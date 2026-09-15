@@ -10,8 +10,18 @@ import { useQuery } from '@tanstack/react-query';
 import { Controller } from 'react-hook-form';
 import CreateReseller from '../../../reseller/create-reseller';
 import { useState } from 'react';
+import { Info } from 'lucide-react';
+import CustomTooltip from '@/components/custom/custom-tooltip';
+import { Req, req } from '@/pages/admin-settings/compliance/required-mark';
 // import { File } from 'lucide-react';
 // import { RadioGroup, RadioGroupItem } from '@radix-ui/react-radio-group';
+
+/* The three long-text fields carried the same 200-character Tailwind string
+   inline, one copy each, drifting slightly between them (one had different
+   indentation baked into the class list). One class, defined next to the
+   inputs it has to match. */
+const textareaClass = (invalid?: unknown) =>
+  `dlc-wizard-textarea ${invalid ? 'is-invalid' : ''}`;
 
 const staticResellerOptions = [
   { label: 'No Reseller', value: 'R000000' },
@@ -22,8 +32,17 @@ const CampaignDetails = ({ formInstance }: { formInstance: any }) => {
 
   const {
     control,
+    watch,
     formState: { errors },
   } = formInstance || {};
+
+  /* The schema wants 40, 40 and 20 characters. Nothing said so until Next
+     refused, so the minimum is stated up front and counts up as you type. */
+  const [wDescription, wMessageFlow, wSample1] = watch(['description', 'messageFlow', 'sample1']);
+  const counter = (value: unknown, min: number) => {
+    const len = String(value || '').length;
+    return len >= min ? `${len} characters` : `${len} of ${min} characters minimum`;
+  };
 
   const { data: resellerList, isLoading: resellerLoading } = useQuery({
     queryKey: ['getResellerList'],
@@ -38,12 +57,13 @@ const CampaignDetails = ({ formInstance }: { formInstance: any }) => {
   console.log('🚀 ~ CampaignDetails ~ resellerList:', gcpList);
 
   return (
-    <div className="w-full min-h-0 flex flex-col gap-3 overflow-y-auto pr-1">
-      <div className="w-full flex flex-col gap-3 border-b border-gray-200 pb-4">
-        <h3 className="text-shadow-gray-900 flex items-center gap-1.5 font-medium ">
-          Content Details
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-4">
+    <div className="dlc-wizard-step-scroll h-full w-full overflow-auto pr-1">
+      {/* One two-column grid with mono section rules through it -- the same
+          shape the brand wizard's step uses. It was three bordered cards,
+          each with its own heading weight and its own inner grid, which read
+          as three separate forms stacked up. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 w-full gap-x-4 gap-y-5">
+        <div className="dlc-wizard-section">Content</div>
           <div className="flex w-full gap-1 relative">
             <Controller
               name="usecase"
@@ -61,15 +81,15 @@ const CampaignDetails = ({ formInstance }: { formInstance: any }) => {
                 <Input
                   {...field}
                   maxLength={50}
-                  label="Campaign Reference ID"
+                  label={req('Campaign Reference ID')}
                   error={errors?.referenceId?.message}
                 />
               )}
             />
           </div>
-          <div className="flex flex-col gap-1.5 w-full">
+          <div className="flex flex-col gap-1.5 w-full sm:col-span-2">
             <div className="flex items-center justify-between">
-              <Label>Campaign Description</Label>
+              <Label>{req('Campaign Description')}</Label>
 
               <div className="flex items-start">
                 {errors?.description?.message && (
@@ -84,20 +104,17 @@ const CampaignDetails = ({ formInstance }: { formInstance: any }) => {
               render={({ field }) => (
                 <textarea
                   {...field}
-                  className={`w-full h-full leading-7 p-2 rounded-xl text-sm overflow-y-auto placeholder:text-gray-700
-    focus:ring-0 focus-visible:shadow-none focus-visible:outline-0 text-gray-900 shadow-none resize-none
-    border border-gray-200 ${
-      errors?.description?.message ? 'border-red-500 focus:border-red-500' : ''
-    }`}
-                  rows={2}
-                  placeholder="Description"
+                  className={textareaClass(errors?.description?.message)}
+                  rows={3}
+                  placeholder="What this campaign sends, and to whom"
                 />
               )}
             />
+            <p className="dlc-wizard-hint">{counter(wDescription, 40)}</p>
           </div>
-          <div className="flex flex-col gap-1.5 w-full">
+          <div className="flex flex-col gap-1.5 w-full sm:col-span-2">
             <div className="flex items-center justify-between">
-              <Label>Call-to-Action/Message Flow Workflow</Label>
+              <Label>{req('Call-to-action / message flow')}</Label>
 
               <div className="flex items-start">
                 {errors?.messageFlow?.message && (
@@ -112,17 +129,13 @@ const CampaignDetails = ({ formInstance }: { formInstance: any }) => {
               render={({ field }) => (
                 <textarea
                   {...field}
-                  className={`w-full h-full leading-7 p-2 rounded-xl text-sm overflow-y-auto placeholder:text-gray-700
-    focus:ring-0 focus-visible:shadow-none focus-visible:outline-0 text-gray-900 shadow-none resize-none
-    border border-gray-200 ${
-      errors?.messageFlow?.message ? 'border-red-500 focus:border-red-500' : ''
-    }`}
-                  // className="w-full h-full  leading-7 p-2 rounded-xl text-sm overflow-y-auto placeholder:text-gray-700 focus:ring-0 focus-visible:shadow-none focus-visible:outline-0 text-gray-900 shadow-none resize-none border border-gray-200"
-                  rows={2}
-                  placeholder="Write here..."
+                  className={textareaClass(errors?.messageFlow?.message)}
+                  rows={3}
+                  placeholder="How a subscriber opts in, and what they receive after"
                 />
               )}
             />
+            <p className="dlc-wizard-hint">{counter(wMessageFlow, 40)}</p>
           </div>
           {/* <div className="w-full">
             <Input label="Terms and Conditions Link" placeholder={''} />
@@ -130,8 +143,6 @@ const CampaignDetails = ({ formInstance }: { formInstance: any }) => {
           <div className="w-full">
             <Input label="Privacy Policy Link" placeholder={''} />
           </div> */}
-        </div>
-      </div>
       {/* <div className="w-full flex flex-col gap-3 border-b border-gray-200 pb-4">
         <div className="w-full flex flex-col gap-1">
           <h3 className="text-gray-900 font-medium ">
@@ -234,17 +245,13 @@ Reply HELP for help. Message frequency may vary. Msg&data rates may apply. Conse
           </div>
         </div>
       </div> */}
-      <div className="w-full flex flex-col gap-3 border-b border-gray-200 pb-4">
-        {/* <h3 className="text-shadow-gray-900 flex items-center gap-1.5 font-medium ">
-          Sample Messages
-        </h3> */}
+        <div className="dlc-wizard-section">Sample messages</div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-4">
-          <div className="flex flex-col gap-1.5 w-full">
+          <div className="flex flex-col gap-1.5 w-full sm:col-span-2">
             {/* <Label className="text-sm leading-none font-medium">Message 1</Label> */}
 
             <div className="flex items-center justify-between">
-              <Label> Sample Messages</Label>
+              <Label>{req('Sample message')}</Label>
 
               <div className="flex items-start">
                 {errors?.sample1?.message && <ErrorTooltip text={errors?.sample1?.message} />}
@@ -257,25 +264,19 @@ Reply HELP for help. Message frequency may vary. Msg&data rates may apply. Conse
               render={({ field }) => (
                 <textarea
                   {...field}
-                  className={`w-full h-full leading-7 p-2 rounded-xl text-sm overflow-y-auto placeholder:text-gray-700
-                  focus:ring-0 focus-visible:shadow-none focus-visible:outline-0 text-gray-900 shadow-none resize-none
-                  border border-gray-200 ${
-                    errors?.sample1?.message ? 'border-red-500 focus:border-red-500' : ''
-                  }`}
-                  // className="w-full h-full  leading-7 p-2 rounded-xl text-sm overflow-y-auto placeholder:text-gray-700 focus:ring-0 focus-visible:shadow-none focus-visible:outline-0 text-gray-900 shadow-none resize-none border border-gray-200"
+                  className={textareaClass(errors?.sample1?.message)}
                   rows={3}
-                  placeholder="Message"
+                  placeholder="An example of a message this campaign would actually send"
                 />
               )}
             />
+            <p className="dlc-wizard-hint">{counter(wSample1, 20)}</p>
           </div>
           {/* <div className="flex items-center gap-1.5 w-full">
             <Button variant={'primary'} type="submit">
               Add Sample Message
             </Button>
           </div> */}
-        </div>
-      </div>
       {/* <div className="w-full flex flex-col gap-3 border-b border-gray-200 pb-4">
         <div className="w-full flex flex-col gap-1">
           <h3 className="text-gray-900 font-medium ">Sample Multimedia</h3>
@@ -491,23 +492,29 @@ Reply HELP for help. Message frequency may vary. Msg&data rates may apply. Conse
           </div>
         </div>
       </div> */}
-      <div className="w-full flex flex-col gap-3 border-b border-gray-200 pb-4">
-        <div className="w-full flex flex-col gap-1">
-          <h3 className="text-gray-900 font-medium ">Other Responsible Parties</h3>
-          <p className="text-gray-500 text-sm">
-            For Sole Proprietor campaigns, if your CNP is not showing in the list, it means they are
-            not enabled to receive Sole Proprietor campaigns. Please reach out to your CNP for more
-            details.
-          </p>
+        {/* The caveat about sole-proprietor CNPs is an answer to "why is my
+            partner missing", which is a question you only have once you have
+            looked -- so it sits in the tip rather than as a paragraph you
+            read past on the way to the field. */}
+        <div className="dlc-wizard-section flex items-center gap-1.5">
+          Other responsible parties
+          <CustomTooltip
+            side="right"
+            sideOffset={8}
+            className="mcm-tooltip-info"
+            text="For Sole Proprietor campaigns, a connectivity partner missing from this list is one that is not enabled to receive Sole Proprietor campaigns. Reach out to your CNP for details."
+          >
+            <Info className="mcm-intpage-info" />
+          </CustomTooltip>
         </div>
-        <div className="grid grid-cols-2 w-full gap-4">
           <div className="flex w-full gap-1 relative">
             <Controller
               name="cnp"
               control={control}
               render={({ field }) => (
                 <CustomSelect
-                  label="Connectivity Partner"
+                  inputClass="mcm-select"
+                  label={req('Connectivity Partner')}
                   placeholder="Select"
                   value={field.value}
                   handleChange={field.onChange}
@@ -531,7 +538,8 @@ Reply HELP for help. Message frequency may vary. Msg&data rates may apply. Conse
               control={control}
               render={({ field }) => (
                 <CustomSelect
-                  label="Reseller"
+                  inputClass="mcm-select"
+                  label={req('Reseller')}
                   placeholder="Select"
                   value={field.value}
                   handleChange={(val) => {
@@ -556,8 +564,6 @@ Reply HELP for help. Message frequency may vary. Msg&data rates may apply. Conse
               )}
             />
           </div>
-        </div>
-      </div>
       {/* <div className="w-full flex flex-col gap-3 border-b border-gray-200 pb-4">
         <h3 className="text-shadow-gray-900 flex items-center gap-1.5 font-medium ">
           Compliance links
@@ -571,6 +577,8 @@ Reply HELP for help. Message frequency may vary. Msg&data rates may apply. Conse
           </div>
         </div>
       </div> */}
+
+      </div>
 
       {modalOpen && (
         <CreateReseller

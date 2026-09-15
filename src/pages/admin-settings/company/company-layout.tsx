@@ -22,17 +22,6 @@ import { COMPANY_SECTIONS } from './company-sections';
 
 import '@/components/mcm/mcm-page.css';
 
-/* The journey a caller actually takes. Shown at the top because every setting
-   below changes one of these steps, and an admin who cannot see the path cannot
-   tell which setting they need. */
-const CALL_JOURNEY = [
-  { step: 'Call arrives', detail: 'on a company number' },
-  { step: 'Open hours?', detail: 'business hours decide' },
-  { step: 'Rings the person', detail: 'for the ring time set below' },
-  { step: 'No answer', detail: 'nobody picks up' },
-  { step: 'Voicemail', detail: 'caller leaves a message' },
-];
-
 const CompanyLayout = () => {
   const { user } = useUser();
   const companyName =
@@ -40,7 +29,7 @@ const CompanyLayout = () => {
 
   return (
     <section className="mcm-company-theme w-full h-full min-h-0 flex flex-col overflow-hidden bg-gray-200/15">
-      <div className="flex items-start justify-between gap-4 p-3 border-b border-gray-200 min-h-[65px] bg-white">
+      <div className="flex items-start justify-between gap-4 px-3 py-2 border-b border-gray-200 min-h-[56px] bg-white">
         <div className="flex flex-col">
           <p
             className="uppercase"
@@ -88,47 +77,24 @@ const CompanyLayout = () => {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col p-3 overflow-y-auto">
-        <div>
-          <div className="mcm-flowpath" aria-label="How an incoming call is handled">
-            {CALL_JOURNEY.map(({ step, detail }, index) => (
-              <span key={step} className="mcm-flowstep">
-                <span className="chip" title={detail}>
-                  {step}
-                </span>
-                {index < CALL_JOURNEY.length - 1 && (
-                  <span aria-hidden="true" className="px-1 text-gray-400">
-                    →
-                  </span>
-                )}
-              </span>
-            ))}
-          </div>
-        </div>
-
+      {/* Stays put while the section below scrolls — the tab strip is
+          orientation, not content, so it should not disappear the moment
+          someone scrolls a couple of settings down. */}
+      <div className="shrink-0 px-3 pt-4 bg-white">
         {/* Links rather than buttons, so each section can be opened in a new tab,
             bookmarked, and sent to someone in a support reply. */}
-        <div className="mb-3 border-b border-gray-200">
-          <nav
-            className="company-tabs-nav flex flex-nowrap gap-1 overflow-x-auto"
-            aria-label="Company settings"
-          >
+        <div className="mb-3">
+          <nav className="mcm-segmented company-tabs-nav" aria-label="Company settings">
             {COMPANY_SECTIONS.map((item) => (
-              <NavLink
-                key={item.path}
-                to={`/admin-settings/company/${item.path}`}
-                className={({ isActive }) =>
-                  `cursor-pointer shrink-0 whitespace-nowrap px-4 py-2 text-sm font-semibold transition-colors ${
-                    isActive ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
-                  }`
-                }
-              >
+              <NavLink key={item.path} to={`/admin-settings/company/${item.path}`}>
                 {item.label}
               </NavLink>
             ))}
           </nav>
         </div>
+      </div>
 
+      <div className="no-scrollbar flex min-h-0 flex-1 flex-col px-3 pb-3 overflow-y-auto">
         <Outlet />
       </div>
     </section>

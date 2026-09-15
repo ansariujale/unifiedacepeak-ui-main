@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRightLeft, PhoneForwarded, PhoneOutgoing, ShieldAlert } from 'lucide-react';
+import { ArrowRightLeft, Info, PhoneForwarded, PhoneOutgoing, ShieldAlert } from 'lucide-react';
 
 import Loader from '@/components/custom/loader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { handleAlert } from '@/lib/utils';
 import {
   COMPANY_DEFAULTS_QUERY_KEY,
@@ -149,7 +150,7 @@ const StatusBadge = ({ enforced }: { enforced: boolean }) =>
       In effect now
     </span>
   ) : (
-    <span className="rounded-sm bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700">
+    <span className="rounded-sm bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700">
       Saved, not enforced yet
     </span>
   );
@@ -163,13 +164,29 @@ interface PermissionCardProps {
 
 const PermissionCard = ({ icon, title, summary, children }: PermissionCardProps) => (
   <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-    <div className="flex flex-wrap items-start gap-3 border-b border-gray-200 p-4">
+    <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 p-4">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
         {icon}
       </div>
-      <div className="flex min-w-[220px] flex-1 flex-col gap-1">
+      <div className="flex min-w-[220px] flex-1 items-center gap-1.5">
         <p className="text-base font-semibold text-gray-900">{title}</p>
-        <p className="text-xs text-gray-500">{summary}</p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+            style={{
+              background: '#fdf7f5',
+              border: 'none',
+              color: '#000',
+              boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+            }}
+          >
+            {summary}
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
     <div className="flex flex-col gap-3 p-4">{children}</div>
@@ -216,15 +233,31 @@ const PermissionRow = ({
         onCheckedChange={(value) => onCheckedChange(value === true)}
       />
       <div className="flex flex-1 flex-col gap-1">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <p
             className={`text-sm font-semibold ${disabled ? 'text-gray-500' : 'text-gray-900'}`}
           >
             {label}
           </p>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+            </TooltipTrigger>
+            <TooltipContent
+              side="right"
+              className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+              style={{
+                background: '#fdf7f5',
+                border: 'none',
+                color: '#000',
+                boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+              }}
+            >
+              {description}
+            </TooltipContent>
+          </Tooltip>
           <StatusBadge enforced={enforced} />
         </div>
-        <p className="text-xs text-gray-500">{description}</p>
       </div>
     </div>
     {disabled && disabledNote && (
@@ -233,11 +266,10 @@ const PermissionRow = ({
       </p>
     )}
     <p
-      className={`rounded-lg border px-3 py-2 text-xs ${
-        enforced
-          ? 'border-green-200 bg-green-50 text-green-800'
-          : 'border-amber-200 bg-amber-50 text-amber-800'
+      className={`rounded-lg border px-3 py-2 text-xs text-black ${
+        enforced ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
       }`}
+      style={{ boxShadow: '0 6px 18px rgba(17, 17, 17, 0.1), 0 1px 4px rgba(17, 17, 17, 0.06)' }}
     >
       {enforcementNote}
     </p>
@@ -326,30 +358,41 @@ const CompanyCallingPermissions = () => {
 
   return (
     <section className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-gray-200/15">
-      <div className="flex min-h-[65px] flex-col justify-center border-b border-gray-200 bg-white px-4 py-3">
-        <p className="text-lg font-semibold text-gray-900">Calling permissions</p>
-        <p className="text-xs text-gray-500">
-          Which number a team member may show when they call out, and where they may send a call
-          once it is connected.
-        </p>
-      </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-3 sm:px-4">
         <div className="mx-auto flex w-full max-w-[1040px] min-h-0 flex-col gap-4">
+          <div className="flex items-center gap-1.5 px-1">
+            <p className="text-lg font-semibold text-gray-900">Calling permissions</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                style={{
+                  background: '#fdf7f5',
+                  border: 'none',
+                  color: '#000',
+                  boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                }}
+              >
+                Which number shows when a team member calls out, and where they may send a call
+                once connected.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <div className="flex flex-wrap items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-700">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-red-700">
               <ShieldAlert className="h-5 w-5" />
             </div>
             <div className="flex min-w-[220px] flex-1 flex-col gap-1">
               <p className="text-sm font-semibold text-red-900">
                 These are fraud controls, not conveniences
               </p>
-              <p className="text-xs text-red-800">
-                Every box on this page is off to begin with, which is how Dialpad ships them. Each
-                one is a way of turning a call you already pay for into a second leg you also pay
-                for. Toll fraud works by getting someone — or something — to transfer a call out to
-                a premium-rate number abroad and leaving it up; the bill arrives days later. Turn a
-                box on only when a real job needs it, and turn it off again when that job ends.
+              <p className="text-xs text-black">
+                Off by default. Each toggle can turn into a paid second call leg — toll fraud
+                transfers calls out to premium-rate numbers and leaves them running. Turn a box on
+                only when needed, then off again.
               </p>
             </div>
           </div>
@@ -383,25 +426,24 @@ const CompanyCallingPermissions = () => {
           >
             <PermissionRow
               label="Allow team members to use the office number or group numbers for which they are a member as caller ID"
-              description="A team member could pick the main office number, or the number of any group they belong to, instead of their own line — so a call from the support team looks like it came from support."
+              description="A team member could show the office or group number instead of their own — so a support call looks like it came from support."
               checked={form.allow_office_or_group_caller_id}
               onCheckedChange={(checked) =>
                 updateForm({ allow_office_or_group_caller_id: checked })
               }
               enforced={false}
-              enforcementNote="Saved only. The caller ID list a person actually sees is built in src/hooks/use-dialpad-caller-id-options.ts from the DIDs assigned to them individually, and it has no notion of an office or group number — so there is nothing for this box to add to the list yet. Turning it on changes nothing anyone can pick from the dialpad today."
+              enforcementNote="Saved only — nothing reads this yet. A person's caller ID list comes from their own assigned numbers; office and group numbers aren't offered either way."
             />
             <PermissionRow
               label="Allow team members to hide their caller ID. Calls from them will appear as 'unknown'."
-              description="The person being called sees no number at all. Worth knowing: caller ID cannot be hidden on a cold external transfer from a shared line — the shared line's number goes out regardless. Per call, a team member can dial *67 before the number to hide it once, or *82 to unhide it once, whichever way this box is set."
+              description="The called person sees no number at all. Per call, dial *67 to hide it once or *82 to unhide it once, whichever way this box is set."
               checked={form.allow_hidden_caller_id}
               onCheckedChange={(checked) => updateForm({ allow_hidden_caller_id: checked })}
               enforced={false}
-              enforcementNote="Saved only. There is no hidden or withheld caller ID option anywhere in the dialpad — src/hooks/use-dialpad-caller-id-options.ts offers assigned numbers and a 'No caller id' placeholder, and neither withholds the number on the wire. The *67 and *82 codes are handled by the carrier, not by this setting, so they keep working either way."
+              enforcementNote="Saved only — the dialpad has no hidden-caller-ID option to control. *67 and *82 are handled by the carrier either way."
             />
-            <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
-              How Dialpad describes the pair: if neither of these two is on, a team member with more
-              than one line can only ever call out from their own primary number.
+            <p className="rounded-none bg-gray-50 px-3 py-2 text-xs text-gray-600">
+              With both off, a team member can only call out from their own primary number.
             </p>
           </PermissionCard>
 
@@ -416,7 +458,7 @@ const CompanyCallingPermissions = () => {
               checked={form.allow_external_transfer}
               onCheckedChange={setExternalTransfer}
               enforced={false}
-              enforcementNote="Saved only. The transfer panel in src/components/dialpad/components/dialpad-transfer-list.tsx accepts any typed number of three digits or more and hands it straight to handleTransfer (src/context/dialpad-context.tsx:2460), which does no company lookup. Admin-side external forwarding in src/components/custom/forwarding-actions.tsx is equally open. Switching this off does not stop an external transfer today."
+              enforcementNote="Saved only — the transfer panel accepts any number today with no check against this setting. Turning it off doesn't block external transfers yet."
             />
             <PermissionRow
               label="Allow transfers to international numbers"
@@ -424,7 +466,7 @@ const CompanyCallingPermissions = () => {
               checked={form.allow_international_transfer}
               onCheckedChange={(checked) => updateForm({ allow_international_transfer: checked })}
               enforced={false}
-              enforcementNote="Saved only. Nothing tests the country of a transfer target — dialpad-transfer-list.tsx parses the number with libphonenumber only to format it on screen, never to accept or reject it, and the external number field in forwarding-actions.tsx (the PHONE case, line 251) takes any country. This box records an intention, not a block."
+              enforcementNote="Saved only — nothing checks the destination country. This records intent, not a block."
               disabled={!form.allow_external_transfer}
               disabledNote="Switched off and locked because external transfers are not allowed at all. Allow those first if you need this."
               isChild
@@ -444,19 +486,19 @@ const CompanyCallingPermissions = () => {
                 updateForm({ allow_outbound_call_external_transfer: checked })
               }
               enforced={false}
-              enforcementNote="Saved only, and this is the one to be careful with. The dialpad does know whether a call is incoming or outgoing (src/components/dialpad/components/dialpad-connected-screen.tsx:189-190), but the transfer panel never asks: the transfer button is offered the same way on both, and handleTransfer does not check direction. Do not treat this box as fraud protection that is switched on — until something reads it, an outbound call can still be transferred out."
+              enforcementNote="Saved only — be careful with this one. The transfer panel doesn't check call direction, so an outbound call can still be transferred out either way."
             />
           </PermissionCard>
 
           <div className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-gray-500">
-              Saved to the reserved &ldquo;{COMPANY_DEFAULT_TEMPLATE_NAME}&rdquo; record under
-              <span className="font-semibold"> settings.company_calling_permissions</span>.
-              Everything else in that record is left untouched.
+              Saves only <span className="font-semibold">settings.company_calling_permissions</span>{' '}
+              on &ldquo;{COMPANY_DEFAULT_TEMPLATE_NAME}&rdquo; — nothing else in that record
+              changes.
             </p>
             <Button
               type="button"
-              variant="primary"
+              variant="dark"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

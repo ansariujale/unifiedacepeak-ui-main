@@ -1,8 +1,7 @@
 import { Info } from 'lucide-react';
-import { SearchIcon } from '@/components/custom/header/GlobalSearch';
 import TableManager from '@/components/custom/table-manager';
+import TableSearchHeader from '@/components/custom/table-search-header';
 import CustomTooltip from '@/components/custom/custom-tooltip';
-import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import AddPathModal from '../modal/AddPathModal';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -175,18 +174,23 @@ const ManageWebhook = () => {
         <div className="mcm-intpage-eyebrow">Integration</div>
         {/* Title and actions share a row — see the CRM page; keeps the search
             anchored to the heading instead of floating mid-head. */}
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          {/* Description behind the "i", as on the CRM page. */}
-          <div className="flex flex-1 min-w-0 items-center gap-2">
-            <h1>Manage Webhook</h1>
-            <CustomTooltip
-              side="bottom"
-              sideOffset={10}
-              className="mcm-tooltip-info"
-              text="Endpoints the console posts to when calls, messages or contacts change."
-            >
-              <Info className="mcm-intpage-info" />
-            </CustomTooltip>
+        {/* Title over column 1, filter centred on column 2, action over
+            column 3 -- the same three-column head every other list page
+            uses. Only the search moved into the table card (customHeader). */}
+        <div className="mcm-intpage-headrow">
+          <div className="mcm-intpage-headleft">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1>Manage Webhook</h1>
+              <CustomTooltip
+                side="bottom"
+                sideOffset={10}
+                className="mcm-tooltip-info"
+                text="Endpoints the console posts to when calls, messages or contacts change."
+              >
+                <Info className="mcm-intpage-info" />
+              </CustomTooltip>
+            </div>
+
             <div className="mcm-segmented" role="group" aria-label="Filter webhooks by status">
               {statTiles.map((tile) => (
                 <button
@@ -201,19 +205,7 @@ const ManageWebhook = () => {
               ))}
             </div>
           </div>
-          <div className="mcm-intpage-search flex items-center gap-2">
-            <Input
-              placeholder="Search webhooks"
-              className="pl-9"
-              IconPosition="left-0 pl-3 inset-y-0"
-              value={search}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value.startsWith(' ')) return;
-                setSearch(value);
-              }}
-              Icon={<SearchIcon />}
-            />
+          <div className="flex items-center gap-2 justify-self-end">
             <button type="button" className="btn primary" onClick={handleOpen}>
               <Icon name="PlusIcon" className="w-3 h-3" />
               New webhook
@@ -224,10 +216,22 @@ const ManageWebhook = () => {
 
       <>
         <div className="mcm-intbody w-full p-3 flex flex-col gap-2 overflow-y-auto">
+          {/* One card around toolbar, table and pager -- TableManager renders
+              them as three bordered siblings otherwise. */}
+          <div className="mcm-tablecard mcm-tablecard--tm">
           <TableManager
             perPageSelectClass="mcm-select"
             recordNoun="webhook"
             {...{
+              customHeader: (
+                <TableSearchHeader
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search webhooks"
+                />
+              ),
+              /* Refresh lives in the toolbar on this pattern, not the pager. */
+              hideFooterRefresh: true,
               // fetcherKey: 'callListingLog',
               // fetcherFn: callList,
               columns,
@@ -256,6 +260,7 @@ const ManageWebhook = () => {
               ),
             }}
           />
+          </div>
         </div>
         <Dialog open={modalState} onOpenChange={setModalState}>
           <DialogContent className="w-[calc(100vw_-_2rem)] max-w-lg p-3" showCloseButton={false}>

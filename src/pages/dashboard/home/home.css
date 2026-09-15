@@ -1,0 +1,1059 @@
+/* Home / Dashboard — redesigned to match the product's new mockup: a
+   greeting hero, quick actions, KPI strip, a communication trend chart,
+   a live activity rail and a recent-calls table. Scoped under `.dash-home`
+   so nothing here leaks onto other pages; loaded globally via index.css
+   (see the comment there) rather than a component-level import, for the
+   same cascade-ordering reason `ai-tools-table.css` had to move — a
+   component-level `import '...css'` isn't guaranteed to land after
+   Tailwind's own `@layer utilities` in the final stylesheet. */
+
+.dash-home__hero {
+  position: relative;
+  /* No `overflow: hidden` here on purpose — it was clipping the greeting
+     text underneath any time this card's height came out even slightly
+     shorter than its content (the exact symptom reported: the subtitle
+     line getting sliced off). */
+  border-radius: 18px;
+  background: #fff5f5;
+  border: 1px solid #fde3e3;
+}
+
+.dash-home__status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  background: #dcf5f1;
+  color: #0d9488;
+  flex-shrink: 0;
+}
+
+/* Small combined status line under the greeting, instead of the status
+   card competing with it for the same line — one message, quietly stated. */
+.dash-home__hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  border-radius: 9999px;
+  background: rgba(13, 21, 38, 0.045);
+  color: #3d4a63;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 8px 14px;
+}
+
+.dash-home__hero-chip svg {
+  color: #7c3aed;
+}
+
+/* Purely decorative — an abstract colour wash + a small vertical brand
+   line, filling the hero's own empty middle third the way the reference
+   does. Adds nothing functional, so it steps aside entirely below `lg`
+   rather than fighting the greeting/status card for room on a narrower
+   screen. */
+.dash-home__hero-decor {
+  display: none;
+  position: relative;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 2px;
+  width: 150px;
+  padding: 8px 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9aa3b8;
+  overflow: hidden;
+}
+
+.dash-home__hero-decor::before {
+  content: '';
+  position: absolute;
+  inset: -40% -10% -40% 30%;
+  background:
+    radial-gradient(60% 60% at 30% 20%, rgba(124, 58, 237, 0.16), transparent 70%),
+    radial-gradient(70% 70% at 70% 80%, rgba(37, 99, 235, 0.14), transparent 70%);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.dash-home__hero-decor span {
+  position: relative;
+  z-index: 1;
+}
+
+.dash-home__hero-decor span:last-child {
+  color: #6b7891;
+}
+
+.dash-home__hero-decor i {
+  display: block;
+  width: 26px;
+  height: 3px;
+  margin-top: 6px;
+  border-radius: 9999px;
+  background: #7c3aed;
+  font-style: normal;
+}
+
+@media (min-width: 80rem) {
+  .dash-home__hero-decor {
+    display: flex;
+  }
+}
+
+.dash-home__hero-status-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 4px 14px rgba(13, 21, 38, 0.06);
+  padding: 16px 18px;
+}
+
+.dash-home__hero-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0 -18px;
+}
+
+.dash-home__hero-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  background: #f0fdf4;
+  color: #16a34a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+/* This card is a <button>, and `.mcm-page button` (a global reset — see
+   mcm-page.css) sets `background: none; border: 0;` with one extra type
+   selector's worth of specificity over this single class, so it was
+   silently winning and leaving the card fully transparent no matter what
+   color was set here — hence `!important` on exactly the two properties
+   that reset actually contests. */
+.dash-home__quick-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 9999px;
+  background: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
+  box-shadow: 0 1px 2px rgba(13, 21, 38, 0.04);
+  padding: 10px 20px 10px 10px;
+  min-width: 0;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.dash-home__quick-card:hover {
+  background: #fef2f2 !important;
+  box-shadow: 0 10px 24px rgba(13, 21, 38, 0.08);
+  border-color: #fecaca !important;
+  transform: translateY(-1px);
+}
+
+.dash-home__quick-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  background: #fef2f2;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.dash-home__stat-card {
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(13, 21, 38, 0.04);
+}
+
+.dash-home__stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.dash-home__stat-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.dash-home__stat-trend--up {
+  color: #16a34a;
+}
+
+.dash-home__stat-trend--flat {
+  color: #93a0b8;
+}
+
+/* Fills the empty right side of a stat card with its 7-day trend — reuses
+   Performance's own `Sparkline` (its `.stat-spark` class) rather than a
+   bespoke chart, on request, so this reads as the same visual language the
+   rest of the console already uses instead of something invented for this
+   one page. It already renders nothing for fewer than 2 points, so a
+   metric with no history just shows no chart. Grows to take whatever room
+   the text block on the left doesn't need (that block keeps its own
+   natural width via `min-w-0` without `flex-1`, so it's never squeezed by
+   this), capped so it doesn't dwarf the card on very wide screens; the
+   height matches the text block's so the two sit level. */
+.dash-home__stat-spark-wrap {
+  flex: 1 1 auto;
+  min-width: 110px;
+  max-width: 260px;
+  height: 64px;
+}
+
+.dash-home__stat-spark-wrap .stat-spark {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Placeholder data (Total Messages / AI Agent Interactions, or Calls /
+   Meetings when the real query comes back empty — see the `NeedsBackendFlag`
+   next to each label) reads as a real chart at a glance, so it's dimmed and
+   dashed to keep it visibly provisional up close. */
+.dash-home__stat-spark-wrap--dummy {
+  opacity: 0.5;
+}
+
+.dash-home__stat-spark-wrap--dummy .stat-spark path[stroke] {
+  stroke-dasharray: 3 3;
+}
+
+.dash-home__card {
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 1px 2px rgba(13, 21, 38, 0.04);
+}
+
+.dash-home__chart-tab {
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #6b7891;
+  background: transparent;
+  border: 1px solid transparent;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dash-home__chart-tab:hover:not(.dash-home__chart-tab--active) {
+  background: #f5f5f5;
+}
+
+/* Same `.mcm-page button` reset problem as `.dash-home__quick-card` above —
+   a single class here loses to that rule's one extra type selector, so the
+   active tab's tint needs the same override. */
+.dash-home__chart-tab--active {
+  background: #fef2f2 !important;
+  color: #b91c1c;
+}
+
+.dash-home__chart-tab--disabled {
+  color: #c9cfda;
+  cursor: not-allowed;
+}
+
+.dash-home__chart-tab--disabled:hover {
+  background: transparent;
+}
+
+.dash-home__live-dot {
+  position: relative;
+  display: inline-flex;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #16a34a;
+}
+
+.dash-home__live-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: rgba(22, 163, 74, 0.35);
+  animation: dash-home-pulse 1.8s ease-out infinite;
+}
+
+@keyframes dash-home-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.dash-home__activity-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dash-home__activity-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.dash-home__activity-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.dash-home__activity-icon--in {
+  background: #dcf5f1;
+  color: #0d9488;
+}
+
+.dash-home__activity-icon--out {
+  background: #f2ecff;
+  color: #7c3aed;
+}
+
+.dash-home__activity-icon--miss {
+  background: #fde9e9;
+  color: #d32f2f;
+}
+
+.dash-home__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 9999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dash-home__pill--in {
+  background: #dcf5f1;
+  color: #0d9488;
+}
+
+.dash-home__pill--out {
+  background: #f2ecff;
+  color: #7c3aed;
+}
+
+.dash-home__pill--miss {
+  background: #fde9e9;
+  color: #d32f2f;
+}
+
+.dash-home__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dash-home__quick-dial-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (min-width: 30rem) {
+  .dash-home__quick-dial-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.dash-home__quick-dial-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 12px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dash-home__quick-dial-tile:hover {
+  background: #fafafa;
+}
+
+.dash-home__quick-dial-tile span {
+  max-width: 100%;
+}
+
+.dash-home__quick-dial-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.dash-home__quick-dial-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 9999px;
+  background: #d1d5db;
+  border: 2px solid #ffffff;
+  flex-shrink: 0;
+}
+
+.dash-home__quick-dial-dot--online {
+  background: #16a34a;
+}
+
+/* ================================================================
+   Recent Calls — filter tabs, date pill, quality column, row actions.
+   ================================================================ */
+
+.dash-home__call-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.dash-home__call-filter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7891;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dash-home__call-filter-tab:hover {
+  background: #f5f5f5;
+}
+
+.dash-home__call-filter-tab--active {
+  background: #fef2f2 !important;
+  color: #b91c1c;
+}
+
+.dash-home__call-filter-count {
+  border-radius: 9999px;
+  background: rgba(13, 21, 38, 0.06);
+  padding: 1px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.dash-home__call-filter-tab--active .dash-home__call-filter-count {
+  background: rgba(185, 28, 28, 0.14);
+}
+
+.dash-home__call-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  border-radius: 9999px;
+  border: 1px solid #e5e5e5;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #6b7891;
+  white-space: nowrap;
+}
+
+.dash-home__call-row {
+  height: 56px;
+  transition: background-color 0.15s ease;
+}
+
+.dash-home__call-row:hover {
+  background: #fafafa;
+}
+
+.dash-home__quality-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.dash-home__row-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  color: #93a0b8;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.dash-home__row-action-btn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* ================================================================
+   Live Activity — mini metrics strip + timeline.
+   ================================================================ */
+
+.dash-home__live-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.dash-home__live-metric {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 12px;
+  padding: 10px 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.dash-home__live-metric:hover {
+  filter: brightness(0.97);
+}
+
+.dash-home__live-metric-arrow {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0.6;
+}
+
+.dash-home__timeline {
+  margin-top: 14px;
+}
+
+.dash-home__timeline-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.dash-home__timeline-rail {
+  position: absolute;
+  left: 3px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.dash-home__timeline-row:first-child .dash-home__timeline-rail {
+  top: 50%;
+}
+
+.dash-home__timeline-row:last-child .dash-home__timeline-rail {
+  bottom: 50%;
+}
+
+.dash-home__timeline-rail {
+  background: #f0f0f0;
+}
+
+.dash-home__timeline-dot {
+  position: absolute;
+  left: -2.5px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  transform: translateY(-50%);
+  box-shadow: 0 0 0 3px #ffffff;
+}
+
+.dash-home__timeline-time {
+  flex-shrink: 0;
+  width: 58px;
+  margin-left: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #93a0b8;
+  font-family: var(--mcm-mono);
+}
+
+.dash-home__timeline-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.dash-home__timeline-status {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dash-home__world-map {
+  position: absolute;
+  inset: 0;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.dash-home__promo-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #fff5f5;
+  border: 1px solid #fde3e3;
+}
+
+.dash-home__flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #fdf0dc;
+  color: #92400e;
+  cursor: default;
+}
+
+/* ================================================================
+   Quick Actions — a 2x2 grid of tinted, self-contained tiles instead
+   of plain rows, plus a tip banner. Each tile's colour comes from the
+   console's own semantic tokens (--mcm-accent/--mcm-warn/--mcm-live/
+   --mcm-ai in index.css), not the reference's own arbitrary palette —
+   the same "borrow the app's real system, don't invent one" rule the
+   stat-card charts followed earlier in this file.
+   ================================================================ */
+
+.dash-home__section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dash-home__section-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.dash-home__section-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 9999px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.dash-home__section-pill-btn:hover {
+  filter: brightness(0.97);
+}
+
+.dash-home__qa-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@media (min-width: 30rem) {
+  .dash-home__qa-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dash-home__qa-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.dash-home__qa-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(13, 21, 38, 0.07);
+}
+
+.dash-home__qa-tile-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.dash-home__qa-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.dash-home__qa-tile-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.dash-home__qa-tile-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(13, 21, 38, 0.07);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.dash-home__qa-tile--red {
+  background: #fef2f2;
+}
+.dash-home__qa-tile--red .dash-home__qa-tile-icon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+.dash-home__qa-tile--red .dash-home__qa-tile-arrow {
+  color: #dc2626;
+}
+
+.dash-home__qa-tile--amber {
+  background: #fdf5e9;
+}
+.dash-home__qa-tile--amber .dash-home__qa-tile-icon {
+  background: #fbe6c4;
+  color: #92400e;
+}
+.dash-home__qa-tile--amber .dash-home__qa-tile-arrow {
+  color: #92400e;
+}
+
+.dash-home__qa-tile--teal {
+  background: #f0faf8;
+}
+.dash-home__qa-tile--teal .dash-home__qa-tile-icon {
+  background: #ccece6;
+  color: #0d9488;
+}
+.dash-home__qa-tile--teal .dash-home__qa-tile-arrow {
+  color: #0d9488;
+}
+
+.dash-home__qa-tile--violet {
+  background: #f8f5ff;
+}
+.dash-home__qa-tile--violet .dash-home__qa-tile-icon {
+  background: #ede4ff;
+  color: #7c3aed;
+}
+.dash-home__qa-tile--violet .dash-home__qa-tile-arrow {
+  color: #7c3aed;
+}
+
+.dash-home__tip-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  border-radius: 12px;
+  background: #f8f5ff;
+  padding: 10px 14px;
+}
+
+.dash-home__tip-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: #ede4ff;
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   Global Presence
+   ================================================================ */
+
+.dash-home__gp-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dash-home__gp-stat {
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.dash-home__gp-stat-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7891;
+}
+
+.dash-home__gp-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.dash-home__gp-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+/* Full card width; height is whatever the map's own real aspect ratio
+   comes out to at that width (set inline per-render in
+   global-presence-map.tsx, from the map library's actual pixel size) —
+   not independently constrained, so it's never cropped or scrollable. */
+.dash-home__presence-map {
+  width: 100%;
+  margin-top: 12px;
+  border-radius: 12px;
+  background: #fafbfc;
+  overflow: hidden;
+}
+
+.dash-home__presence-map-inner {
+  position: relative;
+  width: 100%;
+}
+
+.dash-home__presence-map-svg svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* A real <button> — clickable (jumps to Performance) and hoverable (shows
+   the region's quality via CustomTooltip), not just a positioned label. */
+.dash-home__presence-pin {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%) scale(1);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.dash-home__presence-pin:hover {
+  transform: translate(-50%, -50%) scale(1.12);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.dash-home__presence-pin-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
+  transition: box-shadow 0.15s ease;
+}
+
+.dash-home__presence-pin:hover .dash-home__presence-pin-dot {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.95);
+}
+
+.dash-home__presence-pin-label {
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.dash-home__region-panel {
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  background: #ffffff;
+  padding: 10px 12px;
+}
+
+.dash-home__region-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4.5px 0;
+}
+
+.dash-home__region-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.dash-home__region-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
+  color: #3d4a63;
+}
+
+.dash-home__region-bar-track {
+  width: 88px;
+  height: 5px;
+  border-radius: 9999px;
+  background: #f0f0f0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.dash-home__region-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+}
+
+.dash-home__region-pct {
+  width: 34px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d1526;
+  font-family: var(--mcm-mono);
+}
+
+.dash-home__gp-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  border-radius: 12px;
+  background: #f0faf8;
+  padding: 10px 14px;
+}
+
+/* ================================================================
+   Page-wide: every decorative icon "chip" (section headers, stat
+   cards, quick-action tiles, the hero status icon, tip/banner icons,
+   Global Presence's stat icons, the Live Activity timeline icons) —
+   no background circle, just the bare icon, uniformly #dc2626. This
+   overrides both the per-instance inline `style={{background,color}}`
+   props and the per-theme modifier rules above (`!important` beats
+   both, inline included, the one case a stylesheet rule can). */
+.dash-home__section-icon,
+.dash-home__stat-icon,
+.dash-home__qa-tile-icon,
+.dash-home__qa-tile-arrow,
+.dash-home__status-icon,
+.dash-home__tip-icon,
+.dash-home__timeline-icon,
+.dash-home__gp-stat-icon,
+.dash-home__row-action-btn {
+  background: transparent !important;
+  color: #dc2626 !important;
+}
+
+.dash-home__row-action-btn:hover {
+  background: #fef2f2 !important;
+}

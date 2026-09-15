@@ -153,7 +153,9 @@ const CommonGreetingNotification: FC<IGREETINGPROPS> = ({
                       id={`switch-${name}`}
                       checked={isEnabled}
                       onCheckedChange={(checked) => onChangeMedia(name, checked)}
-                      className="cursor-pointer"
+                      className={
+                        acepeakTheme ? 'accounts-switch-compact cursor-pointer' : 'cursor-pointer'
+                      }
                       disabled={disabled}
                     />
                   )}
@@ -193,12 +195,24 @@ const CommonGreetingNotification: FC<IGREETINGPROPS> = ({
                             }))}
                             value={watch(`${formParentKey}.${name}.value`) || null}
                             errors={
-                              (errors as any)?.[formParentKey]?.[name]?.value?.value?.message ||
-                              (errors as any)?.[formParentKey]?.[name]?.value?.message
+                              /* Turning the switch on makes this schema
+                                 require a value, but the value field itself
+                                 hasn't been touched yet at that point —
+                                 without the dirty check this warning fired
+                                 the instant the toggle went on, before the
+                                 person had any chance to open the dropdown,
+                                 reading as "empty is wrong" rather than
+                                 "you cleared a required field". Only shown
+                                 once the select itself has actually been
+                                 interacted with. */
+                              (dirtyFields as any)?.[formParentKey]?.[name]?.value &&
+                              ((errors as any)?.[formParentKey]?.[name]?.value?.value?.message ||
+                                (errors as any)?.[formParentKey]?.[name]?.value?.message)
                                 ? `${label} is required`
                                 : ''
                             }
                             menuPortalTarget={selectMenuPortalTarget}
+                            selectMenuPortalTarget={selectMenuPortalTarget}
                           />
                         </>
                       )}

@@ -117,10 +117,20 @@ const VoiceMailConfigureModal: FC<ModalProps> = ({ modalState, setModalState, da
         </div>
         <DialogFooter>
           <div className="justify-end flex gap-2">
-            <Button variant={'transparent'} type="button" onClick={handleCancel}>
+            <Button
+              variant={'transparent'}
+              type="button"
+              className="rounded-full"
+              onClick={handleCancel}
+            >
               Cancel
             </Button>
-            <Button variant={'dark'} type="button" onClick={() => setModalState(false)}>
+            <Button
+              variant={'dark'}
+              type="button"
+              className="rounded-full"
+              onClick={() => setModalState(false)}
+            >
               Submit
             </Button>
           </div>

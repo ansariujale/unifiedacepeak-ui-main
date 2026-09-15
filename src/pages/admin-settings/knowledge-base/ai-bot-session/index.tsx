@@ -1,4 +1,11 @@
 import { getAIReceptionistList, getChatAgentList, getSessionList } from '@/services/api';
+// DUMMY DATA - remove this import together with DUMMY_DATA.ts
+import {
+  DUMMY_CHAT_AGENTS,
+  DUMMY_RECEPTIONISTS,
+  DUMMY_SESSIONS,
+  SHOW_DUMMY_DATA,
+} from '../DUMMY_DATA';
 import AiSessionDetailDrawer from '@/pages/admin-settings/knowledge-base/components/ai-session-detail-drawer';
 import { HoverPortalCard, SentimentAnalysisCard } from '@/components/custom/hover-portal-card';
 import {
@@ -21,7 +28,6 @@ import {
   Loader2,
   MessageSquare,
   Phone,
-  PhoneForwarded,
   Search,
   X,
   type LucideIcon,
@@ -187,7 +193,7 @@ const getOutcome = (session: any) => {
 
 const getOutcomeClass = (outcome: string) => {
   if (outcome === 'Resolved') return 'text-emerald-600';
-  if (outcome === 'Handoff') return 'text-amber-600';
+  if (outcome === 'Handoff') return 'text-blue-600';
   if (outcome === 'Callback') return 'text-amber-600';
   if (outcome === 'Active') return 'text-red-600';
   return 'text-red-600';
@@ -195,15 +201,35 @@ const getOutcomeClass = (outcome: string) => {
 
 const getOutcomeBorderClass = (outcome: string) => {
   if (outcome === 'Resolved') return 'border-emerald-500';
-  if (outcome === 'Handoff') return 'border-amber-500';
+  if (outcome === 'Handoff') return 'border-blue-500';
   if (outcome === 'Callback') return 'border-amber-500';
   if (outcome === 'Active') return 'border-red-500';
   return 'border-red-500';
 };
 
-const getOutcomeIcon = (outcome: string): LucideIcon => {
+const HandoffIcon = (props: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <path d="M4.2 8.2A8.6 8.6 0 0 1 19.2 6.8" />
+    <path d="M20 16.4A8.6 8.6 0 0 1 5 17.8" />
+    <path d="M2.4 5.2v3.2h3.2" />
+    <path d="M21.8 19.4v-3.2h-3.2" />
+    <circle cx="12" cy="9.4" r="2.3" />
+    <path d="M8.5 15.3a3.6 3.6 0 0 1 7 0" />
+  </svg>
+);
+
+const getOutcomeIcon = (outcome: string): LucideIcon | typeof HandoffIcon => {
   if (outcome === 'Resolved') return Check;
-  if (outcome === 'Handoff') return PhoneForwarded;
+  if (outcome === 'Handoff') return HandoffIcon;
   if (outcome === 'Callback') return ArrowUpRight;
   if (outcome === 'Active') return Circle;
   return X;
@@ -444,7 +470,7 @@ const PillDropdown = ({
     </DropdownMenuTrigger>
     <DropdownMenuContent
       align="start"
-      className="w-[200px] max-h-[280px] overflow-y-auto bg-white border border-slate-200 shadow-lg rounded-xl p-1 z-50 animate-none"
+      className="flex w-[200px] max-h-[280px] flex-col gap-1 overflow-y-auto bg-white border border-neutral-200 shadow-lg rounded-xl p-1.5 z-50 animate-none"
     >
       {options.map((option) => {
         const isSelected = value === option.value;
@@ -452,8 +478,10 @@ const PillDropdown = ({
           <DropdownMenuItem
             key={option.value || `all-${label}`}
             onClick={() => onChange(option)}
-            className={`flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium cursor-pointer rounded-lg hover:bg-red-50! focus:bg-red-50! ${
-              isSelected ? 'bg-red-50! text-red-600! font-semibold' : 'text-slate-900'
+            className={`flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium cursor-pointer rounded-lg ${
+              isSelected
+                ? 'bg-red-50! text-neutral-900! font-semibold'
+                : 'text-neutral-900 hover:bg-[#f3f4f6]! focus:bg-[#f3f4f6]!'
             }`}
           >
             <span className="truncate">{option.label}</span>
@@ -496,7 +524,14 @@ const AiBotSession = () => {
       ...agent,
       sessionChannel: 'call',
     }));
-    return [...chatRows, ...callRows];
+    // DUMMY DATA - preview agents for the filter list. Remove with DUMMY_DATA.ts.
+    const dummyRows = SHOW_DUMMY_DATA
+      ? [
+          ...DUMMY_CHAT_AGENTS.map((agent) => ({ ...agent, sessionChannel: 'chat' })),
+          ...DUMMY_RECEPTIONISTS.map((agent) => ({ ...agent, sessionChannel: 'call' })),
+        ]
+      : [];
+    return [...chatRows, ...callRows, ...dummyRows];
   }, [chatAgentList, receptionistAgentList]);
 
   const agentById = useMemo(() => {
@@ -538,10 +573,11 @@ const AiBotSession = () => {
     select: (data) => data?.data?.data?.result?.rows || [],
   });
 
-  const rangeSessions = useMemo(
-    () => (sessions || []).filter((session: any) => isInDateRange(session, dateRange)),
-    [dateRange, sessions],
-  );
+  const rangeSessions = useMemo(() => {
+    // DUMMY DATA - preview rows appended to the API result. Remove with DUMMY_DATA.ts.
+    const allSessions = SHOW_DUMMY_DATA ? [...(sessions || []), ...DUMMY_SESSIONS] : sessions || [];
+    return allSessions.filter((session: any) => isInDateRange(session, dateRange));
+  }, [dateRange, sessions]);
 
   const tableRows = useMemo(() => {
     const normalizedSearch = searchText.trim().toLowerCase();
@@ -675,7 +711,7 @@ const AiBotSession = () => {
   };
 
   return (
-    <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#eef1f8] text-neutral-900">
+    <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#efefef] text-neutral-900">
       <div className="flex min-h-[92px] items-center justify-between border-b border-neutral-200 bg-white px-7">
         <div className="flex items-center gap-3">
           <div>
@@ -708,10 +744,6 @@ const AiBotSession = () => {
             >
               Sessions
             </div>
-            <p className="-mt-1 text-xs font-normal text-neutral-400">
-              Every AI receptionist call &amp; AI chatbot conversation — with transcripts,
-              sentiment &amp; outcomes.
-            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -728,7 +760,7 @@ const AiBotSession = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="w-[180px] bg-white border border-slate-200 shadow-lg rounded-xl p-1 z-50 animate-none"
+              className="flex w-[180px] flex-col gap-1 bg-white border border-neutral-200 shadow-lg rounded-xl p-1.5 z-50 animate-none"
             >
               {dateRangeOptions.map((option) => {
                 const isSelected = dateRange === option.value;
@@ -736,8 +768,10 @@ const AiBotSession = () => {
                   <DropdownMenuItem
                     key={option.value}
                     onClick={() => setDateRange(option.value)}
-                    className={`flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium cursor-pointer rounded-lg hover:bg-red-50! focus:bg-red-50! ${
-                      isSelected ? 'bg-red-50! text-red-600! font-semibold' : 'text-slate-900'
+                    className={`flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium cursor-pointer rounded-lg ${
+                      isSelected
+                        ? 'bg-red-50! text-neutral-900! font-semibold'
+                        : 'text-neutral-900 hover:bg-[#f3f4f6]! focus:bg-[#f3f4f6]!'
                     }`}
                   >
                     <span className="truncate">{option.label}</span>
@@ -758,7 +792,7 @@ const AiBotSession = () => {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-auto bg-[#eef1f8] px-7 py-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-auto bg-[#efefef] px-7 py-6">
         <div>
           <div className="mb-3 flex items-center gap-2.5">
             <h2 className="text-[12.5px] font-semibold uppercase tracking-[0.05em] text-red-600">
@@ -901,17 +935,26 @@ const AiBotSession = () => {
                   <div className="flex min-w-0 justify-start">
                     {(() => {
                       const OutcomeIcon = getOutcomeIcon(outcome);
+                      // The handoff mark draws its own ring, so it is not put
+                      // inside the bordered circle the other outcomes use.
+                      const isHandoff = outcome === 'Handoff';
                       return (
                         <span className="inline-flex min-w-0 items-center gap-1.5 truncate text-[12px] font-semibold text-neutral-900">
-                          <span
-                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] ${getOutcomeBorderClass(outcome)} ${getOutcomeClass(outcome)}`}
-                          >
-                            <OutcomeIcon
-                              className="h-2.5 w-2.5 shrink-0"
-                              strokeWidth={2.75}
-                              fill={outcome === 'Active' ? 'currentColor' : 'none'}
-                            />
-                          </span>
+                          {isHandoff ? (
+                            <OutcomeIcon className={`h-4 w-4 shrink-0 ${getOutcomeClass(outcome)}`} />
+                          ) : (
+                            <span
+                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] ${getOutcomeBorderClass(outcome)} ${getOutcomeClass(outcome)}`}
+                            >
+                              {outcome === 'Active' ? (
+                                // A plain dot centres exactly; the filled Circle
+                                // glyph carries its own stroke and sits off by a hair.
+                                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+                              ) : (
+                                <OutcomeIcon className="h-2.5 w-2.5 shrink-0" strokeWidth={2.75} />
+                              )}
+                            </span>
+                          )}
                           {outcome}
                         </span>
                       );

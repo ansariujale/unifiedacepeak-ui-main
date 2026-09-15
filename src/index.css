@@ -23,6 +23,7 @@
    puts it in the same PostCSS-processed bundle as Tailwind and mcm-page.css,
    in the same reliable position that already makes mcm-page.css win. */
 @import './components/mcm/ai-tools-table.css';
+@import './pages/dashboard/home/home.css';
 
 @theme {
   --color-ucass-gray: oklch(0.9612 0 0);
@@ -1710,20 +1711,20 @@
     max-width: none;
   }
 
-  .ten-dlc-brand-drawer {
+  .dlc-wizard {
     min-height: 100%;
     overflow: hidden;
   }
 
-  .ten-dlc-brand-drawer .ten-dlc-brand-tabs-header {
+  .dlc-wizard .dlc-wizard-tabs-header {
     overflow-x: auto;
   }
 
-  .ten-dlc-brand-drawer .ten-dlc-brand-tabs-list {
+  .dlc-wizard .dlc-wizard-tabs-list {
     min-width: max-content;
   }
 
-  .ten-dlc-brand-drawer .ten-dlc-brand-tab-trigger {
+  .dlc-wizard .dlc-wizard-tab-trigger {
     flex: none;
     width: auto;
     white-space: nowrap;
@@ -1732,29 +1733,29 @@
     font-size: 0.75rem;
   }
 
-  .ten-dlc-brand-drawer .ten-dlc-brand-form {
+  .dlc-wizard .dlc-wizard-form {
     min-height: 0;
     flex: 1 1 auto;
     overflow: hidden;
   }
 
-  .ten-dlc-brand-drawer .ten-dlc-brand-step-content {
+  .dlc-wizard .dlc-wizard-step-content {
     min-height: 0;
     flex: 1 1 auto;
     overflow-y: auto;
     padding-right: 0.25rem;
   }
 
-  .ten-dlc-brand-drawer .ten-dlc-brand-step-scroll {
+  .dlc-wizard .dlc-wizard-step-scroll {
     height: auto;
     min-height: 0;
   }
 
-  .ten-dlc-brand-drawer .ten-dlc-brand-two-col-grid {
+  .dlc-wizard .dlc-wizard-two-col-grid {
     grid-template-columns: 1fr;
   }
 
-  .ten-dlc-brand-drawer .ten-dlc-brand-footer {
+  .dlc-wizard .dlc-wizard-footer {
     flex-wrap: nowrap;
     flex-shrink: 0;
     align-items: center;
@@ -1764,7 +1765,7 @@
     background: var(--color-white);
   }
 
-  .ten-dlc-brand-drawer .ten-dlc-brand-footer-btn {
+  .dlc-wizard .dlc-wizard-footer-btn {
     width: auto;
     flex: 0 0 auto;
   }
@@ -1839,13 +1840,13 @@
 }
 
 @media (min-width: 641px) and (max-width: 1024px) {
-  .ten-dlc-brand-drawer .ten-dlc-brand-relationship-grid {
+  .dlc-wizard .dlc-wizard-relationship-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 640px) {
-  .ten-dlc-brand-drawer .ten-dlc-brand-relationship-grid {
+  .dlc-wizard .dlc-wizard-relationship-grid {
     grid-template-columns: 1fr;
   }
 }

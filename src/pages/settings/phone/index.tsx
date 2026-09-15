@@ -549,13 +549,70 @@ const IncomingCalls = () => {
           line-height: 41px;
           color: #171717;
         }
+        .acepeak-myphone [data-slot='button'] {
+          border-radius: 9999px !important;
+        }
+        /* Forward All Calls' header (.mcm-rule-h, ending in its on/off
+           switch, id="forwardCall") and its description directly below
+           sit in separate elements — the description is ForwardingActions'
+           own first child row, which stacks a 16px gap-4 on top of
+           .mcm-rule-b's own 14px top padding, reading as one large gap
+           rather than the compact spacing used elsewhere on this card.
+           :has(#forwardCall) — not :first-child — because the (visually
+           hidden, but still-rendered) .mcm-callsummary banner above this
+           section is a real DOM sibling that comes first, so ":first-child"
+           never actually matched .mcm-rule at all. Targeting by the
+           switch's id instead finds the right card regardless of what
+           else is or isn't hidden around it. */
+        .acepeak-myphone .mcm-rule:has(#forwardCall) > .mcm-rule-b {
+          padding-top: 6px !important;
+        }
+        .acepeak-myphone .mcm-rule:has(#forwardCall) > .mcm-rule-b > .flex.flex-col.gap-4 {
+          gap: 6px !important;
+        }
+        /* Incoming Calls' own description — Tailwind's text-sm is 14px;
+           this is the only element on the page with this exact class
+           combination (text-gray-800 text-sm w-full), so it's reachable
+           without touching the shared component or any other row's own
+           description text. */
+        .acepeak-myphone .text-gray-800.text-sm.w-full {
+          font-size: 13px !important;
+        }
+        /* index.css's own .custom-react-select__option--is-selected rule
+           is itself !important inside @layer base — an unlayered
+           !important here (this page's usual technique) would still lose
+           to it regardless of specificity, since a layered !important
+           always outranks an unlayered one. Joining the same layer name
+           puts this back on normal specificity terms, where the page
+           scope here wins. Only the text colour changes; the pink
+           background/weight that mark a selected row stay as they are
+           everywhere else. */
+        @layer base {
+          .acepeak-myphone .custom-react-select__option--is-selected,
+          .acepeak-myphone .custom-react-select__option--is-selected:hover,
+          .acepeak-myphone .custom-react-select__option--is-selected.custom-react-select__option--is-focused {
+            color: #171717 !important;
+            background-color: #FEE2E2 !important;
+          }
+        }
+        /* Matches the Numbers page's own coral eyebrow (mcm-page.css's
+           .ident-coral-theme .mcm-adminpage-eyebrow) without pulling in
+           that whole theme class — reusing mcm-adminpage-eyebrow for its
+           family/case/tracking, only the 4 properties that variant
+           changes are restated here, scoped to this page. */
+        .acepeak-myphone .mcm-adminpage-eyebrow {
+          font-size: 12px;
+          font-weight: 800;
+          line-height: 18px;
+          color: #DC2626;
+        }
         .acepeak-tooltip-content {
           background: #fdf7f5 !important;
           color: #000 !important;
           border: none !important;
-          width: max-content !important;
-          max-width: 340px !important;
+          width: 395px !important;
           white-space: normal !important;
+          text-wrap: normal !important;
           line-height: 1.5 !important;
           box-shadow: 0 6px 20px rgba(17, 17, 17, 0.18) !important;
         }
@@ -580,6 +637,13 @@ const IncomingCalls = () => {
         }
         .acepeak-myphone .acepeak-info-trigger:hover {
           color: var(--ap-primary);
+        }
+        /* The shared CallRules component's own "When someone calls you now —
+           ..." summary banner — kept as-is for the admin per-user forwarding
+           screen, hidden only here since this page's own header info tip
+           covers the same ground now. */
+        .acepeak-myphone .mcm-callsummary {
+          display: none;
         }
         .acepeak-myphone [data-slot='button'][type='submit'] {
           background: #000 !important;
@@ -679,6 +743,9 @@ const IncomingCalls = () => {
            just inheriting the row's), not the pill. */
         .acepeak-myphone .mcm-rule-t {
           font-size: 15px;
+          /* mcm-page.css's own default is font-weight: 800 (extra-bold) —
+             lighter here, per this page's own request. */
+          font-weight: 600;
         }
         /* Content inside each card's expanded body — the description
            sentence, the Type/Value Select controls, and the voicemail
@@ -742,10 +809,207 @@ const IncomingCalls = () => {
             font-size: 13px !important;
           }
         }
+        /* Accounts-only compact toggle (38x22, red, white knob, no
+           overflow). Opt-in via .accounts-switch-compact, passed down
+           from CallRules/device-options only when compactDescriptions is
+           true (i.e. only on this page) — the shared Switch component and
+           every other caller of CallRules (the People admin screen) are
+           untouched, so a future main-branch change to the default Switch
+           has nothing here to collide with. !important is enough to win: the
+           component's own classes (and mcm-page.css's [data-slot='switch']
+           rules) are plain, non-!important utilities, so this beats them
+           regardless of source order. Kept identical to the same rule on
+           Notifications/Preferences on purpose so all three read as one
+           system. */
+        .acepeak-myphone .accounts-switch-compact {
+          position: relative !important;
+          display: inline-block !important;
+          width: 38px !important;
+          height: 22px !important;
+          min-width: 38px !important;
+          border-width: 0 !important;
+          border-radius: 9999px !important;
+          overflow: hidden !important;
+          padding: 0 !important;
+        }
+        .acepeak-myphone .accounts-switch-compact[data-state='checked'] {
+          background-color: #dc2626 !important;
+        }
+        .acepeak-myphone .accounts-switch-compact[data-state='unchecked'] {
+          background-color: #d1d5db !important;
+        }
+        .acepeak-myphone .accounts-switch-compact:disabled {
+          opacity: 0.5 !important;
+          cursor: not-allowed !important;
+        }
+        .acepeak-myphone .accounts-switch-compact [data-slot='switch-thumb'] {
+          position: absolute !important;
+          top: 50% !important;
+          left: 2px !important;
+          width: 18px !important;
+          height: 18px !important;
+          border-radius: 50% !important;
+          transform: translateY(-50%) !important;
+          translate: none !important;
+          background-color: #fff !important;
+          box-shadow: 0 1px 2px rgba(13, 21, 38, 0.25) !important;
+          transition: left 0.15s ease !important;
+        }
+        .acepeak-myphone .accounts-switch-compact[data-state='checked'] [data-slot='switch-thumb'] {
+          /* Anchored from the right edge with the same 2px inset the
+             unchecked state uses from the left, so both states are inset
+             by construction — no track/thumb arithmetic to keep in sync
+             if either size ever changes. */
+          left: auto !important;
+          right: 2px !important;
+          transform: translateY(-50%) !important;
+          translate: none !important;
+        }
+        /* The unchecked radio ring (Forward All Calls > Send to Voicemail >
+           My Voicemail / Another Voicemail) was invisible for a reason
+           deeper than colour: Radix's RadioGroupItem renders as a real
+           <button>, so mcm-page.css's own generic reset —
+           ".mcm-page button:not([data-slot='switch']) { border: 0; }" —
+           matches it too, and that rule is MORE specific (class + element +
+           :not([attr])) than mcm-page.css's own
+           "[data-slot='radio-group-item'] { border-width: 1.5px; ... }"
+           (class + attribute), so the border-width it actually renders with
+           is 0 regardless of colour — a colour-only override (border-color)
+           does nothing on a 0-width border. The checked "Another Voicemail"
+           only looked fine because its red ring is a separate box-shadow +
+           SVG dot, not the border. Setting the full border shorthand here
+           beats that 0-width reset outright; not touching either shared
+           rule (both are used by every page inside .mcm-page). */
+        .acepeak-myphone [data-slot='radio-group-item'] {
+          border: 1.5px solid #9ca3af !important;
+        }
+        /* The "Upload File" panel reachable from Forward All Calls / If Busy
+           → Play an Announcement → upload button (SelectGreeting's own
+           SideDrawer). Same treatment as the Greetings page's own upload
+           panel (see settings/greetings/index.tsx's #drawer-example rules),
+           duplicated here rather than shared, since each page owns its
+           scope — kept identical on purpose. SideDrawer's own default is a
+           full-height panel pinned to the right edge (its base classes and
+           an inline width style both fight for that); everything below is
+           !important specifically to win over that inline style, resizing
+           it into a small centered modal instead, without touching
+           SideDrawer itself (still mount/unmount driven by SelectGreeting
+           exactly as before, so open/close behaviour is unchanged). */
+        .acepeak-myphone #drawer-example {
+          top: 50% !important;
+          left: 50% !important;
+          right: auto !important;
+          transform: translate(-50%, -50%) !important;
+          height: auto !important;
+          max-height: 85vh !important;
+          width: min(520px, 92vw) !important;
+          min-width: 0 !important;
+          border-radius: 16px !important;
+          border: 1px solid #e5e7eb !important;
+          box-shadow: 0 24px 60px -12px rgba(17, 17, 17, 0.28) !important;
+        }
+        .acepeak-myphone #drawer-example .min-h-11 {
+          border-bottom: 1px solid #e5e7eb !important;
+          padding-top: 14px !important;
+          padding-bottom: 12px !important;
+          margin-bottom: 2px !important;
+        }
+        /* SideDrawer's own content wrapper drops to overflow: hidden at
+           the md breakpoint — correct for its original full-height,
+           right-edge panel, but this page turns it into a small,
+           height-capped centered modal instead, where the Text to Speech
+           tab's fields can be taller than that cap. Overriding just
+           overflow-y still leaves overflow-x hidden from that same rule,
+           which clips a sliver off any field's border sitting flush
+           against that edge. visible here computes to auto in practice
+           (the spec upgrades "visible" to "auto" on this axis once the
+           other axis actually scrolls), so nothing gets an unwanted
+           horizontal scrollbar. */
+        .acepeak-myphone #drawer-example > .overflow-auto {
+          overflow-y: auto !important;
+          overflow-x: visible !important;
+        }
+        /* The Text to Speech textarea stretches to fill this row exactly,
+           so its own border sits flush against the row's edge with no
+           room to render fully. A few px narrower, centred, leaves the
+           border itself space to sit fully inside on both sides. */
+        .acepeak-myphone #drawer-example textarea {
+          width: calc(100% - 6px) !important;
+          margin: 0 auto !important;
+        }
+        .acepeak-myphone #drawer-example #drawer-label {
+          font-size: 17px !important;
+          font-weight: 700 !important;
+          color: #171717 !important;
+        }
+        .acepeak-myphone #drawer-example [data-slot='tabs-trigger'] {
+          font-weight: 600 !important;
+        }
+        .acepeak-myphone #drawer-example [data-slot='tabs-trigger'][data-state='active'] {
+          color: #dc2626 !important;
+          border-bottom-color: #dc2626 !important;
+        }
+        /* The drop zone — a plain white dashed box by default; a light red
+           wash and matching border make it read as this page's own upload
+           target rather than a generic file input. */
+        .acepeak-myphone #drawer-example label[for='file-upload'] {
+          background: #fef2f2 !important;
+          border-color: #fca5a5 !important;
+          border-radius: 14px !important;
+          height: 128px !important;
+        }
+        .acepeak-myphone #drawer-example label[for='file-upload']:hover {
+          border-color: #dc2626 !important;
+        }
+        .acepeak-myphone #drawer-example label[for='file-upload'] svg {
+          color: #dc2626 !important;
+        }
+        .acepeak-myphone #drawer-example [data-slot='input'] {
+          border-color: #e5e7eb !important;
+          border-radius: 10px !important;
+        }
+        .acepeak-myphone #drawer-example [data-slot='input']:focus {
+          border-color: #dc2626 !important;
+          outline: none !important;
+        }
+        /* Cancel (first) / Upload (second) — the shared Button's own
+           "transparent" and "outline" variants read as this tenant's
+           default palette; restyled to a plain neutral Cancel and a solid
+           black primary Upload, matching this page's own black CTA
+           treatment elsewhere. */
+        .acepeak-myphone #drawer-example .justify-end.pt-4.mt-auto [data-slot='button'] {
+          border-radius: 9999px !important;
+        }
+        .acepeak-myphone #drawer-example .justify-end.pt-4.mt-auto [data-slot='button']:first-child {
+          background: #fff !important;
+          border: 1px solid #e5e7eb !important;
+          color: #171717 !important;
+        }
+        .acepeak-myphone
+          #drawer-example
+          .justify-end.pt-4.mt-auto
+          [data-slot='button']:first-child:hover {
+          background: #f9fafb !important;
+          border-color: #d1d5db !important;
+        }
+        .acepeak-myphone #drawer-example .justify-end.pt-4.mt-auto [data-slot='button']:last-child {
+          background: #171717 !important;
+          border-color: #171717 !important;
+          color: #fff !important;
+        }
+        .acepeak-myphone
+          #drawer-example
+          .justify-end.pt-4.mt-auto
+          [data-slot='button']:last-child:hover {
+          background: #1a1a1a !important;
+          border-color: #1a1a1a !important;
+        }
       `}</style>
       <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-1.5">
-          <p className="acepeak-page-title text-gray-900 font-semibold text-lg">My Phone</p>
+        <div>
+          <p className="mcm-adminpage-eyebrow">My Account</p>
+          <div className="flex items-center gap-1.5">
+            <p className="acepeak-page-title text-gray-900 font-semibold text-lg">My Phone</p>
           <Tooltip open={showHeaderHint || undefined}>
             <TooltipTrigger asChild>
               <button
@@ -756,10 +1020,12 @@ const IncomingCalls = () => {
                 <Info className="h-3.5 w-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent className="acepeak-tooltip-content" side="right" align="center">
-              Your devices, forwarding rules, and what happens when you miss a call.
+            <TooltipContent className="acepeak-tooltip-content" side="right" align="center" textWrap="pretty">
+              When someone calls you now — 3 devices will ring. If no one answers, the call will
+              end.
             </TooltipContent>
           </Tooltip>
+          </div>
         </div>
       </div>
       {/* This div, not the <form> it contains, owns scrolling — the one and
@@ -797,6 +1063,7 @@ const IncomingCalls = () => {
                 customClass=""
                 compactDescriptions
                 selectMenuPortalTarget={selectPortalNode}
+                menuPlacement="bottom"
               />
             </div>
             <div className="acepeak-submit-row flex justify-end gap-2">

@@ -27,6 +27,12 @@ export interface AddGreetingProps {
   drawerState: boolean;
   setDrawerState: (state: boolean) => void;
   greetingType: string;
+  /** Undefined by default, in which case CustomSelect falls back to its own
+   * default (document.body). Only passed by callers that want this
+   * drawer's dropdown menus (Text to Speech's Language/Voice selects) kept
+   * inside their own page-scoped styling instead of portaled out to the
+   * app root. */
+  selectMenuPortalTarget?: any;
 }
 
 export interface GreetingForm {
@@ -42,4 +48,9 @@ export interface GreetingForm {
 export interface UploadGreetingProps {
   handleTextToSpeech?: () => void;
   isPendingTextToSpeech?: any;
+  /** Undefined by default, in which case CustomSelect falls back to its own
+   * default (document.body). Only passed by callers that want the
+   * Language/Voice dropdown menus kept inside their own page-scoped
+   * styling instead of portaled out to the app root. */
+  selectMenuPortalTarget?: any;
 }

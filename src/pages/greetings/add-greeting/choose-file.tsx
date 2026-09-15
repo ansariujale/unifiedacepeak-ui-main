@@ -63,7 +63,7 @@ const ChooseFile: FC = () => {
       <div className={`flex items-center justify-center flex-col gap-4 w-full`}>
         <label
           htmlFor="file-upload"
-          className={`flex flex-col items-center justify-center w-full h-44 border-2 border-dashed rounded-xl cursor-pointer bg-white transition-colors duration-200 ${
+          className={`flex flex-col items-center justify-center w-full py-6 border-2 border-dashed rounded-xl cursor-pointer bg-white transition-colors duration-200 ${
             isDragging ? 'border-primary bg-primary/10' : 'border-gray-300 hover:border-gray-400'
           }`}
           onDragOver={handleDragOver}

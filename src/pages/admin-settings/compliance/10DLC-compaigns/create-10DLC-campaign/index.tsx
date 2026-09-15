@@ -1,6 +1,10 @@
 import { Button } from '@/components/ui/button';
+import { Icon } from '@/assets/icons/icon';
+import { CloseIcon } from '@/assets/icons';
+import { Info } from 'lucide-react';
+import CustomTooltip from '@/components/custom/custom-tooltip';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ReactNode, useMemo, useState } from 'react';
+import { Fragment, ReactNode, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import CampaignDetails from './campaign-details';
 import CarrierTermsPreview from './carrier-terms-preview';
@@ -45,6 +49,25 @@ const schemaLookUp: Record<TabKey, any> = {
   payment: paymentSchema,
 };
 
+/* Schema keys are what yup reports; these are what the form calls them on
+   screen, so a refusal can name the field the user is looking for rather
+   than `mnoIds`. */
+const FIELD_LABELS: Record<string, string> = {
+  brand_type: 'Brand',
+  usecase: 'Use case',
+  subUsecases: 'Sub use cases',
+  referenceId: 'Reference ID',
+  resellerId: 'Reseller',
+  description: 'Campaign description',
+  messageFlow: 'Message flow',
+  sample1: 'Sample message',
+  mnoIds: 'Carriers',
+  amount: 'Amount',
+  autoRenewal: 'Auto renewal',
+  cnp: 'Upstream CNP',
+  payment_terms: 'Payment terms',
+};
+
 const Create10DLCCampaign = ({ setDrawerState }: { drawerState: boolean; setDrawerState: any }) => {
   const queryClient: any = useQueryClient();
 
@@ -86,10 +109,82 @@ const Create10DLCCampaign = ({ setDrawerState }: { drawerState: boolean; setDraw
 
   const currentIndex = tabOrder.indexOf(currentStep);
 
+  /* Why a move was refused. `goNext` used to just `return` on an invalid
+     step, so pressing Next on an incomplete form did nothing visible. */
+  const [blockedMsg, setBlockedMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sub = formInstance.watch(() => setBlockedMsg(null));
+    return () => sub.unsubscribe();
+  }, [formInstance]);
+
+  /* Ask the schema directly rather than reading `formState.errors` -- that is
+     a Proxy which only stays current for components that read it during
+     render, and a read straight after `trigger()` comes back empty. */
+  const findProblems = async (): Promise<{ key: string; message: string }[]> => {
+    try {
+      await activeSchema.validate(formInstance.getValues(), { abortEarly: false });
+      return [];
+    } catch (err: any) {
+      const seen = new Set<string>();
+      const out: { key: string; message: string }[] = [];
+      for (const e of err?.inner ?? []) {
+        const key = String(e?.path || '').split(/[.[]/)[0];
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        out.push({ key, message: String(e?.message || '') });
+      }
+      return out;
+    }
+  };
+
+  const describeProblems = (problems: { key: string; message: string }[]) => {
+    if (!problems.length) return `Finish ${DLC_CAMPAIGN_CONST[currentStep]} to continue.`;
+    /* Lead with the first problem in the schema's own words, then say how
+       many others are waiting. Listing bare labels -- "Still to fix: Campaign
+       description, Message flow" -- had the same defect the single-field case
+       was already fixed for: a field that is filled but too short is named
+       exactly like one that is empty, so you go back to a field that looks
+       done and nothing on screen says what is wrong with it. */
+    const [first, ...rest] = problems;
+    const label = FIELD_LABELS[first.key] || first.key;
+    /* Some messages already open with the field's own name -- yup's defaults
+       use the schema key ("mnoIds must be..."), and several of the custom
+       ones name the field too ("Description must be at least 40 characters").
+       Those get the name swapped for the label rather than a second copy of
+       it bolted on the front, which is how "Campaign description: Description
+       must be..." happened. Messages that do not name a field keep the
+       "label: message" shape, since on their own they say nothing about
+       where to look. */
+    const raw = String(first.message || '').trim();
+    const leads = raw.toLowerCase().startsWith(first.key.toLowerCase());
+    const head = leads ? `${label}${raw.slice(first.key.length)}` : `${label}: ${raw}`;
+    if (!rest.length) return head;
+    return `${head} (and ${rest.length} other field${rest.length > 1 ? 's' : ''} on this step)`;
+  };
+
+  const refuse = async () => {
+    const problems = await findProblems();
+    setBlockedMsg(describeProblems(problems));
+    const first = problems[0]?.key;
+    if (!first) return;
+    try {
+      formInstance.setFocus(first);
+    } catch {
+      document
+        .querySelector(`[name="${first}"]`)
+        ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  };
+
   const goNext = async () => {
     const isValid = await formInstance.trigger();
 
-    if (!isValid) return;
+    if (!isValid) {
+      await refuse();
+      return;
+    }
+    setBlockedMsg(null);
 
     const nextTab = nextTabMap[currentStep];
 
@@ -101,6 +196,7 @@ const Create10DLCCampaign = ({ setDrawerState }: { drawerState: boolean; setDraw
   };
 
   const goPrev = () => {
+    setBlockedMsg(null);
     if (currentIndex > 0) {
       setCurrentStep(tabOrder[currentIndex - 1]);
     }
@@ -117,9 +213,14 @@ const Create10DLCCampaign = ({ setDrawerState }: { drawerState: boolean; setDraw
 
     // For forward movement, validate current tab
     const isValid = await formInstance.trigger();
-    if (isValid) {
-      setCurrentStep(targetTab);
+    if (!isValid) {
+      /* Same refusal the Next button gives. The tab used to fail silently,
+         which is indistinguishable from a dead control. */
+      await refuse();
+      return;
     }
+    setBlockedMsg(null);
+    setCurrentStep(targetTab);
   };
 
   const onSubmit = (data: any) => {
@@ -137,65 +238,122 @@ const Create10DLCCampaign = ({ setDrawerState }: { drawerState: boolean; setDraw
 
   return (
     <>
-      <div className="w-full h-full min-h-0 overflow-hidden flex flex-col gap-4 justify-between">
-        <Tabs
-          value={currentStep}
-          onValueChange={(val) => handleTabChange(val as TabKey)}
-          className="flex w-full min-h-0 flex-col"
-        >
-          <div className="w-full overflow-x-auto overflow-y-hidden border-b border-gray-200">
-            <TabsList className="flex min-w-max flex-nowrap text-sm font-semibold text-center p-0 rounded-none bg-transparent min-h-10">
-              {Object.entries(DLC_CAMPAIGN_CONST).map(([key, value]) => {
+      {/* Head, scrolling body, footer -- the same three bands as the Create
+          brand wizard. The drawer used to supply the title; in a centred
+          dialog the form paints its own. */}
+      <div className="mcm-modal dlc-wizard">
+        <div className="mcm-modal-head">
+          <div className="mcm-modal-titlerow">
+            <div className="min-w-0">
+              <div className="mcm-modal-eyebrow">10DLC Compliance</div>
+              <div className="flex items-center gap-2">
+                <h2 className="mcm-modal-title">Create 10DLC Campaign</h2>
+                <CustomTooltip
+                  side="bottom"
+                  sideOffset={8}
+                  className="mcm-tooltip-info"
+                  text="The message programme you register against a brand before carriers will deliver its A2P traffic."
+                >
+                  <Info className="mcm-intpage-info" />
+                </CustomTooltip>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDrawerState(false)}
+              className="mcm-modal-close"
+              aria-label="Close"
+            >
+              <CloseIcon className="w-3 h-3" />
+            </button>
+          </div>
+
+          <Tabs
+            value={currentStep}
+            onValueChange={(val) => handleTabChange(val as TabKey)}
+            className="dlc-wizard-tabs flex w-full min-h-0 flex-col"
+          >
+            <div className="w-full dlc-wizard-tabs-header">
+            {/* The same stepper the brand wizard uses: numbered nodes joined
+                by a line, done steps checked, the current one filled. These
+                were four underline tabs in the tenant blue, which read as
+                interchangeable views rather than an order to work through. */}
+            <TabsList className="dlc-wizard-tabs-list flex w-full p-0 rounded-none bg-transparent min-h-10">
+              {tabOrder.map((key, index) => {
+                const done = index < currentIndex;
                 return (
-                  <TabsTrigger
-                    className="data-[state=active]:border-b-2 data-[state=active]:border-b-primary data-[state=active]:text-primary border-b-2 px-3 sm:px-6 text-gray-700 cursor-pointer h-full rounded-none min-w-max relative flex gap-1 bg-transparent font-semibold data-[state=active]:shadow-2xs whitespace-nowrap"
-                    key={key}
-                    value={key}
-                  >
-                    {value}
-                  </TabsTrigger>
+                  <Fragment key={key}>
+                    {index > 0 && <span aria-hidden="true" className="dlc-wizard-tab-line" />}
+                    <TabsTrigger
+                      className={`dlc-wizard-tab-trigger ${done ? 'is-done' : ''}`}
+                      value={key}
+                    >
+                      <span className="dlc-wizard-tab-num">
+                        {done ? <Icon name="VerifiedCheck" className="h-3 w-3" /> : index + 1}
+                      </span>
+                      <span className="dlc-wizard-tab-label">{DLC_CAMPAIGN_CONST[key]}</span>
+                    </TabsTrigger>
+                  </Fragment>
                 );
               })}
             </TabsList>
-          </div>
-        </Tabs>
+
+            {/* Next to the control that refused, not down by the buttons. */}
+            {blockedMsg ? (
+              <p className="dlc-wizard-blocked" role="status">
+                <Icon name="InfoIcon" className="h-3.5 w-3.5 shrink-0" />
+                {blockedMsg}
+              </p>
+            ) : null}
+            </div>
+          </Tabs>
+        </div>
+
         <FormProvider {...formInstance}>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="h-full min-h-0 w-full flex flex-1 flex-col justify-between gap-4 overflow-hidden"
+            className="dlc-wizard-form min-h-0 w-full flex flex-1 flex-col justify-between overflow-hidden"
           >
-            <div className="min-h-0 flex-1 overflow-y-auto">{stepLookUp?.[currentStep]}</div>
-            <div className="mt-2 shrink-0 border-t border-gray-200 bg-white pt-4 sm:mt-4">
-              <div className="flex min-w-max flex-nowrap justify-start gap-2 overflow-x-auto overflow-y-hidden sm:justify-end">
-                <Button
-                  variant="transparent"
-                  type="button"
-                  onClick={() => setDrawerState(false)}
-                  className="shrink-0"
-                >
-                  Cancel
-                </Button>
+            <div className="mcm-modal-body dlc-wizard-step-content min-h-0 flex-1 overflow-y-auto">
+              {stepLookUp?.[currentStep]}
+            </div>
+            <div className="mcm-modal-foot dlc-wizard-footer">
+              {/* Where you are in the wizard, so Prev/Next have a frame. */}
+              <span className="dlc-wizard-step">
+                Step {currentIndex + 1} of {tabOrder.length}
+              </span>
+              <Button
+                variant="transparent"
+                type="button"
+                onClick={() => setDrawerState(false)}
+                className="dlc-wizard-footer-btn shrink-0"
+              >
+                Cancel
+              </Button>
 
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={goPrev}
-                  disabled={currentIndex === 0}
-                  className="shrink-0"
-                >
-                  Prev
-                </Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={goPrev}
+                disabled={currentIndex === 0}
+                className="dlc-wizard-footer-btn shrink-0"
+              >
+                Prev
+              </Button>
 
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={goNext}
-                  disabled={isPending}
-                  className="shrink-0"
-                >
-                  {currentStep === 'payment' ? 'Submit' : 'Next'}
-                </Button>
-              </div>
+              {/* The step that moves you forward is the primary action, so it
+                  is the black pill the rest of the console uses. Prev and Next
+                  were both `outline`, which gave the row two identical
+                  buttons and no answer to "what do I press". */}
+              <Button
+                variant="outline"
+                type="button"
+                onClick={goNext}
+                disabled={isPending}
+                className="dlc-wizard-footer-btn dlc-wizard-footer-btn--primary shrink-0"
+              >
+                {currentStep === 'payment' ? (isPending ? 'Creating...' : 'Create campaign') : 'Next'}
+              </Button>
             </div>
             {/* <div className="flex justify-end gap-2">
               <Button variant={'transparent'} type="button" onClick={() => setDrawerState(false)}>
@@ -226,6 +384,12 @@ const Create10DLCCampaign = ({ setDrawerState }: { drawerState: boolean; setDraw
         </FormProvider>
       </div>
 
+      {/* AlertConfirm is shared by some thirty pages, so the black pill goes
+          on through its own `confirmBtnClassName` hook rather than into the
+          component -- this is the wizard's primary action and should look
+          like the Create campaign button that opened it, but nothing else in
+          the app should change. `dlc-wizard-footer-btn` is deliberately
+          unscoped for exactly this: the dialog portals to <body>. */}
       <AlertConfirm
         {...{
           apiLoading: isPending,
@@ -234,11 +398,13 @@ const Create10DLCCampaign = ({ setDrawerState }: { drawerState: boolean; setDraw
           },
           open,
           setOpen,
+          confirmBtnText: 'Create campaign',
+          confirmBtnClassName: 'dlc-wizard-footer-btn dlc-wizard-footer-btn--primary',
           descriptionTextComp: (
-            <div className=" text-md">
+            <span className="text-md">
               Are you sure you want to proceed with creating the campaign? The amount $20 will be
-              deducted from your wallet?
-            </div>
+              deducted from your wallet.
+            </span>
           ),
         }}
       />

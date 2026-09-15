@@ -146,7 +146,7 @@ const AlertConfirm = ({
           <div className="flex justify-end gap-2 w-full">
             <Button
               variant={'outline'}
-              className="min-w-[120px]"
+              className="min-w-[120px] rounded-full"
               type="button"
               onClick={(e) => {
                 e.stopPropagation();

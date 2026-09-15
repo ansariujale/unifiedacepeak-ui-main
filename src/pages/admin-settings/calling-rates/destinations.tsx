@@ -17,8 +17,7 @@ import { Info } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import CustomTooltip from '@/components/custom/custom-tooltip';
-import { SearchIcon } from '@/components/custom/header/GlobalSearch';
-import { Input } from '@/components/ui/input';
+import TableSearchHeader from '@/components/custom/table-search-header';
 import { Icon } from '@/assets/icons/icon';
 import { callingRatesList } from '@/services/api';
 import countryList from '@/lib/countries.json';
@@ -186,6 +185,9 @@ const Destinations = () => {
           Outbound Rates page beside it did not look like the same section. */}
       <div className="mcm-intpage-head">
         <div className="mcm-intpage-eyebrow">SMS / Calling Rates</div>
+        {/* Title over column 1, filter centred on column 2 -- the same
+            three-column head every other list page uses. Only the search
+            moved into the table card (the toolbar strip below). */}
         <div className="mcm-intpage-headrow">
           <div className="mcm-intpage-headleft">
             <div className="flex min-w-0 items-center gap-2">
@@ -214,21 +216,6 @@ const Destinations = () => {
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="mcm-intpage-search">
-            <Input
-              placeholder="Country, code, or a number"
-              className="pl-9"
-              IconPosition="left-0 pl-3 inset-y-0"
-              value={search}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value.startsWith(' ')) return;
-                setSearch(value);
-              }}
-              Icon={<SearchIcon />}
-            />
           </div>
         </div>
       </div>
@@ -268,6 +255,14 @@ const Destinations = () => {
             extends the list sits inside the thing it extends rather than
             floating on the page background under it. */}
         <div className="mcm-tablecard">
+          {/* Search left, filter right, inside the card above the columns. */}
+          <div className="mcm-tabletools">
+            <TableSearchHeader
+              value={search}
+              onChange={setSearch}
+              placeholder="Country, code, or a number"
+            />
+          </div>
           <div className="scroller overflow-x-auto">
             <table className="mcm-desttbl w-full min-w-[48rem] border-collapse text-sm">
               <thead className="mcm-ratetbl-head sticky top-0 z-10">

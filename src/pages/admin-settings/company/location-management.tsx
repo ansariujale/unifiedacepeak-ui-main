@@ -419,25 +419,26 @@ const LocationManagement = () => {
       actions={
         <Button
           type="button"
-          variant="outline"
+          variant="dark"
           onClick={exportCsv}
           disabled={!rows.length}
-          className="rounded-lg bg-white text-black border-black hover:bg-white"
+          className="rounded-full"
         >
           <Download className="h-3.5 w-3.5" />
           Export list
         </Button>
       }
-      filters={
-        <>
+    >
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-10 py-6">
+        <div className="location-management-bar">
           <div className="min-w-[220px] flex-1">
             <Input
               placeholder="Search locations"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              Icon={<Search className="h-4 w-4 text-gray-500" />}
-              IconPosition="left-0 pl-2 inset-y-0"
-              className="pl-9 border-transparent shadow-none hover:border-transparent"
+              Icon={<Search className="h-3.5 w-3.5 text-gray-500" />}
+              IconPosition="left-0 pl-3 inset-y-0"
+              className="mcm-pill-input pl-8"
             />
           </div>
           <div className="min-w-[220px] flex-1">
@@ -473,10 +474,7 @@ const LocationManagement = () => {
           <span className="flex-1 text-center text-xs font-medium text-gray-500">
             {visible.length} of {rows.length}
           </span>
-        </>
-      }
-    >
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-10 py-6">
+        </div>
         <SettingCard
           title={
             <span className="flex items-center gap-1.5">
@@ -592,7 +590,8 @@ const LocationManagement = () => {
                 </div>
                 <Button
                   type="button"
-                  variant="primary"
+                  variant="dark"
+                  className="rounded-full"
                   disabled={!selectedRows.length || !bulkZone?.value || isApplying}
                   onClick={() => bulkZone?.value && applyTimezone(bulkZone.value)}
                 >
@@ -664,10 +663,10 @@ const LocationManagement = () => {
                       ) : null}
                       <td>
                         <div className="list-row-name flex items-center gap-2">
-                          <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                          {orDash(row.site?.name)}
+                          <MapPin className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                          <span className="truncate">{orDash(row.site?.name)}</span>
                           {row.site?.is_default === '1' ? (
-                            <span className="tag acc">Main</span>
+                            <span className="tag acc shrink-0">Main</span>
                           ) : null}
                         </div>
                         <div className="list-row-sub">{orDash(row.site?.address)}</div>
