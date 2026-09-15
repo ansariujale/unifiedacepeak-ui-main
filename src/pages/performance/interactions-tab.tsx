@@ -8,36 +8,11 @@ import {
   Timer as TimerIcon,
 } from 'lucide-react';
 import CallHistory from '@/pages/reports/call-logs/call-history';
-import { callTalkSeconds, isMissedCall } from '@/hooks/use-call-stats';
+import { callTalkSeconds } from '@/hooks/use-call-stats';
+import { CALL_KINDS as KINDS, countKinds, type CallKind } from './call-kinds';
 import { usePerformanceCallStats } from './use-performance-call-stats';
 import { formatSecsToClock } from './format';
 import { PerfHero, PerfNotice, PerfSplit, PerfStat, type PerfSplitItem } from './perf-surface';
-
-type CallKind = 'answered' | 'outgoing' | 'missed' | 'voicemail' | 'other';
-
-/**
- * One kind per call, so the split's parts genuinely add up to its whole. The
- * rules are the call log's own: voicemail first, then direction, and an
- * inbound call nobody spoke on counts as missed. The server's own per-category
- * totals can't be stacked like this — its inbound count takes in missed calls.
- */
-const kindOf = (row: any): CallKind => {
-  if (String(row?.forward_type || '').toUpperCase() === 'VOICEMAIL' || row?.is_voicemail) {
-    return 'voicemail';
-  }
-  const direction = String(row?.direction || '').toLowerCase();
-  if (direction === 'outbound') return 'outgoing';
-  if (direction === 'inbound') return isMissedCall(row) ? 'missed' : 'answered';
-  return 'other';
-};
-
-const KINDS: { key: CallKind; label: string; color: string }[] = [
-  { key: 'answered', label: 'Answered', color: 'var(--live)' },
-  { key: 'outgoing', label: 'Outgoing', color: 'var(--accent)' },
-  { key: 'missed', label: 'Missed', color: 'var(--warn)' },
-  { key: 'voicemail', label: 'Voicemail', color: 'var(--hold)' },
-  { key: 'other', label: 'Other', color: 'var(--ink-4)' },
-];
 
 /** Same breach line the KPI band grades its abandon rate on. */
 const MISSED_ALERT_PERCENT = 5;
@@ -114,19 +89,10 @@ const InteractionsTab = ({
   const isPending = callStats.isSample && callStats.isRealPending;
   const showSample = callStats.isSample && !callStats.isRealPending;
 
-  const kindCounts = useMemo(() => {
-    const counts: Record<CallKind, number> = {
-      answered: 0,
-      outgoing: 0,
-      missed: 0,
-      voicemail: 0,
-      other: 0,
-    };
-    (callStats.rows || []).forEach((row: any) => {
-      counts[kindOf(row)] += 1;
-    });
-    return counts;
-  }, [callStats.rows]);
+  const kindCounts: Record<CallKind, number> = useMemo(
+    () => countKinds(callStats.rows || []),
+    [callStats.rows],
+  );
 
   const classified = KINDS.reduce((sum, kind) => sum + kindCounts[kind.key], 0);
   const incoming = kindCounts.answered + kindCounts.missed + kindCounts.voicemail;

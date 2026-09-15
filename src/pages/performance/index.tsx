@@ -26,6 +26,7 @@ import Sparkline from './sparkline';
 import CampaignActivityTab from './campaign-activity-tab';
 import AgentsTab from './agents-tab';
 import InteractionsTab from './interactions-tab';
+import FlowsTab from './flows-tab';
 import DashboardsTab from './dashboards-tab';
 import LiveInteractionsTab from './live-interactions-tab';
 import CallbacksTab from './callbacks-tab';
@@ -61,6 +62,9 @@ const TABS = [
   { key: 'campaign-activity', label: 'Campaign Activity' },
   { key: 'agents', label: 'Agents' },
   { key: 'interactions', label: 'Interactions' },
+  /* In the area rail since the console layout, but never listed here — so
+     `?view=flows` fell through to Queues Activity and the tab was unreachable. */
+  { key: 'flows', label: 'Flows' },
   { key: 'dashboards', label: 'Dashboards' },
   { key: 'live-interactions', label: 'Live Interactions' },
   { key: 'callbacks', label: 'Callbacks' },
@@ -68,7 +72,9 @@ const TABS = [
   { key: 'reports', label: 'Reports' },
 ];
 
-const SHOW_KPI_HEADER_TABS = new Set(['queues-activity', 'campaign-activity', 'dashboards']);
+/* Boards carries its own summary of the same figures, so the band would only
+   repeat it above. */
+const SHOW_KPI_HEADER_TABS = new Set(['queues-activity', 'campaign-activity']);
 
 /** One line under each heading saying what the view is actually showing. */
 const TAB_SUBTITLES: Record<string, string> = {
@@ -76,8 +82,9 @@ const TAB_SUBTITLES: Record<string, string> = {
   'campaign-activity': 'Outbound campaign progress and contact outcomes.',
   agents: 'Who is signed in, what they are on, and how their day is going.',
   interactions: 'Every call in the selected range, with wait, duration and charge.',
+  flows: 'IVR call flows on this account, and what routed through each one.',
   dashboards: 'Your saved views of this account.',
-  'live-interactions': 'Calls in progress right now.',
+  'live-interactions': 'Every call in progress, and who is free to take the next.',
   callbacks: 'Customers waiting for a call back.',
   'speech-text': 'What was said on the calls in this range.',
   reports: 'Scheduled and ad-hoc reporting across the contact centre.',
@@ -679,7 +686,10 @@ const Performance = () => {
           display:flex; align-items:flex-start; gap:12px 16px;
           flex-wrap:wrap; padding:13px 0 14px;
         }
-        .mcm-page .perf-head-main { min-width:0; }
+        /* Heading and actions share one row. The heading gives way first —
+           its subtitle wraps — so the range, chips and buttons only drop
+           beneath it once there truly isn't room for both. */
+        .mcm-page .perf-head-main { flex:1 1 260px; min-width:0; }
         .mcm-page .perf-head-title { display:flex; align-items:center; gap:7px; }
         /* The display face, loaded in index.css. Instrument Serif ships one
            weight, so 400 is the regular — never bolded, and the fallback stack
@@ -693,10 +703,11 @@ const Performance = () => {
         .mcm-page .perf-head-sub {
           margin:2px 0 0; max-width:56ch;
           font-size:13px; line-height:1.5; color:var(--ink-3);
+          text-wrap:balance;
         }
         .mcm-page .perf-head-actions {
           display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-          margin-left:auto; padding-top:2px;
+          flex:0 1 auto; margin-left:auto; padding-top:2px;
         }
         .mcm-page .perf-head-actions .fchip,
         .mcm-page .perf-head-actions .btn.sm { height:34px; border-radius:9px; }
@@ -923,8 +934,32 @@ const Performance = () => {
         {activeTab === 'interactions' && (
           <InteractionsTab selectedRange={selectedRange} rangePhrase={rangePhrase} />
         )}
-        {activeTab === 'dashboards' && <DashboardsTab />}
-        {activeTab === 'live-interactions' && <LiveInteractionsTab />}
+        {activeTab === 'flows' && <FlowsTab selectedRange={selectedRange} rangePhrase={rangePhrase} />}
+        {activeTab === 'dashboards' && (
+          <DashboardsTab
+            queues={queues}
+            activeQueueCalls={activeQueueCalls}
+            usersOnlineStatus={usersOnlineStatus || []}
+            agentRows={effectiveAgentRows}
+            avgSla={effectiveAvgSla}
+            callStats={effectiveCallStats}
+            selectedRange={selectedRange}
+            rangePhrase={rangePhrase}
+          />
+        )}
+        {activeTab === 'live-interactions' && (
+          // Live figures only: the real roster and the real average handle
+          // time, never the sample layered over quiet ranges elsewhere.
+          <LiveInteractionsTab
+            calls={activeQueueCalls}
+            queues={queues}
+            usersOnlineStatus={usersOnlineStatus || []}
+            agentRows={agentRows}
+            isAgentsLoading={isAgentsLoading}
+            avgHandleSec={callStats.avgHandleSec}
+            rangePhrase={rangePhrase}
+          />
+        )}
         {activeTab === 'callbacks' && <CallbacksTab />}
         {activeTab === 'speech-text' && <SpeechTextTab />}
         {activeTab === 'reports' && <ReportsTab selectedRange={selectedRange} />}

@@ -13,7 +13,13 @@ import {
 import TableManager from '@/components/custom/table-manager';
 import Timer from '@/components/timer';
 import CustomAvatar from '@/components/custom/custom-avatar';
-import buildAgentRows, { AGENT_STATES, type LiveAgentRow } from './agent-rows';
+import buildAgentRows, {
+  AGENT_GROUP_OF_STATE,
+  AGENT_GROUPS,
+  AGENT_STATES,
+  type AgentGroupKey,
+  type LiveAgentRow,
+} from './agent-rows';
 import { formatMinutesAsDuration, formatSecsToClock } from './format';
 import { PerfHero, PerfNotice, PerfSplit, PerfStat } from './perf-surface';
 
@@ -33,26 +39,11 @@ export type QueueMembership = {
   memberKeys: string[];
 };
 
-/* Seven live states read as four questions a supervisor actually asks: who is
-   taking a call, who could take one, who has stepped away, who isn't here. */
-type GroupKey = 'live' | 'available' | 'away' | 'offline';
-
-const GROUP_OF_STATE: Record<string, GroupKey> = {
-  'On Call': 'live',
-  Ringing: 'live',
-  'On Hold': 'live',
-  Available: 'available',
-  Busy: 'away',
-  'Do Not Disturb': 'away',
-  Offline: 'offline',
-};
-
-const GROUPS: { key: GroupKey; label: string; color: string }[] = [
-  { key: 'live', label: 'On a call', color: 'var(--accent)' },
-  { key: 'available', label: 'Available', color: 'var(--live)' },
-  { key: 'away', label: 'Away', color: 'var(--warn)' },
-  { key: 'offline', label: 'Offline', color: 'var(--ink-4)' },
-];
+/* The four groups come from agent-rows.ts, so Boards' agents ring reads the
+   floor exactly the way this page does. */
+type GroupKey = AgentGroupKey;
+const GROUP_OF_STATE = AGENT_GROUP_OF_STATE;
+const GROUPS = AGENT_GROUPS;
 
 /**
  * Scoped under `.mcm-page` so it reads the console's tokens — and Performance's

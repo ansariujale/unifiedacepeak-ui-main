@@ -26,7 +26,6 @@ import {
   Hash,
   Megaphone,
   CalendarClock,
-  Bot,
   Globe2,
   ChevronDown,
   CheckCircle2,
