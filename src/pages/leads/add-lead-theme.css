@@ -125,8 +125,10 @@
   border-radius: 8px !important;
   min-height: 40px !important;
   font-size: 13.5px !important;
-  width: 95% !important;
-  max-width: 95% !important;
+  width: 90% !important;
+  max-width: 90% !important;
+  padding-left: 12px !important;
+  padding-right: 16px !important;
 }
 .leads-add-lead-theme .contact-dob-trigger[data-slot='button']:hover {
   border-color: #fca5a5 !important;

@@ -37,9 +37,17 @@ export function CustomDatePicker({
      the popover (re)opens, so a previous unconfirmed pick never leaks
      into the next time this is opened. */
   const [draft, setDraft] = useState<Date | undefined>(value ?? undefined);
+  /* `value` is rebuilt as a fresh Date object on every parent render
+     (moment(...).toDate() never returns the same instance twice), so
+     depending on `value` itself re-fired this effect — and reset the
+     in-progress pick — on almost every render while the popover was
+     open, not just when the committed value actually changed. Keying
+     off the timestamp instead only resyncs when the real value moves. */
+  const valueTime = value ? value.getTime() : null;
   useEffect(() => {
     if (open) setDraft(value ?? undefined);
-  }, [open, value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, valueTime]);
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -57,7 +65,7 @@ export function CustomDatePicker({
             variant="outline"
             disabled={disabled}
             className={cn(
-              'w-full justify-between text-left font-normal p-0 border-gray-300 text-gray-900 hover:bg-white hover:border-primary hover:text-gray-900 gap-2',
+              'w-full justify-between text-left font-normal px-3 border-gray-300 text-gray-900 hover:bg-white hover:border-primary hover:text-gray-900 gap-2',
               error && 'border-red-500 hover:border-red-500',
               className,
             )}
@@ -81,6 +89,14 @@ export function CustomDatePicker({
             selected={draft}
             onSelect={setDraft}
             initialFocus
+            /* Keeps the year/month dropdown from ever offering a year
+               that's entirely disabled (e.g. Start Date can't predate
+               today, so nothing before this year is pickable anyway) —
+               without this, navigating into a fully-disabled year looks
+               like a broken picker when really every day in it is
+               correctly blocked by `disabled` below. */
+            fromYear={minDate?.getFullYear()}
+            toYear={maxDate?.getFullYear()}
             disabled={(date) => {
               if (minDate && moment(date).isBefore(moment(minDate).startOf('day'))) return true;
               if (maxDate && moment(date).isAfter(moment(maxDate).endOf('day'))) return true;

@@ -487,26 +487,12 @@ const SettingsAndPermission = ({ campaignStatus }: { campaignStatus: string }) =
                           { enabled: nextChecked },
                           { shouldDirty: true, shouldValidate: true },
                         );
-                        if (nextChecked) {
-                          setValue(
-                            'settings.transcription',
-                            { enabled: true },
-                            { shouldDirty: true, shouldValidate: true },
-                          );
-                        }
                       } else {
                         setValue(
                           'settings.transcription',
                           { enabled: nextChecked },
                           { shouldDirty: true, shouldValidate: true },
                         );
-                        if (!nextChecked) {
-                          setValue(
-                            'settings.ai_call_monitoring',
-                            { enabled: false },
-                            { shouldDirty: true, shouldValidate: true },
-                          );
-                        }
                       }
                     }}
                   />

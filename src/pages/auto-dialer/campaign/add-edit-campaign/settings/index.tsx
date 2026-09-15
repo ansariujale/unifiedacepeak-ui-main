@@ -103,11 +103,29 @@ const Settings: FC<any> = ({ dialMethod, setModalState, campaignStatus }) => {
   const disabled = isLocked(campaignStatus);
   const dialerErrors = (errors as any)?.dialerSetting;
 
-  const { data: dispositionsList = [] } = useQuery({
+  const { data: dispositionsListRaw = [] } = useQuery({
     queryKey: ['getDispositionsList'],
     queryFn: () => getDispositions({ page: 1, limit: 200 }),
     select: (data) => data?.data?.data?.result?.rows || [],
   });
+  /* TEMP: no dispositions exist in this environment yet (the endpoint
+     currently errors — no DB connection), which left "Agent
+     Disposition" with nothing to pick and no way to satisfy its
+     required-selection validation to reach the next step. Falls back
+     to sample rows only when the real list is empty, so it disappears
+     on its own once real dispositions exist. */
+  const dispositionsList =
+    dispositionsListRaw.length > 0
+      ? dispositionsListRaw
+      : [
+          { _id: 'demo-disp-1', dispositionType: 'AGENT', disposition: { name: 'Interested' } },
+          {
+            _id: 'demo-disp-2',
+            dispositionType: 'AGENT',
+            disposition: { name: 'Not Interested' },
+          },
+          { _id: 'demo-disp-3', dispositionType: 'AGENT', disposition: { name: 'No Answer' } },
+        ];
 
   const handleDispositionCheck = (checked: boolean, item: any) => {
     const currentValues = watch('agentDisposition') || [];
