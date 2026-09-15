@@ -407,7 +407,15 @@ const AgentChat = ({
           {/* Left: welcome hero */}
           <div className="w-full lg:flex-1">
             <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">
-              <span className="mcm-wave-hand -my-3 -ml-1 text-[40px] leading-none" aria-hidden>
+              <span
+                className="mcm-wave-hand leading-none"
+                style={{
+                  fontSize: 'clamp(20px, 6vw, 40px)',
+                  marginBlock: '-0.3em',
+                  marginLeft: '-0.1em',
+                }}
+                aria-hidden
+              >
                 👋
               </span>
               Welcome back, {firstName}!

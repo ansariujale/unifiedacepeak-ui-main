@@ -600,7 +600,7 @@ const CallRecord = ({
   return (
     <div className="record-view">
       {/* ---- contact header ---- */}
-      <div className="record-head">
+      <div className="record-head" style={{ borderBottom: 'none' }}>
         <button type="button" className="rec-back" onClick={onBack} title="Back to dialer">
           <Ic n="chev" size={16} className="flip" />
         </button>
@@ -619,20 +619,70 @@ const CallRecord = ({
         <div className="record-head-acts">
           <button
             type="button"
-            className="rec-callback"
+            aria-label="Call back"
+            title="Call back"
             disabled={!row.number}
             onClick={() => {
               rememberDialLabel(row.number, row.name);
               dial(row.number);
             }}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              display: 'grid',
+              placeItems: 'center',
+              border: '1px solid var(--line)',
+              background: '#fff',
+              color: 'var(--ink-2)',
+              cursor: row.number ? 'pointer' : 'not-allowed',
+              opacity: row.number ? 1 : 0.5,
+            }}
           >
             <Ic n="phone" size={15} />
-            Call back
           </button>
-          <button type="button" className="rec-message" onClick={() => navigate('/inbox')}>
+          <button
+            type="button"
+            aria-label="Message"
+            title="Message"
+            onClick={() => navigate('/inbox')}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              display: 'grid',
+              placeItems: 'center',
+              border: '1px solid var(--line)',
+              background: '#fff',
+              color: 'var(--ink-2)',
+              cursor: 'pointer',
+            }}
+          >
             <Ic n="chat" size={15} />
-            Message
           </button>
+          {/* Add contact only when the number isn't already saved — a saved
+              contact already carries a name, so `row.contactId` decides. */}
+          {!row.contactId ? (
+            <button
+              type="button"
+              aria-label="Add contact"
+              title="Add contact"
+              onClick={() => navigate('/contact', { state: { number: row.number } })}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                display: 'grid',
+                placeItems: 'center',
+                border: '1px solid var(--line)',
+                background: '#fff',
+                color: 'var(--ink-2)',
+                cursor: 'pointer',
+              }}
+            >
+              <Ic n="plus" size={15} />
+            </button>
+          ) : null}
         </div>
       </div>
 

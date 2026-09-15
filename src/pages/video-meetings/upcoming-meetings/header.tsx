@@ -53,10 +53,6 @@ const MeetingHeader = ({ formInstance }: any) => {
           <div className="w-full whitespace-nowrap text-xl sm:text-2xl font-bold leading-tight text-gray-900">
             Connect, Collaborate, <span className="text-primary">Get More Done</span>
           </div>
-          <div className="w-full text-[12.5px] leading-5 text-gray-500">
-            Start, schedule, or join high-quality video meetings with your team and clients.
-            Secure, reliable, and built for seamless collaboration.
-          </div>
           <div className="flex w-full flex-nowrap items-center gap-2 pt-1">
             {videAccess?.create && (
               <button

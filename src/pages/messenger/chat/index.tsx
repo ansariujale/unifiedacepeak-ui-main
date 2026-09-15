@@ -5396,7 +5396,7 @@ const ChatWorkspace = ({
         {/* Contact info, files, pinned and the rest open beside the
             conversation rather than replacing it. */}
         {isAuxSidebarOpen ? (
-          <div className="flex w-full min-w-0 min-h-0 flex-col overflow-hidden bg-white lg:w-[var(--mcm-side-panel-w)] lg:min-w-[var(--mcm-side-panel-w)] lg:max-w-[var(--mcm-side-panel-w)] lg:border-l lg:border-gray-200">
+          <div className="flex w-full min-w-0 min-h-0 flex-col overflow-hidden bg-white lg:w-[380px] lg:min-w-[380px] lg:max-w-[380px] lg:border-l lg:border-gray-200">
             {chatFeatures.canUseSidebarActions && sidePanelMode === 'notes' ? (
               <NotesList selectedChat={currentChat} setActiveState={setSidePanelMode} />
             ) : null}

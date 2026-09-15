@@ -437,7 +437,7 @@ const CreateTeamChat = ({
               />
 
               <div className="grid flex-1 grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium">Team name</label>
                     <div className="flex items-center gap-2">
@@ -459,24 +459,22 @@ const CreateTeamChat = ({
                   />
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <CustomSelect
-                    label={'Members'}
-                    isMulti
-                    options={formattedMembers}
-                    value={members}
-                    handleChange={(val: any) => setValue('members', val, { shouldValidate: true })}
-                    placeholder="Search by name..."
-                    error={membersErrorMessage}
-                    inputClass="team_chat"
-                    FormatOptionLabel={ExtensionListView}
-                    isLoading={isLoadingUsers || isFetchingNextPage}
-                    onInputChange={setUserSearch}
-                    onMenuScrollToBottom={() => {
-                      if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-                    }}
-                  />
-                </div>
+                <CustomSelect
+                  label={'Members'}
+                  isMulti
+                  options={formattedMembers}
+                  value={members}
+                  handleChange={(val: any) => setValue('members', val, { shouldValidate: true })}
+                  placeholder="Search by name..."
+                  error={membersErrorMessage}
+                  inputClass="team_chat"
+                  FormatOptionLabel={ExtensionListView}
+                  isLoading={isLoadingUsers || isFetchingNextPage}
+                  onInputChange={setUserSearch}
+                  onMenuScrollToBottom={() => {
+                    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+                  }}
+                />
               </div>
             </div>
 
