@@ -339,7 +339,7 @@ const CompanyInfo = () => {
                     </div>
                   </div>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+                      <div className="rounded-lg bg-white p-3">
                         <p className="flex items-center gap-1 text-[11px] font-semibold capitalize tracking-wide text-gray-500">
                           <Globe className="h-3 w-3" />
                           Country
@@ -348,7 +348,7 @@ const CompanyInfo = () => {
                           {defaultSite?.country || '---'}
                         </p>
                       </div>
-                      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+                      <div className="rounded-lg bg-white p-3">
                         <p className="flex items-center gap-1 text-[11px] font-semibold capitalize tracking-wide text-gray-500">
                           <Map className="h-3 w-3" />
                           State
@@ -357,7 +357,7 @@ const CompanyInfo = () => {
                           {defaultSite?.state || '---'}
                         </p>
                       </div>
-                      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+                      <div className="rounded-lg bg-white p-3">
                         <p className="flex items-center gap-1 text-[11px] font-semibold capitalize tracking-wide text-gray-500">
                           <Building2 className="h-3 w-3" />
                           City
@@ -366,7 +366,7 @@ const CompanyInfo = () => {
                           {defaultSite?.city || '---'}
                         </p>
                       </div>
-                      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+                      <div className="rounded-lg bg-white p-3">
                         <p className="flex items-center gap-1 text-[11px] font-semibold capitalize tracking-wide text-gray-500">
                           <Hash className="h-3 w-3" />
                           Postal Code
@@ -375,7 +375,7 @@ const CompanyInfo = () => {
                           {defaultSite?.postal_code || '---'}
                         </p>
                       </div>
-                      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+                      <div className="rounded-lg bg-white p-3">
                         <p className="flex items-center gap-1 text-[11px] font-semibold capitalize tracking-wide text-gray-500">
                           <Clock className="h-3 w-3" />
                           Timezone
@@ -586,7 +586,7 @@ const CompanyInfo = () => {
                         </div>
                       </div>
                       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+                        <div className="rounded-lg bg-white p-3">
                           <p className="flex items-center gap-1 text-[11px] font-semibold capitalize tracking-wide text-gray-500">
                             <Globe className="h-3 w-3" />
                             Country
@@ -595,7 +595,7 @@ const CompanyInfo = () => {
                             {site?.country || '---'}
                           </p>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+                        <div className="rounded-lg bg-white p-3">
                           <p className="flex items-center gap-1 text-[11px] font-semibold capitalize tracking-wide text-gray-500">
                             <Map className="h-3 w-3" />
                             State
@@ -604,7 +604,7 @@ const CompanyInfo = () => {
                             {site?.state || '---'}
                           </p>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+                        <div className="rounded-lg bg-white p-3">
                           <p className="flex items-center gap-1 text-[11px] font-semibold capitalize tracking-wide text-gray-500">
                             <Building2 className="h-3 w-3" />
                             City
@@ -613,7 +613,7 @@ const CompanyInfo = () => {
                             {site?.city || '---'}
                           </p>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+                        <div className="rounded-lg bg-white p-3">
                           <p className="flex items-center gap-1 text-[11px] font-semibold capitalize tracking-wide text-gray-500">
                             <Hash className="h-3 w-3" />
                             Postal Code
@@ -622,7 +622,7 @@ const CompanyInfo = () => {
                             {site?.postal_code || '---'}
                           </p>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+                        <div className="rounded-lg bg-white p-3">
                           <p className="flex items-center gap-1 text-[11px] font-semibold capitalize tracking-wide text-gray-500">
                             <Clock className="h-3 w-3" />
                             Timezone

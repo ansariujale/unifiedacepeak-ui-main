@@ -7,8 +7,10 @@ import { Ic } from '@/components/mcm/icons';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import NewDepartment from '@/pages/admin-settings/phone-systems/departments/new-department';
 import { DirectoryPage, EmptyRow, SearchChip, TableFooter } from './page-shell';
-import { InfoIcon } from 'lucide-react';
+import { InfoIcon, UsersRound } from 'lucide-react';
 import CustomTooltip from '@/components/custom/custom-tooltip';
+import { useUser } from '@/hooks/use-user';
+import '@/components/mcm/wizard-shell.css';
 import './groups-theme.css';
 
 /**
@@ -59,6 +61,7 @@ const DUMMY_GROUP_ROWS = [
 
 const Groups = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
 
@@ -238,28 +241,21 @@ const Groups = () => {
           means create rather than edit. */}
       {creating && (
         <Dialog open={creating} onOpenChange={(val) => !val && setCreating(false)}>
-          <DialogContent className="grp-create-dialog flex w-[92vw] max-w-[760px] max-h-[85vh] flex-col gap-0 overflow-hidden p-0">
-            <DialogTitle className="dir-serif-heading flex items-center gap-2 px-5 py-4 text-gray-900">
-              Create group
-              <CustomTooltip
-                text={
-                  <>
-                    Create a department to organize your
-                    <br />
-                    company's workflow. This allows you to route
-                    <br />
-                    calls to specific teams (e.g., Support or Billing)
-                    <br />
-                    and assign multiple users to a single extension.
-                  </>
-                }
-                side="right"
-                className="whitespace-normal text-left"
-              >
-                <InfoIcon className="w-4 h-4 text-gray-500 cursor-pointer" />
-              </CustomTooltip>
-            </DialogTitle>
-            <div className="grp-create-theme min-h-0 flex-1 overflow-hidden px-5 pb-5">
+          <DialogContent className="grp-create-dialog mcm-group-modal flex flex-col gap-0 overflow-hidden p-0">
+            {/* The mark, the name and which company's departments these are —
+                the same header the Invite people wizard opens with. */}
+            <header className="wz-head">
+              <span className="wz-head-mark" aria-hidden="true">
+                <UsersRound />
+              </span>
+              <div className="min-w-0">
+                <DialogTitle className="wz-head-title">Create group</DialogTitle>
+                <p className="wz-head-sub">
+                  {[user?.company_info?.name, 'Departments'].filter(Boolean).join(' · ')}
+                </p>
+              </div>
+            </header>
+            <div className="grp-create-theme min-h-0 flex-1 overflow-hidden">
               <NewDepartment rowData={{}} setDrawerState={setCreating} />
             </div>
           </DialogContent>

@@ -602,7 +602,7 @@ const Sidebar = ({ collapsed = false }: { collapsed?: boolean }) => {
                   {...getRoutePrefetchHandlers(prefetchPath)}
                   className={`flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors ${
                     isCurrent
-                      ? 'border-primary bg-ucass-primary-200/60 text-primary'
+                      ? 'border-[#dc2626] bg-[#fee2e2] text-[#dc2626]'
                       : 'border-gray-200 bg-white text-gray-700'
                   } ${item?.enabled === false ? 'cursor-not-allowed opacity-60' : ''}`}
                   disabled={item?.enabled === false}
@@ -645,7 +645,7 @@ const Sidebar = ({ collapsed = false }: { collapsed?: boolean }) => {
                       disabled={enabled === false}
                       className={`flex min-h-11 w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left text-sm font-medium last:border-b-0 ${
                         isChildActive
-                          ? 'bg-ucass-primary-200/50 text-primary'
+                          ? 'bg-[#fee2e2] text-[#dc2626]'
                           : 'bg-white text-gray-700'
                       } ${enabled === false ? 'cursor-not-allowed opacity-60' : ''}`}
                     >
@@ -730,7 +730,7 @@ const Sidebar = ({ collapsed = false }: { collapsed?: boolean }) => {
                         {...(isPeopleArea
                           ? {
                               activeClassName:
-                                '[&>button[data-state=open]]:bg-red-50 [&>button[data-state=open]]:text-red-600 [&>button[data-state=open]]:border-r-red-600 [&>button[data-state=open]]:border-r-2',
+                                '[&[data-state=open]]:bg-red-50 [&[data-state=open]]:text-red-600 [&[data-state=open]]:border-r-red-600 [&[data-state=open]]:border-r-2 hover:bg-red-50 hover:text-red-600',
                               activeIconClassName: 'text-red-600',
                             }
                           : {})}
@@ -760,7 +760,7 @@ const Sidebar = ({ collapsed = false }: { collapsed?: boolean }) => {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent
-                        className={`border md:border-0 z-10 relative bg-white ${isPeopleArea ? 'md:bg-red-50/40' : 'md:bg-ucass-primary-200/20'}`}
+                        className={`border md:border-0 z-10 relative bg-white ${isPeopleArea ? 'md:bg-red-50/40' : 'md:bg-[#fee2e2]/20'}`}
                       >
                         {visibleChildren?.map(
                           ({ title, path, icon, extraActiveTab, enabled }: any, index: number) => {
@@ -815,7 +815,7 @@ const Tile = ({
   );
   return (
     <div
-      className={`flex items-center w-full px-3 min-h-14 h-14 gap-2 cursor-pointer transition-colors ${isActive ? 'text-gray-900 bg-gray-100 border-r-gray-400 border-r-2' : 'text-gray-900/80 hover:bg-red-50 hover:text-red-600'} ${nested ? 'pl-10' : ''} ${!isEnabled ? 'text-gray-400 opacity-60' : ''}`}
+      className={`flex items-center w-full px-3 min-h-14 h-14 gap-2 cursor-pointer transition-colors ${isActive ? 'text-[#dc2626] bg-[#fee2e2] border-r-[#dc2626] border-r-2' : 'text-gray-900/80 hover:bg-[#fee2e2] hover:text-[#dc2626]'} ${nested ? 'pl-10' : ''} ${!isEnabled ? 'text-gray-400 opacity-60' : ''}`}
       {...getRoutePrefetchHandlers(path)}
       onClick={() => {
         if (!isEnabled || !path) return;

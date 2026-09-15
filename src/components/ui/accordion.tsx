@@ -29,8 +29,8 @@ function AccordionTrigger({
   triggerIcon = true,
   /* Lets one sidebar section (e.g. People) show its active state in a
      different colour than the rest, without recolouring every accordion. */
-  activeClassName = '[&>button[data-state=open]]:bg-ucass-primary-200/50 [&>button[data-state=open]]:text-primary [&>button[data-state=open]]:border-r-primary [&>button[data-state=open]]:border-r-2',
-  activeIconClassName = 'text-primary',
+  activeClassName = '[&[data-state=open]]:bg-[#fee2e2] [&[data-state=open]]:text-[#dc2626] [&[data-state=open]]:border-r-[#dc2626] [&[data-state=open]]:border-r-2 hover:bg-[#fee2e2] hover:text-[#dc2626]',
+  activeIconClassName = 'text-[#dc2626]',
   ...props
 }: React.ComponentProps<typeof AccordionPrimitive.Trigger> & {
   isActive?: boolean;
@@ -43,7 +43,7 @@ function AccordionTrigger({
 
   return (
     <AccordionPrimitive.Header
-      className={cn('flex', isSidebar && cn('text-gray-900/80', activeClassName))}
+      className={cn('flex', isSidebar && 'text-gray-900/80')}
     >
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
@@ -51,6 +51,7 @@ function AccordionTrigger({
           isSidebar
             ? 'focus-visible:border-ring rounded-none focus-visible:ring-ring/50 flex flex-1 items-start justify-between gap-4 py-4 text-left text-sm font-medium transition-all outline-none hover:underline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180'
             : 'focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180',
+          isSidebar && activeClassName,
           className,
         )}
         {...props}

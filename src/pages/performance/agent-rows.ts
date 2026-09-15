@@ -73,6 +73,36 @@ export const AGENT_STATES = [
 
 export type AgentState = (typeof AGENT_STATES)[number];
 
+/* Seven live states read as four questions a supervisor actually asks: who is
+   taking a call, who could take one, who has stepped away, who isn't here. */
+export type AgentGroupKey = 'live' | 'available' | 'away' | 'offline';
+
+export const AGENT_GROUP_OF_STATE: Record<string, AgentGroupKey> = {
+  'On Call': 'live',
+  Ringing: 'live',
+  'On Hold': 'live',
+  Available: 'available',
+  Busy: 'away',
+  'Do Not Disturb': 'away',
+  Offline: 'offline',
+};
+
+export const AGENT_GROUPS: { key: AgentGroupKey; label: string; color: string }[] = [
+  { key: 'live', label: 'On a call', color: 'var(--accent)' },
+  { key: 'available', label: 'Available', color: 'var(--live)' },
+  { key: 'away', label: 'Away', color: 'var(--warn)' },
+  { key: 'offline', label: 'Offline', color: 'var(--ink-4)' },
+];
+
+export const countAgentGroups = (rows: { status: string }[]) =>
+  rows.reduce(
+    (counts, row) => {
+      counts[AGENT_GROUP_OF_STATE[row.status] || 'offline'] += 1;
+      return counts;
+    },
+    { live: 0, available: 0, away: 0, offline: 0 } as Record<AgentGroupKey, number>,
+  );
+
 export type LiveAgentRow = {
   name: string;
   extension: string | undefined;
@@ -110,7 +140,10 @@ export const buildAgentRows = ({
     const answeredToday = typeof stats.answered_calls === 'number' ? stats.answered_calls : 0;
     const timeOnCalls =
       typeof stats.time_on_calls_minutes === 'number' ? stats.time_on_calls_minutes : 0;
-    const aht = answeredToday ? timeOnCalls / answeredToday : null;
+    /* Seconds per answered call, the unit every reader formats it in.
+       `time_on_calls_minutes` is minutes, so dividing it straight by the call
+       count read a five-and-a-half minute average as "00:05". */
+    const aht = answeredToday ? (timeOnCalls * 60) / answeredToday : null;
     const matchKeys = [agent?.uuid, agent?.user_uuid, extension]
       .filter(Boolean)
       .map((value) => String(value));

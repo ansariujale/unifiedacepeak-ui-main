@@ -31,10 +31,17 @@ export const usePerformanceCallStats = (
   const agentKey = (entities?.agents || []).map((a) => a.extension).join(',');
 
   return useMemo(() => {
-    if (real.totalCalls > 0) return real;
+    /* `isSample` lets a view say the figures are demo data rather than pass
+       them off as the account's own; `isRealPending` says the real query hasn't
+       answered yet, so "this range has no calls" isn't actually known. */
+    if (real.totalCalls > 0) return { ...real, isSample: false, isRealPending: real.isPending };
     const rows = buildDummyCdrRows(entities?.queues || [], entities?.agents || []);
     const summary = buildDummyCallStatsSummary(rows);
-    return computeCallStats(rows, summary, rows.length, false);
+    return {
+      ...computeCallStats(rows, summary, rows.length, false),
+      isSample: true,
+      isRealPending: real.isPending,
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [real, queueKey, agentKey]);
 };

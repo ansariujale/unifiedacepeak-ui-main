@@ -5,6 +5,17 @@ export const formatSecsToClock = (totalSeconds: number) => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
+/** Minutes as hours and minutes — "8h 20m", "45m". For totals that outgrow a
+ *  mm:ss clock, which has no hours and printed 500 minutes as "500:00". */
+export const formatMinutesAsDuration = (totalMinutes: number) => {
+  if (!Number.isFinite(totalMinutes) || totalMinutes < 0) return '—';
+  const rounded = Math.round(totalMinutes);
+  const hours = Math.floor(rounded / 60);
+  const minutes = rounded % 60;
+  if (!hours) return `${minutes}m`;
+  return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
+};
+
 export const formatPercent = (numerator: number, denominator: number) => {
   if (!denominator) return '—';
   return `${Math.round((numerator / denominator) * 100)}%`;

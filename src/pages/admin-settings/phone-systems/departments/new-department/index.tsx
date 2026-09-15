@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -31,9 +30,9 @@ import { SETTINGS } from '@/components/common-settings/constants';
 import CommonSettingPermission from '@/components/common-settings';
 import Media from './media';
 import { DEPARTMENT_TAB_CONSTANT } from './consts';
-import { Ic } from '@/components/mcm/icons';
 import { requiredString } from '@/lib/schema';
 import { useGetSite } from '@/hooks/common';
+import '@/components/mcm/wizard-shell.css';
 
 const baseValueSchema = yup.object({
   label: yup.string(),
@@ -503,103 +502,79 @@ const NewDepartment = ({ rowData, setDrawerState, setTabData }: any) => {
   }, [rowData, isEdit, user_info]);
   return (
     <>
-      <div className="flex h-full min-h-0 w-full flex-col justify-between gap-3 pt-2 sm:pt-3">
-        <nav className="flex flex-wrap items-center gap-1 overflow-x-auto border-b border-gray-200 pb-3">
-          {TABS_ORDER.map((tabValue, index) => (
-            <span key={tabValue} className="flex shrink-0 items-center gap-1">
-              {index > 0 && <Ic n="chev" size={14} className="text-gray-300" />}
+      <div className="wz-shell">
+        <FormProvider {...formInstance}>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+            <div className="wz-body">
+              {/* The five steps, down the side rather than across the top: at
+                  five they no longer fit on one line, and a step's own name is
+                  long enough to want a line of its own. */}
+              <aside className="wz-rail">
+                <ol className="wz-steps">
+                  {TABS_ORDER.map((tabValue, index) => {
+                    const isOn = currentStep === tabValue;
+                    return (
+                      <li key={tabValue}>
+                        <button
+                          type="button"
+                          onClick={() => handleTabChange(tabValue)}
+                          /* Every step takes a click: `handleTabChange`
+                             validates each step in between before letting you
+                             jump forward, and refuses if one of them fails. */
+                          className={`wz-step is-done${isOn ? ' is-on' : ''}`}
+                          aria-current={isOn ? 'step' : undefined}
+                        >
+                          <span className="wz-step-n">{index + 1}</span>
+                          <span className="min-w-0">
+                            <span className="wz-step-t">{tabValue}</span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </aside>
+
+              <main className="wz-main">
+                {currentStep === DEPARTMENT_TAB_CONSTANT.BASIC_INFORMATION ? (
+                  <p className="wz-section-d">
+                    Create a department to organize your company's workflow. This allows you to
+                    route calls to specific teams (e.g. Support or Billing) and assign multiple
+                    users to a single extension so they can handle incoming calls together.
+                  </p>
+                ) : (
+                  <h3 className="wz-section-t mb-4">{currentStep}</h3>
+                )}
+                {stepLookUp?.[currentStep]}
+              </main>
+            </div>
+
+            <div className="wz-foot">
               <button
                 type="button"
-                onClick={() => handleTabChange(tabValue)}
-                className={
-                  currentStep === tabValue
-                    ? 'text-sm font-medium text-gray-900 whitespace-nowrap'
-                    : 'text-sm font-normal text-gray-400 whitespace-nowrap hover:text-gray-600'
-                }
+                className="wz-btn wz-btn--ghost"
+                onClick={() => setDrawerState(false)}
               >
-                {tabValue}
+                Cancel
               </button>
-            </span>
-          ))}
-        </nav>
-        <FormProvider {...formInstance}>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex h-full min-h-0 w-full flex-col justify-between gap-4"
-          >
-            <div className="min-h-0 flex-1 overflow-y-auto pr-1">{stepLookUp?.[currentStep]}</div>
-            <div className="border-t border-gray-200 pt-2 sm:pt-3">
-              <div className="hidden items-center justify-between gap-2 lg:flex">
-                <Button variant={'transparent'} type="button" onClick={() => setDrawerState(false)}>
-                  Cancel
-                </Button>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={'outline'}
-                    type="button"
-                    className="grp-prev-btn"
-                    onClick={handlePrev}
-                    disabled={currentStep === TABS_ORDER[0]}
-                  >
-                    Prev
-                  </Button>
-                  {currentStep !== DEPARTMENT_TAB_CONSTANT.GREETING_NOTIFICATION && (
-                    <Button
-                      variant={'outline'}
-                      type="button"
-                      className="grp-next-btn"
-                      onClick={handleNext}
-                    >
-                      Next
-                    </Button>
-                  )}
-                  {currentStep === DEPARTMENT_TAB_CONSTANT.GREETING_NOTIFICATION && (
-                    <Button variant={'primary'} type="submit" disabled={isPending}>
-                      {isPending ? 'Submiting...' : 'Submit'}
-                    </Button>
-                  )}
-                </div>
-              </div>
-              <div className="overflow-x-auto overflow-y-hidden pb-1 lg:hidden">
-                <div className="flex min-w-max items-center gap-2">
-                  <Button
-                    variant={'transparent'}
-                    type="button"
-                    onClick={() => setDrawerState(false)}
-                    className="shrink-0"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant={'outline'}
-                    type="button"
-                    onClick={handlePrev}
-                    disabled={currentStep === TABS_ORDER[0]}
-                    className="grp-prev-btn shrink-0"
-                  >
-                    Prev
-                  </Button>
-                  {currentStep !== DEPARTMENT_TAB_CONSTANT.GREETING_NOTIFICATION && (
-                    <Button
-                      variant={'outline'}
-                      type="button"
-                      onClick={handleNext}
-                      className="grp-next-btn shrink-0"
-                    >
-                      Next
-                    </Button>
-                  )}
-                  {currentStep === DEPARTMENT_TAB_CONSTANT.GREETING_NOTIFICATION && (
-                    <Button
-                      variant={'primary'}
-                      type="submit"
-                      disabled={isPending}
-                      className="shrink-0"
-                    >
-                      {isPending ? 'Submiting...' : 'Submit'}
-                    </Button>
-                  )}
-                </div>
+              <div className="wz-foot-end">
+                <button
+                  type="button"
+                  className="wz-btn wz-btn--soft"
+                  onClick={handlePrev}
+                  disabled={currentStep === TABS_ORDER[0]}
+                >
+                  Prev
+                </button>
+                {currentStep !== DEPARTMENT_TAB_CONSTANT.GREETING_NOTIFICATION ? (
+                  <button type="button" className="wz-btn wz-btn--primary" onClick={handleNext}>
+                    Next
+                  </button>
+                ) : (
+                  <button type="submit" className="wz-btn wz-btn--primary" disabled={isPending}>
+                    {isPending ? 'Submitting...' : 'Submit'}
+                  </button>
+                )}
               </div>
             </div>
           </form>

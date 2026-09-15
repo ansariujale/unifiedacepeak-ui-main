@@ -120,8 +120,8 @@ const CompanySettingsCard = () => {
           className="rounded-full"
           onClick={() => navigate(COMPANY_RULES_PATH)}
         >
-          {hasDefaults ? 'Edit' : 'Set up'}
           <Pencil className="h-3.5 w-3.5" />
+          {hasDefaults ? 'Edit' : 'Set up'}
         </Button>
       </div>
 
