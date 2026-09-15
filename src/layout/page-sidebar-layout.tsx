@@ -1,10 +1,10 @@
 import { cloneElement, isValidElement, useState } from 'react';
 import { ChevronIcon } from '@/assets/icons';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import CustomTooltip from '@/components/custom/custom-tooltip';
-import AcepeakLogo from '@/assets/images/Logo.svg';
-import AcepeakLogoIcon from '@/assets/images/LogoIcon.svg';
+/* The wordmark on its own. The full lockup (`Logo.svg`) leads with the circular
+   mark, which sat directly above the rail's own icon column and read as one
+   more nav icon rather than as the brand. */
+import AcepeakWordmark from '@/assets/images/LogoWordmark.png';
 
 const PageSidebarLayout = ({
   title = '',
@@ -92,66 +92,44 @@ const PageSidebarLayout = ({
                   : 'md:min-w-[16rem] md:max-w-[16rem] w-full xs:max-h-32 md:max-h-full',
       )}
     >
-      {/* Admin Hub toggles from its own title instead of this floating
-          button — see the header below, which carries the same onClick. */}
-      {!isAdminResponsiveTopbar && (
-        <button
-          onClick={() => setCollapsed(!collapsed)}
+      {/* The toggle rides the divider between the panel and the body, and only
+          shows itself once you are on the panel — every side panel in the app
+          opens and closes from the same spot, Admin Hub included. */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        /* A solid chip, not a bare chevron: sitting on the divider with the
+           page behind it, an outline-only button had nothing to read against
+           and disappeared into whatever it happened to overlap. */
+        className={cn(
+          'absolute z-30 top-10 -right-3 h-6 w-6 items-center justify-center transition-all ease-in-out duration-200 border rounded-full shadow-md cursor-pointer hidden',
+          isCampaignResponsiveTopbar || isAdminResponsiveTopbar ? 'lg:flex' : 'md:flex',
+          collapsed || hovered
+            ? 'opacity-100 pointer-events-auto'
+            : 'opacity-0 pointer-events-none',
+          hovered
+            ? 'bg-primary border-primary text-white'
+            : 'bg-white border-gray-300 text-gray-600',
+        )}
+      >
+        <ChevronIcon
           className={cn(
-            'absolute z-30 top-10 -right-3 transition-all ease-in-out duration-200 border border-gray-200 rounded-full p-0.5 cursor-pointer hidden',
-            isCampaignResponsiveTopbar ? 'lg:flex' : 'md:flex',
-            collapsed || hovered
-              ? 'opacity-100 pointer-events-auto'
-              : 'opacity-0 pointer-events-none',
-            hovered ? 'bg-primary text-white' : 'bg-white text-gray-600',
+            'w-4 h-4 transition-transform duration-200',
+            collapsed ? '-rotate-90' : 'rotate-90',
           )}
-        >
-          <ChevronIcon
-            className={cn(
-              'w-5 h-5 transition-transform duration-200',
-              collapsed ? '-rotate-90' : 'rotate-90',
-            )}
-          />
-        </button>
-      )}
+        />
+      </button>
 
       <div className={cn('flex flex-col', fullHeightOnMobile ? 'h-full' : 'h-auto sm:h-full')}>
         {(title || action) && isAdminResponsiveTopbar ? (
-          // Both states stay mounted the whole time and are absolutely
-          // stacked on top of each other, crossfading via CSS
-          // (`data-rail-collapsed`) — the version above swapped one for the
-          // other with a React conditional, which unmounts/mounts a
-          // different DOM node instead of transitioning an existing one, so
-          // no CSS transition could ever smooth it. This can't jump because
-          // there's nothing to jump: only opacity changes.
+          // The wordmark stays mounted and fades with the rail's own width
+          // (`data-rail-collapsed`) rather than being swapped by a React
+          // conditional — an unmount/mount is a different DOM node, which no
+          // CSS transition can smooth. Collapsed, the row closes to nothing
+          // and the nav below takes the space back.
           <div className="relative mcm-adminnav-headerwrap">
-            <CustomTooltip text={title} side="right">
-              <button
-                type="button"
-                onClick={() => setCollapsed(!collapsed)}
-                className="mcm-adminnav-header-collapsed absolute inset-0 flex cursor-pointer items-center justify-center"
-                aria-label="Expand sidebar"
-              >
-                <img src={AcepeakLogoIcon} alt="Acepeak" className="h-7 w-7 object-contain" />
-              </button>
-            </CustomTooltip>
-            <div className="mcm-adminnav-header-expanded absolute inset-0 flex items-center justify-center p-3 pr-10">
-              <img src={AcepeakLogo} alt="Acepeak" className="h-10 w-auto" />
-              {action && (
-                <div className="absolute right-12 flex items-center">{action}</div>
-              )}
-              <button
-                type="button"
-                onClick={() => setCollapsed(!collapsed)}
-                className="absolute right-3 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-                aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              >
-                {collapsed ? (
-                  <PanelLeftOpen className="w-4.5 h-4.5" />
-                ) : (
-                  <PanelLeftClose className="w-4.5 h-4.5" />
-                )}
-              </button>
+            <div className="mcm-adminnav-header-expanded absolute inset-0 flex items-center justify-center px-4">
+              <img src={AcepeakWordmark} alt="Acepeak" className="h-6 w-auto" />
             </div>
           </div>
         ) : (

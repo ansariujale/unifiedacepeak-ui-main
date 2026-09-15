@@ -153,11 +153,19 @@
 /* Extension refresh icon — solid black at rest, same as at rest on hover
    (no colour change either way). department-info.tsx is shared with the
    platform's own department screen, so this only touches the icon here. */
-.grp-create-theme .grp-ext-refresh-btn,
+/* Rolls its own extension number. A tinted chip rather than the black square
+   it used to be — the wizard around it has one accent, and a solid black
+   button beside a red one reads as a second, more important control. */
+.grp-create-theme .grp-ext-refresh-btn {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+  border-radius: 999px !important;
+}
 .grp-create-theme .grp-ext-refresh-btn:hover {
-  background: #171717 !important;
-  border-color: #171717 !important;
-  color: #fff !important;
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #b91c1c !important;
 }
 
 /* Tighter vertical rhythm so the form fits with less scrolling — the fields

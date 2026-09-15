@@ -143,11 +143,11 @@
   /* Width of the right-hand detail panel — the phone console's call panel
      and the chat page's contact-info panel. One value so the two pages cannot
      drift apart. */
-  --mcm-side-panel-w: 460px;
+  --mcm-side-panel-w: 560px;
 
   /* Width of the left listing column — the phone console's call list and the
      chat page's conversation list. Shared so the two pages stay level. */
-  --mcm-list-panel-w: 440px;
+  --mcm-list-panel-w: 360px;
 
   /* The visitor profile sits as a third column beside the queue and the
      conversation, so it is narrower than the two-column detail panels. */
@@ -395,6 +395,16 @@
   html {
     height: 100%;
     background-color: #e3e3e3;
+  }
+
+  button,
+  input,
+  textarea,
+  select,
+  radio,
+  checkbox,
+  label {
+    font-family: var(--mcm-sans);
   }
 
   input,

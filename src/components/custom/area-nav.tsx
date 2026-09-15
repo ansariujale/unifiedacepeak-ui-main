@@ -3,9 +3,21 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useCompanyFeatures } from '@/hooks/rbac';
 import { useUser } from '@/hooks/use-user';
 import { cn } from '@/lib/utils';
-import { Icon } from '@/assets/icons/icon';
-import type { IconType } from '@/assets/icons/type';
+import {
+  Home, Phone, MessageSquare, Video, Inbox, BookUser, Users, Megaphone,
+  FileBarChart, ShieldCheck, BarChart2, List, Activity, PhoneMissed,
+  LayoutGrid, BrainCircuit, ListOrdered, GitBranch, MapPin, Mail, Star,
+  Bot, Ban,
+  type LucideIcon,
+} from 'lucide-react';
 import { AREA_VIEWS, NAV_AREAS, areaOfPath, type NavArea } from './nav-areas';
+
+const NAV_ICON_MAP: Record<string, LucideIcon> = {
+  Home, Phone, MessageSquare, Video, Inbox, BookUser, Users, Megaphone,
+  FileBarChart, ShieldCheck, BarChart2, List, Activity, PhoneMissed,
+  LayoutGrid, BrainCircuit, ListOrdered, GitBranch, MapPin, Mail, Star,
+  Bot, Ban,
+};
 import { navList, navListBottom } from './sidebar-nav-list';
 
 /**
@@ -130,7 +142,7 @@ const AreaNav = () => {
             aria-current={isActive ? 'page' : undefined}
             onClick={() => openArea({ area, entries })}
           >
-            <Icon name={area.icon as IconType} className="h-4 w-4" />
+            {(() => { const LI = NAV_ICON_MAP[area.icon]; return LI ? <LI className="h-4 w-4" strokeWidth={1.75} /> : null; })()}
             <span>{area.label}</span>
           </button>
         );

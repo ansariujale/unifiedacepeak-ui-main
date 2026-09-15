@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import moment from 'moment';
@@ -16,7 +16,7 @@ import {
   Phone,
   MessageSquare,
   Video,
-  Sparkles,
+  Bot,
   ArrowUpRight,
   ArrowRight,
   MoreVertical,
@@ -26,7 +26,6 @@ import {
   Hash,
   Megaphone,
   CalendarClock,
-  Bot,
   Globe2,
   ChevronDown,
   CheckCircle2,
@@ -38,6 +37,11 @@ import {
   Users,
   Activity,
   ShieldCheck,
+  Trophy,
+  TrendingUp,
+  Crown,
+  Wallet,
+  CreditCard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CustomTooltip from '@/components/custom/custom-tooltip';
@@ -196,6 +200,28 @@ const formatDuration = (secs: number) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
+const DUMMY_TOP_PERFORMERS = [
+  { name: 'Sarah Johnson', role: 'Sales Agent',   calls: 142, score: 98, trend: '+12%' },
+  { name: 'Marcus Webb',   role: 'Support Agent', calls: 128, score: 95, trend: '+8%'  },
+  { name: 'Priya Nair',   role: 'Sales Agent',   calls: 119, score: 91, trend: '+5%'  },
+  { name: 'Chen Wei',     role: 'Support Agent', calls: 104, score: 88, trend: '+3%'  },
+  { name: 'Alex Turner',  role: 'Sales Agent',   calls:  97, score: 85, trend: '+2%'  },
+  { name: 'Emma Wilson',  role: 'Support Agent', calls:  89, score: 82, trend: '+1%'  },
+  { name: 'James Miller', role: 'Sales Agent',   calls:  76, score: 79, trend: '+1%'  },
+];
+
+const RANK_META = [
+  { bg: '#fef9c3', color: '#a16207', icon: <Crown className="h-3 w-3" /> },
+  { bg: '#f1f5f9', color: '#475569', icon: null },
+  { bg: '#fdf2e9', color: '#92400e', icon: null },
+  { bg: '#f0fdf4', color: '#166534', icon: null },
+  { bg: '#f0f9ff', color: '#0369a1', icon: null },
+  { bg: '#fdf4ff', color: '#7e22ce', icon: null },
+  { bg: '#fff7ed', color: '#c2410c', icon: null },
+];
+
+/** No "calls + quality score per agent" endpoint exists — placeholder data. */
+
 /** No call-quality/MOS-score endpoint exists — this is a heuristic read off
     duration, not a real telemetry value (flagged next to the column
     header). Kept deterministic (not random) so the same call always shows
@@ -306,7 +332,7 @@ const ACTIVITY_KIND_META: Record<ActivityKind, { icon: ReactNode; bg: string; to
   miss: { icon: <PhoneMissed className="h-3.5 w-3.5" />, bg: '#fde9e9', tone: '#d32f2f' },
   sms: { icon: <MessageSquare className="h-3.5 w-3.5" />, bg: '#cffafe', tone: '#0e7490' },
   meeting: { icon: <Video className="h-3.5 w-3.5" />, bg: '#fdf0dc', tone: '#c2670a' },
-  ai: { icon: <Sparkles className="h-3.5 w-3.5" />, bg: '#f2ecff', tone: '#7c3aed' },
+  ai: { icon: <Bot className="h-3.5 w-3.5" />, bg: '#f2ecff', tone: '#7c3aed' },
 };
 
 const CALL_KIND_META: Record<CallKind, { label: string; pill: string }> = {
@@ -358,6 +384,9 @@ const Home = () => {
   const { user }: any = useUser();
   const firstName = user?.user_info?.first_name || '';
   const fullName = `${firstName} ${user?.user_info?.last_name || ''}`.trim() || 'there';
+  const companyAmount = user?.company_info?.amount;
+  const balanceDisplay =
+    companyAmount !== null && companyAmount !== undefined ? `$${companyAmount}` : '—';
 
   const [chartTab, setChartTab] = useState<'calls' | 'meetings'>('calls');
 
@@ -414,6 +443,29 @@ const Home = () => {
   const recentCalls: CallRow[] = recentCallsAreDummy ? dummyRecentCalls : realRecentCalls;
 
   const [callFilter, setCallFilter] = useState<(typeof CALL_FILTERS)[number]['key']>('all');
+
+  const filterNavRef = useRef<HTMLDivElement>(null);
+  const filterBtnRefs = useRef(new Map<string, HTMLButtonElement>());
+  const [filterIndicator, setFilterIndicator] = useState<{
+    left: number; top: number; width: number; height: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const btn = filterBtnRefs.current.get(callFilter);
+      const nav = filterNavRef.current;
+      if (!btn || !nav) { setFilterIndicator(p => p === null ? p : null); return; }
+      const { offsetLeft: left, offsetTop: top, offsetWidth: width, offsetHeight: height } = btn;
+      setFilterIndicator(p =>
+        p && p.left === left && p.top === top && p.width === width && p.height === height
+          ? p : { left, top, width, height },
+      );
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [callFilter]);
+
   const callFilterCounts = useMemo(
     () => ({
       all: recentCalls.length,
@@ -512,7 +564,7 @@ const Home = () => {
       key: 'ai',
       title: 'AI Agent',
       subtitle: 'Create / Manage agent',
-      icon: <Sparkles className="h-4.5 w-4.5" />,
+      icon: <Bot className="h-4.5 w-4.5" />,
       to: '/admin-settings/knowledge/ai-agent',
     },
   ];
@@ -569,7 +621,7 @@ const Home = () => {
     {
       key: 'ai',
       label: 'AI Agent Interactions',
-      icon: <Sparkles className="h-4.5 w-4.5" />,
+      icon: <Bot className="h-4.5 w-4.5" />,
       value: dummyTotal(DUMMY_SERIES.ai),
       changePct: null,
       isLoading: false,
@@ -655,7 +707,7 @@ const Home = () => {
             </CustomTooltip>
           </div>
           <div className="dash-home__hero-chip">
-            <Sparkles className="h-3.5 w-3.5 shrink-0" />
+            <Bot className="h-3.5 w-3.5 shrink-0" />
             Your system is running smoothly. Keep building great conversations!
           </div>
         </div>
@@ -871,7 +923,7 @@ const Home = () => {
           </div>
 
       {/* ── recent calls + live activity, side by side ──────────────────── */}
-      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="dash-home__card p-4">
           <div className="dash-home__section-head">
             <div className="flex items-start gap-3">
@@ -899,11 +951,26 @@ const Home = () => {
             </button>
           </div>
 
-          <div className="dash-home__call-filters">
+          <div className="dash-home__call-filters" ref={filterNavRef}>
+            {filterIndicator && (
+              <span
+                className="dash-home__call-filter-indicator"
+                style={{
+                  transform: `translate(${filterIndicator.left}px, ${filterIndicator.top}px)`,
+                  width: filterIndicator.width,
+                  height: filterIndicator.height,
+                }}
+                aria-hidden="true"
+              />
+            )}
             {CALL_FILTERS.map((f) => (
               <button
                 key={f.key}
                 type="button"
+                ref={(node) => {
+                  if (node) filterBtnRefs.current.set(f.key, node);
+                  else filterBtnRefs.current.delete(f.key);
+                }}
                 onClick={() => setCallFilter(f.key)}
                 className={`dash-home__call-filter-tab${callFilter === f.key ? ' dash-home__call-filter-tab--active' : ''}`}
               >
@@ -1023,7 +1090,7 @@ const Home = () => {
           <div className="dash-home__section-head">
             <div className="flex items-start gap-3">
               <span className="dash-home__section-icon" style={{ background: '#fee2e2', color: '#dc2626' }}>
-                <Sparkles className="h-4.5 w-4.5" />
+                <Bot className="h-4.5 w-4.5" />
               </span>
               <div>
                 <div className="text-sm font-bold text-[#0d1526]">Live Activity</div>
@@ -1104,12 +1171,8 @@ const Home = () => {
         </div>
       </div>
       {/* ── quick actions + global presence, side by side ───────────────── */}
-      {/* `items-start` opts both columns out of the grid's default
-          align-items: stretch — each one ends exactly where its own
-          content ends instead of being forced to match its (often taller,
-          e.g. the world map) sibling's height with empty space. */}
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-        <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex h-full flex-col gap-4">
         <div className="dash-home__card p-4">
           <div className="dash-home__section-head">
             <div className="flex items-start gap-3">
@@ -1214,29 +1277,65 @@ const Home = () => {
           </div>
         </div>
 
-        <div className="dash-home__promo-card flex w-full flex-col justify-between gap-4 p-4 sm:flex-row sm:items-center">
-          <div>
-            <span className="dash-home__pill dash-home__pill--out mb-2">
-              <Sparkles className="h-3 w-3" />
-              Featured
+        {/* ── Top Performers ───────────────────────────────────────────── */}
+        <div className="dash-home__card flex flex-col p-4 flex-1">
+          <div className="dash-home__section-head">
+            <div className="flex items-start gap-3">
+              <span className="dash-home__section-icon" style={{ background: '#fef9c3', color: '#a16207' }}>
+                <Trophy className="h-4.5 w-4.5" />
+              </span>
+              <div>
+                <div className="text-sm font-bold text-[#0d1526]">Top Performers</div>
+                <div className="flex items-center gap-1.5 text-xs text-[#6b7891]">
+                  Agents ranked by calls & quality score
+                  <NeedsBackendFlag note="No per-agent performance endpoint exists yet — showing placeholder data." />
+                </div>
+              </div>
+            </div>
+            <span className="dash-home__hero-live-pill shrink-0" style={{ background: '#fef9c3', color: '#a16207', boxShadow: 'none' }}>
+              <TrendingUp className="h-3 w-3" />
+              This week
             </span>
-            <h3 className="text-lg font-bold text-[#0d1526]">AI-Powered Voice Agents</h3>
-            <p className="mt-1 text-sm text-[#6b7891]">
-              Automate conversations, qualify leads and boost your productivity.
-            </p>
           </div>
-          <Button
-            type="button"
-            variant="primary"
-            className="w-fit shrink-0 rounded-full !border-[#262626] !bg-[#262626] !text-[#b2b0b2] hover:!bg-[#262626]/90"
-            onClick={() => navigate('/admin-settings/knowledge/ai-receptionist')}
-          >
-            Get Started
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
+
+          <div className="mt-3 flex-1 overflow-y-auto flex flex-col gap-2">
+            {DUMMY_TOP_PERFORMERS.map((agent, idx) => {
+              const rank = RANK_META[idx] || RANK_META[3];
+              return (
+                <div key={agent.name} className="dash-home__top-performer-row">
+                  <span
+                    className="dash-home__top-performer-rank"
+                    style={{ background: rank.bg, color: rank.color }}
+                  >
+                    {rank.icon || `#${idx + 1}`}
+                  </span>
+                  <span className="dash-home__avatar shrink-0">{initials(agent.name)}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold text-[#0d1526]">{agent.name}</div>
+                    <div className="text-xs text-[#93a0b8]">{agent.role}</div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-bold text-[#0d1526] font-mono">{agent.calls} <span className="text-xs font-normal text-[#93a0b8]">calls</span></div>
+                    <div className="flex items-center justify-end gap-1 text-xs font-semibold text-[#16a34a]">
+                      <ArrowUpRight className="h-3 w-3" />
+                      {agent.trend}
+                    </div>
+                  </div>
+                  <div
+                    className="dash-home__top-performer-score shrink-0"
+                    style={{ background: `${rank.color}1a`, color: rank.color }}
+                  >
+                    {agent.score}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
+        </div>
+
+        <div className="flex h-full flex-col gap-4">
         <div className="dash-home__card relative overflow-hidden p-4">
           <div className="dash-home__section-head">
             <div className="flex items-start gap-3">
@@ -1355,6 +1454,47 @@ const Home = () => {
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
+        </div>
+
+        {/* ── Since you logged off ─────────────────────────────────────── */}
+        <div className="dash-home__card flex flex-1 flex-col p-4">
+          <div className="dash-home__section-head">
+            <div className="flex items-start gap-3">
+              <span className="dash-home__section-icon" style={{ background: '#ede9fe', color: '#7c3aed' }}>
+                <Zap className="h-4.5 w-4.5" />
+              </span>
+              <div>
+                <div className="text-sm font-bold text-[#0d1526]">Since you logged off</div>
+                <div className="flex items-center gap-1.5 text-xs text-[#6b7891]">
+                  Activity while you were away
+                  <NeedsBackendFlag note="No offline-activity summary endpoint exists yet — showing placeholder data." />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-col gap-2">
+            {[
+              { icon: <PhoneIncoming className="h-4 w-4" />, title: '3 missed calls', desc: '+1 555-123-4567 and 2 others', time: '2h ago', tone: '#dc2626', bg: '#fee2e2' },
+              { icon: <MessageSquare className="h-4 w-4" />, title: '5 new messages', desc: 'Inbox — Team & customers', time: '3h ago', tone: '#0e7490', bg: '#cffafe' },
+              { icon: <Video className="h-4 w-4" />, title: '1 meeting ended', desc: 'Product Team Sync', time: '5h ago', tone: '#7c3aed', bg: '#ede9fe' },
+              { icon: <Bot className="h-4 w-4" />, title: 'AI resolved 4 queries', desc: 'While you were away', time: '6h ago', tone: '#c2670a', bg: '#fef3c7' },
+            ].map((item) => (
+              <div key={item.title} className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-[#fafafa]">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                  style={{ background: item.bg, color: item.tone }}
+                >
+                  {item.icon}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-[#0d1526]">{item.title}</div>
+                  <div className="truncate text-xs text-[#93a0b8]">{item.desc}</div>
+                </div>
+                <span className="shrink-0 text-xs text-[#93a0b8]">{item.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
         </div>
       </div>
 

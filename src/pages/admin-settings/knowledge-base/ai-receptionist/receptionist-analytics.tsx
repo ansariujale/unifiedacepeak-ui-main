@@ -11,11 +11,19 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  BarChart3,
+  Clock,
   Download,
   FileText,
+  HelpCircle,
   Info,
   Loader2,
+  MessageSquare,
+  Mic,
   Minus,
+  PieChart as PieChartIcon,
+  Smile,
+  Users,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,9 +38,14 @@ import { useNavigate } from 'react-router-dom';
 import {
   ResponsiveContainer,
   ComposedChart,
+  BarChart,
   Bar,
+  Cell,
+  LabelList,
   LineChart,
   Line,
+  Area,
+  ReferenceLine,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -112,6 +125,7 @@ interface ReceptionistAnalyticsProps {
 
 const ANALYTICS_COMING_SOON = false;
 const THEME_PRIMARY = '#dc2626';
+const RESOLUTION_TARGET_PCT = 70;
 
 // Local helper to validate hex colors
 // const isValidHex = (color: string) => {
@@ -131,17 +145,20 @@ const SENTIMENT_SERIES = [
 /* White tooltip card shared by the charts, in place of Recharts' default box. */
 const ChartTip = ({ active, payload, label, unit = '' }: any) => {
   if (!active || !payload?.length) return null;
+  // The resolved line retraces the resolved bar to draw the trend stroke, so
+  // without deduping the tooltip lists "Resolved" twice.
+  const seenNames = new Set<string>();
+  const items = payload.filter((item: any) => {
+    if (seenNames.has(item.name)) return false;
+    seenNames.add(item.name);
+    return true;
+  });
   return (
     <div className="rounded-lg border border-neutral-200 bg-white px-3 py-2 shadow-[0_4px_14px_rgba(17,17,17,.08)]">
       <div className="text-[10px] font-bold uppercase tracking-[0.04em] text-neutral-400">
         {label}
       </div>
-      {payload[0]?.payload?.rateLabel ? (
-        <div className="mt-0.5 text-xs font-bold text-neutral-900">
-          Resolution rate · {payload[0].payload.rateLabel}
-        </div>
-      ) : null}
-      {payload.map((item: any) => (
+      {items.map((item: any) => (
         <div key={item.name} className="mt-0.5 flex items-center gap-2 text-xs">
           <span className="h-2 w-2 rounded-full" style={{ background: item.color || item.stroke }} />
           <span className="font-medium text-neutral-600">{item.name}</span>
@@ -379,6 +396,7 @@ function AnalyticsPanel({
   isLoading = false,
   dark = false,
   action,
+  icon,
 }: {
   title: string;
   subtitle?: string;
@@ -389,6 +407,8 @@ function AnalyticsPanel({
   dark?: boolean;
   /** Optional control shown at the right of the card's own header. */
   action?: ReactNode;
+  /** Optional badge shown to the left of the title. */
+  icon?: ReactNode;
 }) {
   return (
     <div
@@ -396,18 +416,21 @@ function AnalyticsPanel({
     >
       {isLoading && <CardLoader dark={dark} />}
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-1.5">
-            <h3 className={`text-[14px] font-bold ${dark ? 'text-white' : 'text-neutral-950'}`}>
-              {title}
-            </h3>
-            {tip ? <InfoTip text={tip} /> : null}
+        <div className="flex items-start gap-3">
+          {icon}
+          <div>
+            <div className="flex items-center gap-1.5">
+              <h3 className={`text-[14px] font-bold ${dark ? 'text-white' : 'text-neutral-950'}`}>
+                {title}
+              </h3>
+              {tip ? <InfoTip text={tip} /> : null}
+            </div>
+            {subtitle ? (
+              <p className={`mt-1 text-xs ${dark ? 'text-white/60' : 'text-neutral-500'}`}>
+                {subtitle}
+              </p>
+            ) : null}
           </div>
-          {subtitle ? (
-            <p className={`mt-1 text-xs ${dark ? 'text-white/60' : 'text-neutral-500'}`}>
-              {subtitle}
-            </p>
-          ) : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
@@ -432,7 +455,7 @@ function TopicRing({ value }: { value: number }) {
   const circumference = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(100, value));
   return (
-    <span className="relative flex h-16 w-16 shrink-0 items-center justify-center">
+    <span className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white transition-transform duration-200 group-hover:-translate-y-1 group-hover:shadow-[0_10px_18px_rgba(220,38,38,0.28)]">
       <svg viewBox="0 0 64 64" className="absolute inset-0 h-16 w-16 -rotate-90" aria-hidden="true">
         <circle cx="32" cy="32" r={r} fill="none" stroke="#e5e7eb" strokeWidth="4.5" />
         <circle
@@ -457,7 +480,7 @@ function TopicRing({ value }: { value: number }) {
 
 function TopicTile({ name, value, description }: { name: string; value: number; description?: string }) {
   return (
-    <div className="flex items-center gap-3.5 rounded-xl px-1.5 py-2 transition-colors hover:bg-neutral-50">
+    <div className="group flex items-center gap-3.5 rounded-xl px-1.5 py-2 transition-colors hover:bg-red-50">
       <TopicRing value={value} />
       <div className="min-w-0">
         <div className="text-[13px] font-bold leading-4 text-neutral-900">{name}</div>
@@ -521,6 +544,35 @@ export default function ReceptionistAnalytics({
       const response = await getReceptionistAnalytics({
         startDate,
         endDate,
+        agentId,
+        timezone: viewerTimeZone,
+      });
+      return response.data;
+    },
+    enabled: !ANALYTICS_COMING_SOON,
+  });
+
+  // The resolution-rate trend always looks back 4 full weeks, independent of
+  // the range picker above, so the card reads the same whether the page is
+  // set to "Today" or "Last 90 days".
+  const resolutionTrendRange = useMemo(() => {
+    const end = moment().format('YYYY-MM-DD');
+    const start = moment().subtract(27, 'days').format('YYYY-MM-DD');
+    return { start, end };
+  }, []);
+
+  const { data: resolutionTrendData } = useQuery({
+    queryKey: [
+      'receptionistResolutionTrend',
+      resolutionTrendRange.start,
+      resolutionTrendRange.end,
+      agentId,
+      viewerTimeZone,
+    ],
+    queryFn: async () => {
+      const response = await getReceptionistAnalytics({
+        startDate: resolutionTrendRange.start,
+        endDate: resolutionTrendRange.end,
         agentId,
         timezone: viewerTimeZone,
       });
@@ -917,7 +969,6 @@ export default function ReceptionistAnalytics({
         resolved,
         handoffs,
         scheduled_callbacks: callbacks,
-        rateLabel: total ? `${Math.round((resolved / total) * 100)}%` : '',
       };
     });
   }, [analytics, barData, pieData]);
@@ -930,6 +981,46 @@ export default function ReceptionistAnalytics({
     }),
     [outcomeRows],
   );
+  const resolutionWeeklySeries = useMemo(() => {
+    const normalized = normalizeAnalyticsPayload(resolutionTrendData);
+    let dailyBreakdown = pickArray(normalized, ['daily_breakdown', 'daily_inbound_call_distribution']);
+    if (SHOW_DUMMY_DATA && dailyBreakdown.length === 0) {
+      dailyBreakdown = buildDummyAnalytics(28).daily_breakdown;
+    }
+
+    const dayMap = new Map<string, any>();
+    dailyBreakdown.forEach((item: any) => {
+      if (item.date) dayMap.set(moment(item.date).format('YYYY-MM-DD'), item);
+    });
+
+    const days: { total: number; resolved: number }[] = [];
+    const curr = moment(resolutionTrendRange.start);
+    const end = moment(resolutionTrendRange.end);
+    let limit = 0;
+    while (curr.isSameOrBefore(end, 'day') && limit < 100) {
+      const item = dayMap.get(curr.format('YYYY-MM-DD'));
+      const total = pickNumber(item, ['total_calls', 'calls_handled', 'session_calls', 'calls'], 0) || 0;
+      const resolved = pickNumber(item, ['resolved', 'resolved_calls'], 0) || 0;
+      days.push({ total, resolved });
+      curr.add(1, 'day');
+      limit++;
+    }
+
+    const weeks: { label: string; rate: number }[] = [];
+    for (let i = 0; i < days.length; i += 7) {
+      const chunk = days.slice(i, i + 7);
+      const total = chunk.reduce((sum, day) => sum + day.total, 0);
+      const resolved = chunk.reduce((sum, day) => sum + day.resolved, 0);
+      weeks.push({ label: `W${weeks.length + 1}`, rate: total ? Math.round((resolved / total) * 100) : 0 });
+    }
+    return weeks.slice(-4);
+  }, [resolutionTrendData, resolutionTrendRange]);
+  const resolutionTrendPts = useMemo(() => {
+    if (resolutionWeeklySeries.length < 2) return null;
+    const last = resolutionWeeklySeries[resolutionWeeklySeries.length - 1].rate;
+    const prev = resolutionWeeklySeries[resolutionWeeklySeries.length - 2].rate;
+    return last - prev;
+  }, [resolutionWeeklySeries]);
 
   const sentimentChartData = useMemo(() => {
     const trendMap = new Map<string, any>();
@@ -1064,11 +1155,6 @@ export default function ReceptionistAnalytics({
     }
     return emptyHours;
   }, [analytics]);
-
-  const maxCalls = useMemo(() => {
-    if (!peakCallHours || peakCallHours.length === 0) return 1;
-    return Math.max(...peakCallHours.map((h) => h.calls));
-  }, [peakCallHours]);
 
   // The heat strip needs every hour, including the quiet ones the chart data
   // drops, so the day reads as one continuous 24-cell row.
@@ -1462,6 +1548,7 @@ export default function ReceptionistAnalytics({
             <AnalyticsPanel
               title="Per-receptionist breakdown"
               subtitle="Every receptionist side by side for this range — pick one to drill in."
+              icon={<Users className="mt-0.5 h-4 w-4 text-red-600" />}
               isLoading={isLoading}
             >
               {/* A ranked table rather than a list of cards: the labels move to one
@@ -1660,25 +1747,17 @@ export default function ReceptionistAnalytics({
 
         <div>
           <SectionEyebrow label="Call activity" />
-          <div className="grid grid-cols-1 gap-3.5">
+          <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[3fr_2fr]">
             <AnalyticsPanel
               title="Daily outcomes"
               subtitle={`How each day's calls ended · ${periodLabel}`}
-              tip="Each column is one day's calls: resolved on the call, transferred to a person, or booked as a callback. The number on top is that day's resolution rate."
+              tip="Each column is one day's calls: resolved on the call, transferred to a person, or booked as a callback."
               isLoading={isLoading}
+              icon={<BarChart3 className="mt-0.5 h-4 w-4 text-red-600" />}
               className="flex flex-col"
-              action={
-                <div className="text-right">
-                  <div className={cx('text-[26px] font-bold leading-7', resolutionValueClass)}>
-                    {metrics.resolution}
-                  </div>
-                  <div className="text-[10px] font-semibold text-neutral-400">resolved this range</div>
-                </div>
-              }
             >
               {/* Every column is one day: its height is the volume, its red
-                  share is what the receptionist closed itself, and the number on top
-                  is that day's resolution rate. */}
+                  share is what the receptionist closed itself. */}
               <div className="mt-4 flex flex-wrap gap-2">
                 {OUTCOME_SERIES.map((series) => (
                   <span
@@ -1700,7 +1779,7 @@ export default function ReceptionistAnalytics({
                   </span>
                 ))}
               </div>
-              <div className="mt-4 min-h-[130px] w-full flex-1">
+              <div className="mt-4 min-h-[240px] w-full flex-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={outcomeRows}
@@ -1778,6 +1857,142 @@ export default function ReceptionistAnalytics({
                 </ResponsiveContainer>
               </div>
             </AnalyticsPanel>
+
+            <AnalyticsPanel
+              title="Resolution rate"
+              subtitle="Calls resolved without a transfer, week by week"
+              tip="Share of calls resolved without a transfer, bucketed into weeks across this range, against the 70%+ target."
+              icon={<PieChartIcon className="mt-0.5 h-4 w-4 text-red-600" />}
+              isLoading={isLoading}
+              className="flex flex-col"
+              action={
+                <div className="text-right">
+                  <div className={cx('text-[26px] font-bold leading-7', resolutionValueClass)}>
+                    {metrics.resolution}
+                  </div>
+                  {resolutionTrendPts !== null && (
+                    <div
+                      className={cx(
+                        'mt-0.5 flex items-center justify-end gap-1 text-[11px] font-semibold',
+                        resolutionTrendPts > 0
+                          ? 'text-emerald-600'
+                          : resolutionTrendPts < 0
+                            ? 'text-red-600'
+                            : 'text-neutral-400',
+                      )}
+                    >
+                      {resolutionTrendPts > 0 ? (
+                        <ArrowUp className="h-3 w-3" />
+                      ) : resolutionTrendPts < 0 ? (
+                        <ArrowDown className="h-3 w-3" />
+                      ) : (
+                        <Minus className="h-3 w-3" />
+                      )}
+                      {Math.abs(resolutionTrendPts)} pts vs previous
+                    </div>
+                  )}
+                </div>
+              }
+            >
+              {/* One line, one target: a red gradient area over the weekly
+                  resolution rate, with a dashed line marking the 70% goal. */}
+              <div className="mt-4 min-h-[220px] w-full flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={resolutionWeeklySeries}
+                    margin={{ top: 12, right: 44, bottom: 0, left: 4 }}
+                  >
+                    <defs>
+                      <linearGradient id="resolutionRateFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={THEME_PRIMARY} stopOpacity={0.32} />
+                        <stop offset="100%" stopColor={THEME_PRIMARY} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      stroke="#d1d5db"
+                      strokeDasharray="1 5"
+                      strokeLinecap="round"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="label"
+                      stroke="#94a3b8"
+                      fontSize={10}
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                    />
+                    <YAxis
+                      domain={[0, 100]}
+                      ticks={[0, 25, 50, 75, 100]}
+                      tickFormatter={(v) => `${v}%`}
+                      stroke="#94a3b8"
+                      fontSize={10}
+                      tickLine={false}
+                      axisLine={false}
+                      width={34}
+                    />
+                    <Tooltip cursor={{ stroke: '#e5e7eb' }} content={<ChartTip unit="%" />} />
+                    <ReferenceLine
+                      y={RESOLUTION_TARGET_PCT}
+                      stroke={THEME_PRIMARY}
+                      strokeDasharray="5 4"
+                      strokeWidth={1.5}
+                      label={({ viewBox }: any) => {
+                        const arrowX = viewBox.x + viewBox.width;
+                        const y = viewBox.y;
+                        const textX = arrowX + 9;
+                        return (
+                          <g>
+                            <path d={`M ${arrowX} ${y} l 7 -4 l 0 8 z`} fill={THEME_PRIMARY} />
+                            <text
+                              x={textX}
+                              y={y - 3}
+                              textAnchor="start"
+                              fontSize={10.5}
+                              fontWeight={700}
+                              fill={THEME_PRIMARY}
+                            >
+                              Target
+                            </text>
+                            <text
+                              x={textX}
+                              y={y + 10}
+                              textAnchor="start"
+                              fontSize={10.5}
+                              fontWeight={700}
+                              fill={THEME_PRIMARY}
+                            >
+                              {`${RESOLUTION_TARGET_PCT}%`}
+                            </text>
+                          </g>
+                        );
+                      }}
+                    />
+                    <Area
+                      dataKey="rate"
+                      name="Resolved"
+                      type="stepAfter"
+                      stroke="none"
+                      fill="url(#resolutionRateFill)"
+                      isAnimationActive
+                      animationDuration={700}
+                    />
+                    <Line
+                      dataKey="rate"
+                      name="Resolved"
+                      type="stepAfter"
+                      stroke={THEME_PRIMARY}
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: '#ffffff', stroke: THEME_PRIMARY, strokeWidth: 2 }}
+                      activeDot={{ r: 5.5, fill: '#ffffff', stroke: THEME_PRIMARY, strokeWidth: 2 }}
+                      isAnimationActive
+                      animationDuration={700}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </AnalyticsPanel>
           </div>
         </div>
 
@@ -1787,6 +2002,7 @@ export default function ReceptionistAnalytics({
             <AnalyticsPanel
               title="Sentiment trend"
               subtitle="Caller sentiment score (0-100) at end of call."
+              icon={<Smile className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Caller sentiment score calculated from call transcript analysis. 70+ is healthy."
               isLoading={isLoading}
             >
@@ -1896,6 +2112,7 @@ export default function ReceptionistAnalytics({
             <AnalyticsPanel
               title="Talk-to-listen ratio"
               subtitle="Voice-AI best practice: 35-55% AI talk time. Higher = caller cannot get a word in."
+              icon={<Mic className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Fraction of the call where the AI is speaking vs the caller speaking or silent."
               isLoading={isLoading}
             >
@@ -1975,6 +2192,7 @@ export default function ReceptionistAnalytics({
             <AnalyticsPanel
               title="Top conversation topics"
               subtitle="What callers ask about most"
+              icon={<MessageSquare className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Most frequent topics callers raise, derived from intent classification."
               isLoading={isLoading}
               className="flex flex-col"
@@ -2000,86 +2218,100 @@ export default function ReceptionistAnalytics({
             <AnalyticsPanel
               title="Peak call hours - last 7 days"
               subtitle="Calls by hour of day. Darker cells = busier hours."
+              icon={<Clock className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Hour-of-day distribution. Use to schedule live agents for overflow during peak hours."
               isLoading={isLoading}
-            >
-              {/* One cell per hour on a single red ramp - light for the quiet
-                  hours, solid for the peak - so the whole day reads as one row
-                  and the busiest stretch shows as a block rather than a spike. */}
-              <div className="mt-5">
-                <div className="flex items-end gap-1">
-                  {hourStrip.map((slot) => {
-                    const share = maxCalls > 0 ? slot.calls / maxCalls : 0;
-                    const isPeak = slot.calls > 0 && slot.hour === peakHour.hour;
-                    return (
-                      <CustomTooltip
-                        key={slot.hour}
-                        side="top"
-                        text={`${slot.name} · ${slot.calls} ${slot.calls === 1 ? 'call' : 'calls'}`}
-                        className="rounded-lg border-neutral-200! bg-white! text-xs font-semibold text-neutral-900! shadow-[0_4px_14px_rgba(17,17,17,.08)]! [&_svg]:fill-white"
-                      >
-                        <div className="flex min-w-0 flex-1 cursor-default flex-col items-center gap-1.5">
-                          <span
-                            className={cx(
-                              'h-4 text-[10px] font-bold tabular-nums leading-4',
-                              isPeak ? 'text-red-600' : 'text-transparent',
-                            )}
-                          >
-                            {slot.calls}
-                          </span>
-                          <span
-                            className={cx(
-                              'block h-10 w-full rounded-md transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5',
-                              isPeak && 'ring-2 ring-red-600 ring-offset-1',
-                            )}
-                            style={{
-                              background:
-                                share === 0
-                                  ? '#f5f5f5'
-                                  : `color-mix(in oklab, ${THEME_PRIMARY} ${Math.round(12 + share * 88)}%, white)`,
-                            }}
-                          />
-                          <span
-                            className={cx(
-                              'h-3 whitespace-nowrap text-[9.5px] leading-3',
-                              slot.hour % 3 === 0 ? 'text-neutral-400' : 'text-transparent',
-                            )}
-                          >
-                            {slot.hour % 3 === 0 ? slot.name : '·'}
-                          </span>
-                        </div>
-                      </CustomTooltip>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100 pt-3">
-                  <p className="text-xs text-neutral-500">
-                    {peakHour.calls > 0 ? (
-                      <>
-                        Busiest at{' '}
-                        <span className="font-bold text-neutral-900">{peakHour.name}</span> with{' '}
-                        <span className="font-bold text-neutral-900">{peakHour.calls} calls</span>
+              action={
+                peakHour.calls > 0 ? (
+                  <div className="flex items-center gap-2.5 rounded-xl bg-red-50 px-3 py-2">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white">
+                      <BarChart3 className="h-4 w-4 text-red-600" strokeWidth={2.25} />
+                    </span>
+                    <div>
+                      <div className="text-[12.5px] font-bold leading-4 text-neutral-900">
+                        Busiest at {peakHour.name}
+                      </div>
+                      <div className="text-[11px] leading-4 text-neutral-500">
+                        {peakHour.calls} {peakHour.calls === 1 ? 'call' : 'calls'}
                         {totalStripCalls > 0
-                          ? ` - ${Math.round((peakHour.calls / totalStripCalls) * 100)}% of the day's volume.`
-                          : '.'}
-                      </>
-                    ) : (
-                      'No calls recorded in this range yet.'
-                    )}
-                  </p>
-                  <span className="flex items-center gap-2 text-[10px] font-medium text-neutral-400">
-                    Fewer
-                    <span
-                      aria-hidden="true"
-                      className="h-2 w-20 rounded-full"
-                      style={{
-                        background: `linear-gradient(90deg, color-mix(in oklab, ${THEME_PRIMARY} 12%, white), ${THEME_PRIMARY})`,
-                      }}
+                          ? ` · ${Math.round((peakHour.calls / totalStripCalls) * 100)}% of daily volume`
+                          : ''}
+                      </div>
+                    </div>
+                  </div>
+                ) : undefined
+              }
+            >
+              {/* A proper bar-per-hour chart with axes, rather than a bare
+                  heat strip - the busiest hour stands out in solid red with
+                  its own count called out just above the bar. */}
+              <div className="mt-4 h-[220px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={hourStrip} margin={{ top: 26, right: 4, bottom: 0, left: -20 }}>
+                    <CartesianGrid stroke="#f1f5f9" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#94a3b8"
+                      fontSize={10}
+                      tickLine={false}
+                      axisLine={false}
+                      interval={2}
+                      tickMargin={8}
                     />
-                    More
-                  </span>
-                </div>
+                    <YAxis
+                      stroke="#94a3b8"
+                      fontSize={10}
+                      tickLine={false}
+                      axisLine={false}
+                      width={28}
+                      allowDecimals={false}
+                    />
+                    <Tooltip cursor={{ fill: '#f8fafc' }} content={<ChartTip unit=" calls" />} />
+                    <Bar dataKey="calls" radius={[4, 4, 0, 0]} maxBarSize={16}>
+                      {hourStrip.map((slot) => (
+                        <Cell
+                          key={slot.hour}
+                          fill={
+                            slot.hour === peakHour.hour && slot.calls > 0
+                              ? THEME_PRIMARY
+                              : `color-mix(in oklab, ${THEME_PRIMARY} 22%, white)`
+                          }
+                        />
+                      ))}
+                      <LabelList
+                        dataKey="calls"
+                        content={(props: any) => {
+                          const { x, y, width, value, index } = props;
+                          const slot = hourStrip[index];
+                          if (!slot || slot.hour !== peakHour.hour || !value) return null;
+                          return (
+                            <g>
+                              <rect
+                                x={x + width / 2 - 15}
+                                y={y - 26}
+                                width={30}
+                                height={18}
+                                rx={9}
+                                fill="#ffffff"
+                                stroke="#fecaca"
+                              />
+                              <text
+                                x={x + width / 2}
+                                y={y - 13}
+                                textAnchor="middle"
+                                fontSize={11}
+                                fontWeight={800}
+                                fill={THEME_PRIMARY}
+                              >
+                                {value}
+                              </text>
+                            </g>
+                          );
+                        }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </AnalyticsPanel>
           </div>
@@ -2091,6 +2323,7 @@ export default function ReceptionistAnalytics({
             <AnalyticsPanel
               title="Unanswered caller questions"
               subtitle="Pick a receptionist to see their unanswered questions, then answer each one."
+              icon={<HelpCircle className="mt-0.5 h-4 w-4 text-red-600" />}
               tip="Questions callers asked but the receptionist could not answer with confidence."
               isLoading={isLoading}
             >

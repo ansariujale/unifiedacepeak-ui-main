@@ -20,6 +20,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useGetMyPlanDetails } from '@/hooks/common';
 import { invalidateGlobalUsersDirectory } from '@/lib/invalidate-global-users-directory';
 import { handleAlert } from '@/lib/utils';
+import { TriangleAlert, UserPlus } from 'lucide-react';
+import '@/components/mcm/wizard-shell.css';
 
 interface AddUsersProps {
   setDrawerState: (state: boolean) => void;
@@ -28,7 +30,7 @@ interface AddUsersProps {
 
 const AddUsers: FC<AddUsersProps> = ({ setDrawerState, onReset }) => {
   const { data: dataGetMyPlanDetails } = useGetMyPlanDetails();
-  const { refetch: refetchUserApi } = useUser();
+  const { user, refetch: refetchUserApi } = useUser();
 
   const [isPaymentRequired, setIspaymentRequired] = useState<any>(false);
   const [orderSummary, setOrderSummary] = useState<any>(null);
@@ -153,16 +155,21 @@ const AddUsers: FC<AddUsersProps> = ({ setDrawerState, onReset }) => {
     'site',
   ]);
 
+  /* Named for what you are answering on each one, not for what the form does
+     with it — "Setup Options" said nothing about passwords or invite links. */
   const StepContent = [
     {
       number: 1,
-      title: 'Add User Info',
+      title: 'The people',
+      description: 'Names, roles and extensions',
     },
     {
       number: 2,
-      title: 'Setup Options',
+      title: 'How they sign in',
+      description: 'An invite link, or a password you set',
     },
   ];
+  const activeStep = StepContent.find((step) => step.number === currentStep) || StepContent[0];
 
   const onSubmit = (data: any) => {
     const { password_type, users, site } = data || {};
@@ -294,38 +301,91 @@ const AddUsers: FC<AddUsersProps> = ({ setDrawerState, onReset }) => {
   return (
     <>
       <FormProvider {...formInstance}>
-        <div className="mcm-page mcm-invite w-full h-full min-h-0 overflow-hidden flex flex-col justify-between">
-          <nav className="flex flex-wrap items-center justify-start gap-1 border-b border-gray-200 bg-white py-1 px-3">
-            {StepContent.map((step, index) => (
-              <span key={step.number} className="flex shrink-0 items-center gap-1">
-                {index > 0 && <Ic n="chev" size={14} className="text-gray-300" />}
-                <button
-                  type="button"
-                  onClick={() => step.number < currentStep && setCurrentStep(step.number)}
-                  className={
-                    currentStep === step.number
-                      ? 'text-sm font-medium text-gray-900 whitespace-nowrap'
-                      : 'text-sm font-normal text-gray-400 whitespace-nowrap'
-                  }
-                >
-                  {step.title}
-                </button>
-              </span>
-            ))}
-          </nav>
+        <div className="mcm-page mcm-invite wz-shell">
+          <header className="wz-head">
+            <span className="wz-head-mark" aria-hidden="true">
+              <UserPlus />
+            </span>
+            <div className="min-w-0">
+              <h2 className="wz-head-title">Invite people</h2>
+              <p className="wz-head-sub">
+                {user?.company_info?.name
+                  ? `Add teammates to ${user.company_info.name}`
+                  : 'Add teammates to your company'}
+              </p>
+            </div>
+          </header>
+
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="h-full min-h-0 w-full flex flex-1 flex-col justify-between gap-4 overflow-hidden"
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
-            <div className="min-h-0 flex-1 overflow-y-auto">{stepLookUp?.[currentStep]}</div>
-            <div className="mt-1 flex shrink-0 items-center gap-2 border-t border-gray-200 bg-white pt-2 lg:mt-0 lg:border-t-0 lg:bg-transparent lg:pt-0">
+            <div className="wz-body">
+              <aside className="wz-rail">
+                <ol className="wz-steps">
+                  {StepContent.map((step) => {
+                    const isOn = currentStep === step.number;
+                    const isDone = step.number < currentStep;
+                    return (
+                      <li key={step.number}>
+                        <button
+                          type="button"
+                          onClick={() => isDone && setCurrentStep(step.number)}
+                          className={`wz-step${isOn ? ' is-on' : ''}${isDone ? ' is-done' : ''}`}
+                          aria-current={isOn ? 'step' : undefined}
+                        >
+                          <span className="wz-step-n">{step.number}</span>
+                          <span className="min-w-0">
+                            <span className="wz-step-t">{step.title}</span>
+                            <span className="wz-step-d">{step.description}</span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+
+                {/* What submitting this form actually does to the account —
+                    how many people, how many of them are covered by licences
+                    already held, and what the rest costs. */}
+                <div className="wz-summary">
+                  <p className="wz-summary-k">This invite</p>
+                  <div className="wz-summary-row">
+                    People <b>{watchUsers?.length || 0}</b>
+                  </div>
+                  <div className="wz-summary-row">
+                    Licences you hold <b>{orderSummary?.availableLicenses ?? 0}</b>
+                  </div>
+                  <div className="wz-summary-row">
+                    New to buy <b>{orderSummary?.totalPayableUnit ?? 0}</b>
+                  </div>
+                  <div className="wz-summary-row wz-summary-total">
+                    Added to your bill <b>${paymentCalculation?.total_amount ?? 0}</b>
+                  </div>
+                  {isPaymentRequired && (orderSummary?.totalPayableUnit ?? 0) > 0 ? (
+                    <p className="wz-summary-note">
+                      <TriangleAlert aria-hidden="true" />
+                      Taken when you submit.
+                    </p>
+                  ) : null}
+                </div>
+              </aside>
+
+              <main className="wz-main">
+                <h3 className="wz-section-t">{activeStep.title}</h3>
+                <p className="wz-section-d">{activeStep.description}</p>
+                {stepLookUp?.[currentStep]}
+              </main>
+            </div>
+
+            <div className="wz-foot">
               {onReset ? (
-                <button type="button" className="ppl-invite-reset-btn" onClick={onReset}>
+                <button type="button" className="wz-btn wz-btn--ghost" onClick={onReset}>
                   <Ic n="refresh" size={13} />
                   Reset
                 </button>
               ) : null}
-              <div className="ml-auto flex min-w-max flex-nowrap justify-end gap-2 overflow-x-auto overflow-y-hidden lg:min-w-0 lg:overflow-visible">
+              <div className="wz-foot-end">
                 <button
                   onClick={() => {
                     if (currentStep === 1) {
@@ -336,7 +396,7 @@ const AddUsers: FC<AddUsersProps> = ({ setDrawerState, onReset }) => {
                     setStatus('');
                   }}
                   type="button"
-                  className="btn ghost shrink-0"
+                  className="wz-btn wz-btn--ghost"
                 >
                   {currentStep === 1 ? 'Cancel' : 'Back'}
                 </button>
@@ -365,7 +425,7 @@ const AddUsers: FC<AddUsersProps> = ({ setDrawerState, onReset }) => {
                       }
                     }}
                     disabled={isPendingAddMember || isUserValidatorError}
-                    className="btn primary shrink-0"
+                    className="wz-btn wz-btn--primary"
                   >
                     {isPendingAddMember ? (
                       /* white, not `blue`: this button is filled with the
@@ -375,7 +435,7 @@ const AddUsers: FC<AddUsersProps> = ({ setDrawerState, onReset }) => {
                     ) : currentStep === 2 ? (
                       'Submit'
                     ) : (
-                      'Save & Continue'
+                      'Continue'
                     )}
                   </button>
                 )}

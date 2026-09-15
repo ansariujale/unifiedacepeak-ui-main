@@ -616,14 +616,14 @@ const StageColumn = ({
      the call UI looks the same throughout. */
   const callControls = (
     <>
-      <div className="call-grid">
+      <div className="call-grid" style={{ gap: '6px 14px', maxWidth: 260, marginBottom: 6 }}>
         <button
           type="button"
           className={`call-ctl ${isHold ? 'on' : ''}`}
           onClick={toggleHold}
         >
-          <span className="call-ctl-ic">
-            <Ic n={isHold ? 'play' : 'pause'} size={20} />
+          <span className="call-ctl-ic" style={{ width: 56, height: 56 }}>
+            <Ic n={isHold ? 'play' : 'pause'} size={24} />
           </span>
           {isHold ? 'Resume' : 'Hold'}
         </button>
@@ -632,28 +632,18 @@ const StageColumn = ({
           className={`call-ctl ${isMute ? 'on' : ''}`}
           onClick={toggleMute}
         >
-          <span className="call-ctl-ic">
-            <Ic n={isMute ? 'micoff' : 'mic'} size={20} />
+          <span className="call-ctl-ic" style={{ width: 56, height: 56 }}>
+            <Ic n={isMute ? 'micoff' : 'mic'} size={24} />
           </span>
           {isMute ? 'Unmute' : 'Mute'}
-        </button>
-        <button
-          type="button"
-          className={`call-ctl ${dtmfOpen ? 'on' : ''}`}
-          onClick={() => setDtmfOpen((v) => !v)}
-        >
-          <span className="call-ctl-ic">
-            <Ic n="grid" size={20} />
-          </span>
-          Keypad
         </button>
         <button
           type="button"
           className={`call-ctl ${isRecording ? 'on' : ''}`}
           onClick={toggleRecord}
         >
-          <span className="call-ctl-ic">
-            <Ic n="rec" size={20} />
+          <span className="call-ctl-ic" style={{ width: 56, height: 56 }}>
+            <Ic n="rec" size={24} />
           </span>
           {isRecording ? 'Recording' : 'Record'}
         </button>
@@ -662,20 +652,10 @@ const StageColumn = ({
           className={`call-ctl ${sidePanel === 'notes' ? 'on' : ''}`}
           onClick={() => setSidePanel((v) => (v === 'notes' ? null : 'notes'))}
         >
-          <span className="call-ctl-ic">
-            <Ic n="note" size={20} />
+          <span className="call-ctl-ic" style={{ width: 56, height: 56 }}>
+            <Ic n="note" size={24} />
           </span>
           Notes
-        </button>
-        <button
-          type="button"
-          className={`call-ctl ${isSpeaker ? 'on' : ''}`}
-          onClick={toggleSpeaker}
-        >
-          <span className="call-ctl-ic">
-            <Ic n="mega" size={20} />
-          </span>
-          Speaker
         </button>
         <button
           type="button"
@@ -687,10 +667,26 @@ const StageColumn = ({
             }
           }}
         >
-          <span className="call-ctl-ic">
-            <Ic n="book" size={20} />
+          <span className="call-ctl-ic" style={{ width: 56, height: 56 }}>
+            <Ic n="book" size={24} />
           </span>
           Transcript
+        </button>
+        {/* `.call-grid > :last-child` (console.css) always spans and centers
+            the final child — meant for a lone trailing button, but it also
+            fires when the last child completes a full row. Overriding those
+            two properties here keeps Keypad docked in its own column instead
+            of dropping to a centered row by itself. */}
+        <button
+          type="button"
+          className={`call-ctl ${dtmfOpen ? 'on' : ''}`}
+          onClick={() => setDtmfOpen((v) => !v)}
+          style={{ gridColumn: 'auto', justifySelf: 'center' }}
+        >
+          <span className="call-ctl-ic" style={{ width: 56, height: 56 }}>
+            <Ic n="grid" size={24} />
+          </span>
+          Keypad
         </button>
       </div>
 
@@ -996,45 +992,115 @@ const StageColumn = ({
     );
   }
 
+  /* Ready state — the line's own registration/extension status. Shown below
+     the dialer while idle and below the call card in every other state
+     (incoming, ringing, active, wrap-up), so it reads as one constant strip
+     rather than something that only exists before a call starts. */
+  const readyStateCard = (
+    <div
+      className="card card-pad"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        maxWidth: 400,
+        margin: '0 auto',
+        padding: 10,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 13, fontWeight: 700 }}>Ready state</span>
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '3px 10px',
+            borderRadius: 999,
+            fontSize: 11.5,
+            fontWeight: 600,
+            background: dialpad?.isRegistered ? 'var(--live-wash, #dcfce7)' : 'var(--surface-3)',
+            color: dialpad?.isRegistered ? 'var(--live, #16a34a)' : 'var(--ink-3)',
+          }}
+        >
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: 'currentColor',
+            }}
+          />
+          {dialpad?.isRegistered ? 'Online' : 'Offline'}
+        </span>
+      </div>
+
+      {[
+        {
+          icon: 'headset' as const,
+          label: 'Station',
+          value: `WebRTC · ${dialpad?.uaStatus || 'idle'}`,
+          valueColor: dialpad?.isRegistered ? 'var(--live, #16a34a)' : 'var(--accent)',
+        },
+        {
+          icon: 'grid' as const,
+          label: 'Extension',
+          value: dialpad?.sipCredentials?.extension || '—',
+        },
+      ].map((row) => (
+        <div
+          key={row.label}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingTop: 6,
+            borderTop: '1px solid var(--line)',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--ink-3)' }}>
+            <Ic n={row.icon} size={13} />
+            {row.label}
+          </span>
+          <span
+            className="num"
+            style={{
+              fontSize: 12.5,
+              fontWeight: 700,
+              color: row.valueColor || 'var(--ink)',
+            }}
+          >
+            {row.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+
   /* ---------------------------------------------------------------- idle ---- */
   if (state === 'idle' && !forcedRinging) {
     return (
       <div className={`col stage ${sidePanel ? 'panel-open' : ''}`}>
-        <div className="stage-inner">
+        <div className="stage-inner" style={{ overflowY: 'hidden', justifyContent: 'center', gap: 4 }}>
           <div
             className="card card-pad"
-            style={{ display: 'flex', flexDirection: 'column', gap: 13 }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              maxWidth: 400,
+              margin: '0 auto',
+              padding: 14,
+            }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span
-                aria-hidden
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 34,
-                  height: 34,
-                  borderRadius: 10,
-                  background: 'var(--accent-wash)',
-                  color: 'var(--accent)',
-                }}
-              >
-                <Ic n="phone" size={17} />
-              </span>
-              <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em' }}>Dialer</span>
-
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#111111' }}>Calling as</span>
               {/* This was a static chip, so the number shown here could not be
                   changed without opening the floating dialpad — and when nothing
                   is stored on the account it shows whichever number happens to
                   be first. Picking one here writes it, which is the only way it
                   stops defaulting. */}
-              <div style={{ marginLeft: 'auto', position: 'relative' }}>
-                <span
-                  className="eyebrow"
-                  style={{ display: 'block', textAlign: 'right', marginBottom: 2 }}
-                >
-                  Caller ID
-                </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
                 <button
                   type="button"
                   className="chip"
@@ -1316,7 +1382,7 @@ const StageColumn = ({
                 }}
                 aria-label="Number or name to dial"
                 autoComplete="off"
-                style={{ flex: 1 }}
+                style={{ flex: 1, fontSize: 21 }}
               />
             </div>
             {isDialError ? (
@@ -1349,10 +1415,16 @@ const StageColumn = ({
                 ))}
               </div>
             ) : (
-              <div className="keypad">
+              <div className="keypad" style={{ gap: '12px 14px' }}>
                 {KEYS.map(([d, l]) => (
-                  <button type="button" className="key" key={d} onClick={() => pressKey(d)}>
-                    <b>{d}</b>
+                  <button
+                    type="button"
+                    className="key"
+                    key={d}
+                    onClick={() => pressKey(d)}
+                    style={{ width: 52, height: 52 }}
+                  >
+                    <b style={{ fontSize: 18 }}>{d}</b>
                     <i>{l}</i>
                   </button>
                 ))}
@@ -1364,7 +1436,7 @@ const StageColumn = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 28,
-                paddingTop: 4,
+                paddingTop: 2,
               }}
             >
               {/* Contacts — opens a searchable picker to dial from. */}
@@ -1552,6 +1624,8 @@ const StageColumn = ({
               </button>
             </div>
           </div>
+
+          {readyStateCard}
         </div>
       {/* notes / transcript / summary reachable from the dialer too */}
       {sidePanelEl}
@@ -1581,14 +1655,40 @@ const StageColumn = ({
       'Unknown';
     return (
       <div className={`col stage ${sidePanel ? 'panel-open' : ''}`}>
-        <div className="stage-inner">
+        <div
+          className="stage-inner"
+          style={{
+            overflowY: 'hidden',
+            justifyContent: 'flex-start',
+            gap: 4,
+            padding: '16px 10px',
+          }}
+        >
           {sessionStrip}
-          {/* One card holds the whole call, like the dialer's single-card layout. */}
-          <div className="card call-card">
-            <div className="call-av-lg">{initialsOf(callerName)}</div>
-            <div className="call-name-lg">{callerName}</div>
+          {/* One card holds the whole call, like the dialer's single-card layout.
+              flex:1 lets it grow into the leftover height instead of the
+              "Ready state" card below floating with a big gap underneath it. */}
+          <div
+            className="card call-card"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              flex: '1 0 auto',
+              maxWidth: 400,
+              width: '100%',
+              margin: '0 auto',
+              padding: '12px 12px 10px',
+            }}
+          >
+            <div className="call-av-lg" style={{ width: 64, height: 64, fontSize: 22, marginBottom: 4 }}>
+              {initialsOf(callerName)}
+            </div>
+            <div className="call-name-lg" style={{ fontSize: 15 }}>
+              {callerName}
+            </div>
             {shownNumber ? (
-              <div className="num" style={{ color: 'var(--ink-3)', fontSize: 14 }}>
+              <div className="num" style={{ color: 'var(--ink-3)', fontSize: 12 }}>
                 {shownNumber}
               </div>
             ) : null}
@@ -1596,7 +1696,7 @@ const StageColumn = ({
               className={`state-pill ${
                 state === 'active' ? 'live' : state === 'wrapup' ? 'wrap' : 'ringing pulsing'
               }`}
-              style={{ margin: '6px 0 12px' }}
+              style={{ margin: '4px 0 8px' }}
             >
               {state === 'active'
                 ? 'Connected'
@@ -1607,7 +1707,7 @@ const StageColumn = ({
                     : 'Ringing'}
             </span>
             {state === 'active' || state === 'wrapup' ? (
-              <div className="num" style={{ marginBottom: 10, fontSize: 18, fontWeight: 700 }}>
+              <div className="num" style={{ marginBottom: 4, fontSize: 15, fontWeight: 700 }}>
                 {mmss(secs)}
               </div>
             ) : null}
@@ -1637,7 +1737,18 @@ const StageColumn = ({
             ) : (
               <>
                 {callControls}
-                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, paddingTop: 2 }}>
+                  <button
+                    type="button"
+                    className={`call-ctl ${isSpeaker ? 'on' : ''}`}
+                    onClick={toggleSpeaker}
+                    style={{ gap: 4 }}
+                  >
+                    <span className="call-ctl-ic" style={{ width: 56, height: 56 }}>
+                      <Ic n="mega" size={24} />
+                    </span>
+                    Speaker
+                  </button>
                   <button
                     type="button"
                     className="call-end-pill"
@@ -1652,6 +1763,8 @@ const StageColumn = ({
               </>
             )}
           </div>
+
+          {readyStateCard}
         </div>
         {sidePanelEl}
       </div>

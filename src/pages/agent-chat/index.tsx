@@ -1010,36 +1010,16 @@ const SidebarContent = ({
         </div>
       </div>
 
-      {/* Queue counts, mirroring the phone console's KPI row. Every figure is
-          read from tabCounts, so they always agree with the tabs below. */}
-      <div className="grid grid-cols-4 gap-2 px-[14px] pb-3 pt-3">
-        {(
-          [
-            { key: 'unassigned', label: 'Unassigned' },
-            { key: 'active', label: 'Active' },
-            { key: 'missed', label: 'Missed' },
-            { key: 'resolved', label: 'Resolved' },
-          ] as { key: AgentChatTab; label: string }[]
-        ).map((tile) => (
-          <div key={tile.key} className="min-w-0 rounded-xl bg-[#ebedf0] px-3 py-2.5">
-            <div className="truncate text-[11px] font-medium text-gray-500">{tile.label}</div>
-            <div className="mt-0.5 text-[22px] font-extrabold leading-tight tracking-tight tabular-nums text-gray-900">
-              {tabCounts[tile.key] || 0}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="px-[14px] pb-3 border-b border-border bg-white">
+      <div className="px-[14px] pb-3 pt-3 border-b border-border bg-white">
         <div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-nowrap items-center gap-2.5 overflow-x-auto">
             {tabOptions.map((tab) => {
               const isActive = activeTab === tab.value;
 
               return (
                 <button
                   key={tab.value}
-                  className={`shrink-0 cursor-pointer whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12.5px] font-medium transition-colors ${
+                  className={`shrink-0 cursor-pointer whitespace-nowrap rounded-full px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
                     isActive
                       ? 'bg-[#0b1220] text-white'
                       : 'bg-[#f5f5f5] text-[#64748b] hover:bg-red-50 hover:text-primary'

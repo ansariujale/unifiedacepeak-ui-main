@@ -46,7 +46,7 @@
   --accent-ink: #B91C1C;
   --accent-2: #EF4444;
   --accent-3: #F87171;
-  --accent-wash: #FEE2E2;
+  --accent-wash: #fdf2f2;
   --accent-edge: #FECACA;
 
   /* AI gets its own hue on purpose: machine output must never be
@@ -57,9 +57,9 @@
   --ai-edge: #ddccff;
 
   --live: #0d9488;
-  --live-wash: #dcf5f1;
+  --live-wash: #eefaf8;
   --warn: #c2670a;
-  --warn-wash: #fdf0dc;
+  --warn-wash: #fdf6ec;
   --crit: #d32f2f;
   --crit-wash: #fde9e9;
   --hold: #0e7490;
@@ -3029,9 +3029,9 @@
   --ai-wash: #f2ecff;
   --ai-edge: #ddccff;
   --live: #0d9488;
-  --live-wash: #dcf5f1;
+  --live-wash: #eefaf8;
   --warn: #c2670a;
-  --warn-wash: #fdf0dc;
+  --warn-wash: #fdf6ec;
   --hold: #0e7490;
   --hold-wash: #dcf1f7;
   --crit: #d32f2f;
@@ -4596,29 +4596,25 @@
   min-height: 65px;
   max-height: 65px;
   flex: none;
+  overflow: hidden;
+  transition:
+    height 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    min-height 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    max-height 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* The two header states (stacked "Admin Hub" label vs. icon+title row) are
-   both always mounted, absolutely stacked on the same spot, and crossfade
-   via opacity — see the comment in page-sidebar-layout.tsx on why this
-   replaced a React conditional here specifically. */
-.mcm-admin section[data-admin-rail='true'] .mcm-adminnav-header-collapsed,
+/* The wordmark stays mounted and fades — see the comment in
+   page-sidebar-layout.tsx on why this isn't a React conditional. */
 .mcm-admin section[data-admin-rail='true'] .mcm-adminnav-header-expanded {
   transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.mcm-admin section[data-admin-rail='true'] .mcm-adminnav-header-collapsed {
-  opacity: 0;
-  pointer-events: none;
-}
-.mcm-admin section[data-admin-rail='true'] .mcm-adminnav-header-expanded {
   opacity: 1;
 }
-.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-header-collapsed {
-  opacity: 1;
-  pointer-events: auto;
+/* Collapsed, the rail is an icon column with nothing to brand — the row
+   closes to nothing so the nav starts at the top instead of under a gap. */
+.mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-headerwrap {
+  height: 0;
+  min-height: 0;
+  max-height: 0;
 }
 .mcm-admin section[data-rail-collapsed='true'] .mcm-adminnav-header-expanded {
   opacity: 0;
@@ -4855,7 +4851,9 @@
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-  margin: 2px 0;
+  /* Clear of the top edge: with the brand row gone, the first icon would
+     otherwise start hard against it. */
+  margin: 10px 0 2px;
   padding: 4px 2px;
 }
 .mcm-admin section[data-rail-collapsed='true'] .pl-10 {
@@ -9785,4 +9783,58 @@
 .mcm-channel-tab-icon svg {
   width: 32px !important;
   height: 32px !important;
+}
+
+/* Black pill actions rendered as bare <button>s: Company ▸ "Edit details"
+   (company-record.tsx) and "Add number" / "Add identity" / "Add address"
+   (`.ident-pill-btn`, which had no definition anywhere — hence no background
+   or border at all).
+
+   Both selectors carry the same `:not()` chain as the plain-<button> reset at
+   the top of this file, which strips border and background from every bare
+   button under this shell. An ordinary `.mcm-page .co-edit-btn` rule loses to
+   that reset on specificity however far down the file it sits, and the button
+   renders as bare text. Matched to the shared Button component's own `dark`
+   variant, so these read as the same control as Manage / New location. */
+.mcm-page
+  button.co-edit-btn:not([data-slot='switch']):not([data-slot='button']):not(
+    [data-slot='checkbox']
+  ),
+.mcm-page
+  button.ident-pill-btn:not([data-slot='switch']):not([data-slot='button']):not(
+    [data-slot='checkbox']
+  ) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid #000;
+  background: #000;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.mcm-page
+  button.co-edit-btn:not([data-slot='switch']):not([data-slot='button']):not(
+    [data-slot='checkbox']
+  ):hover,
+.mcm-page
+  button.ident-pill-btn:not([data-slot='switch']):not([data-slot='button']):not(
+    [data-slot='checkbox']
+  ):hover {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: rgba(0, 0, 0, 0.9);
+}
+.mcm-page .co-edit-btn svg,
+.mcm-page .ident-pill-btn svg {
+  width: 14px;
+  height: 14px;
+  color: currentColor;
 }

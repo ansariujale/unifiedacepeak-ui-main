@@ -18,6 +18,22 @@ const defaultEditorValue = [
   },
 ];
 
+// The note body is stored as a Slate document (same shape the rich-text
+// editor produces) so existing notes still render via the read-only
+// `TextEditor` in the list — a plain textarea here just round-trips through
+// that shape instead of adopting it as the storage format.
+const slateToPlainText = (nodes: any): string => {
+  if (!Array.isArray(nodes)) return '';
+  return nodes
+    .map((node: any) =>
+      Array.isArray(node?.children) ? node.children.map((c: any) => c?.text || '').join('') : '',
+    )
+    .join('\n');
+};
+
+const plainTextToSlate = (text: string) =>
+  text.split('\n').map((line) => ({ type: 'paragraph', children: [{ text: line }] }));
+
 const NotesList = ({ selectedChat, setActiveState }: any) => {
   const [addNotes, setAddNotes] = useState(false);
   const [currentNote, setCurrentNote] = useState<any>({ title: '', content: [] });
@@ -146,13 +162,17 @@ const NotesList = ({ selectedChat, setActiveState }: any) => {
                   {currentNote?.title || 'Untitled Note'}
                 </h2>
               )}
-              <div className="mcm-notes-editor w-full px-3 pt-3">
-                <TextEditor
-                  initialValue={currentNote?.content || defaultEditorValue}
-                  onChange={(val: any) =>
-                    setCurrentNote((prev: any) => ({ ...prev, content: val }))
+              <div className="mcm-notes-editor w-full px-4 pt-3">
+                <textarea
+                  className="min-h-[220px] w-full resize-none border-0 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
+                  placeholder="Type something..."
+                  value={slateToPlainText(currentNote?.content || defaultEditorValue)}
+                  onChange={(e) =>
+                    setCurrentNote((prev: any) => ({
+                      ...prev,
+                      content: plainTextToSlate(e.target.value),
+                    }))
                   }
-                  readOnly={false}
                 />
               </div>
             </div>
