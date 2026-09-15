@@ -21,7 +21,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
-import { Building2, Check, Copy } from 'lucide-react';
+import { Building2, Check, Copy, Pencil } from 'lucide-react';
 import { City, State } from 'country-state-city';
 
 import { Button } from '@/components/ui/button';
@@ -166,6 +166,19 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
       setIsEditing(false);
       refetch();
     },
+    /* `upsertCompany` suppresses the shared error toast (it has to, so a 401
+       can't end the session), which would otherwise leave Save doing visibly
+       nothing at all when the endpoint refuses. */
+    onError: (error: any) => {
+      const body = error?.response?.data || {};
+      handleAlert({
+        text:
+          error?.response?.status === 401
+            ? 'Your account is not permitted to change company details. Ask support to update them.'
+            : body?.message || body?.data?.message || 'Company details could not be saved.',
+        type: 'error',
+      });
+    },
   });
 
   const onSubmit = (values: any) => {
@@ -199,7 +212,7 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center text-primary">
             <Building2 className="h-5 w-5" />
           </div>
           <div className="min-w-0">
@@ -216,7 +229,7 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
               type="button"
               onClick={handleCopyId}
               title="Copy company ID"
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gray-600 px-2 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
             >
               {copied ? (
                 <Check className="h-3.5 w-3.5 text-green-600" />
@@ -226,11 +239,23 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
               {copied ? 'Copied' : 'Company ID'}
             </button>
           )}
-          {/* Edit is hidden for the same reason the fetch was removed: the only
-              save endpoint, /api/admin/company/upsert, is behind AdminMiddleware
-              and 401s for every customer — and a 401 force-logs them out. The
-              form below is kept intact and re-enables the moment a tenant-scoped
-              endpoint exists. */}
+          {/* Saving goes to /api/admin/company/upsert, which some deployments
+              gate to platform staff. `upsertCompany` opts that one call out of
+              the session-ending 401 handler, so the worst case is a refusal
+              reported below — pressing Save can't sign anybody out. */}
+          {uuid && !isEditing && (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              /* Styled by class rather than Tailwind colour utilities: the
+                 admin design system remaps `bg-gray-100` onto its own surface
+                 token, which on a white card left the chip invisible. */
+              className="co-edit-btn"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Edit details
+            </button>
+          )}
         </div>
       </div>
 
@@ -241,6 +266,7 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
             <Input label="Street address" placeholder="Enter address" {...register('address')} />
 
             <CustomSelect
+              inputClass="co-grey-select"
               label="Country"
               placeholder="Select country"
               options={COUNTRY_OPTIONS}
@@ -255,6 +281,7 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
             />
 
             <CustomSelect
+              inputClass="co-grey-select"
               label="State / region"
               placeholder={country ? 'Select state' : 'Choose a country first'}
               options={stateOptions}
@@ -267,6 +294,7 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
             />
 
             <CustomSelect
+              inputClass="co-grey-select"
               label="City"
               placeholder={stateValue ? 'Select city' : 'Choose a state first'}
               options={cityOptions}
@@ -285,7 +313,7 @@ const CompanyRecord = ({ companyInfo, defaultSite }: CompanyRecordProps) => {
             <Button type="button" variant="transparent" onClick={() => setIsEditing(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="dark" disabled={isPending}>
+            <Button type="submit" variant="primary" className="rounded-full" disabled={isPending}>
               {isPending ? 'Saving...' : 'Save company details'}
             </Button>
           </div>

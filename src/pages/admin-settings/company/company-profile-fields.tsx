@@ -335,7 +335,7 @@ const CompanyProfileFields = () => {
 
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center text-primary">
                 <IdCard className="h-5 w-5" />
               </div>
               <div className="flex min-w-[220px] flex-1 flex-col gap-1">
@@ -346,7 +346,7 @@ const CompanyProfileFields = () => {
                   Set out the details you want to keep, in the order you want to see them.
                 </p>
               </div>
-              <Button type="button" variant="dark" onClick={addField}>
+              <Button type="button" variant="dark" className="rounded-full" onClick={addField}>
                 <Plus className="h-3.5 w-3.5" />
                 Add a field
               </Button>
@@ -356,7 +356,7 @@ const CompanyProfileFields = () => {
               {/* The honest bit. Defining a field is real and is saved; nothing
                   yet puts it on anybody's record, and an admin who saves this
                   and then opens a colleague's profile must not be surprised. */}
-              <ul className="flex flex-wrap list-disc gap-x-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 pl-6 text-xs text-black">
+              <ul className="flex w-fit flex-wrap list-disc gap-x-4 self-start rounded-lg border border-amber-200 bg-amber-50/10 px-3 py-2 pl-6 text-xs text-amber-900">
                 <li>Coming soon — fields aren&apos;t on anyone&apos;s profile yet.</li>
                 <li>Saved now, so they&apos;re ready once this ships.</li>
               </ul>
@@ -388,6 +388,7 @@ const CompanyProfileFields = () => {
                           <Button
                             type="button"
                             variant="dark"
+                            className="rounded-full"
                             onClick={() => moveField(index, -1)}
                             disabled={index === 0}
                             aria-label={`Move ${field.label || 'this field'} up`}
@@ -397,6 +398,7 @@ const CompanyProfileFields = () => {
                           <Button
                             type="button"
                             variant="dark"
+                            className="rounded-full"
                             onClick={() => moveField(index, 1)}
                             disabled={index === fields.length - 1}
                             aria-label={`Move ${field.label || 'this field'} down`}
@@ -406,6 +408,7 @@ const CompanyProfileFields = () => {
                           <Button
                             type="button"
                             variant="dark"
+                            className="rounded-full"
                             onClick={() =>
                               isSaved ? setConfirmingDelete(field.id) : removeField(field.id)
                             }
@@ -436,6 +439,7 @@ const CompanyProfileFields = () => {
 
                         <div className="flex flex-col gap-1">
                           <CustomSelect
+                            inputClass="co-grey-select"
                             label="Kind of answer"
                             options={TYPE_OPTIONS}
                             value={selectedType(field.type)}
@@ -489,7 +493,7 @@ const CompanyProfileFields = () => {
                       </div>
 
                       {isConfirming && (
-                        <div className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                        <div className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50/50 px-3 py-2">
                           <p className="text-xs font-semibold text-gray-900">
                             Remove &quot;{field.label.trim() || 'this field'}&quot;?
                           </p>
@@ -503,6 +507,7 @@ const CompanyProfileFields = () => {
                             <Button
                               type="button"
                               variant="dark"
+                              className="rounded-full"
                               onClick={() => setConfirmingDelete(null)}
                             >
                               Keep it
@@ -510,6 +515,7 @@ const CompanyProfileFields = () => {
                             <Button
                               type="button"
                               variant="dark"
+                              className="rounded-full"
                               onClick={() => removeField(field.id)}
                             >
                               Remove it
@@ -531,6 +537,7 @@ const CompanyProfileFields = () => {
             <Button
               type="button"
               variant="dark"
+              className="rounded-full"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

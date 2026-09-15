@@ -127,7 +127,7 @@ export default function AgentSiteSelection({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
+                className="[&_[data-slot=dropdown-menu-item]]:focus:text-neutral-900! flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
               >
                 {sites.map((site) => {
                   const siteId = getAgentSiteId(site);

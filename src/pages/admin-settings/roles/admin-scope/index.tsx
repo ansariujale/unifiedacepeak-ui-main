@@ -22,14 +22,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, ShieldCheck, Trash2, Users } from 'lucide-react';
+import { Building2, InfoIcon, ShieldCheck, Trash2, Users } from 'lucide-react';
 
+import CustomTooltip from '@/components/custom/custom-tooltip';
 import Loader from '@/components/custom/loader';
 import { SettingCard, SettingRow } from '@/components/mcm/setting-card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AdminPage } from '@/pages/admin-settings/page-shell';
-import { AreaNav } from '@/pages/admin-settings/roles/area-nav';
 import { handleAlert } from '@/lib/utils';
 import { useUser } from '@/hooks/use-user';
 import { fetchAllPages } from '@/lib/fetch-all-pages';
@@ -54,6 +54,7 @@ import {
   type Person,
   type ScopeTier,
 } from '@/lib/admin-scope';
+import './admin-scope-theme.css';
 
 const STORE_KEY = 'admin_scopes';
 
@@ -235,10 +236,28 @@ const AdminScopePage = () => {
 
   return (
     <AdminPage
+      className="scope-theme"
       section="People"
-      title="Admin scope"
-      description="Step 3 of four. A role says what somebody may do. This says who they may do it to — the whole company, chosen locations, or chosen departments."
-      actions={<AreaNav current="/admin-settings/admin-scope" />}
+      title={
+        <span className="flex items-center gap-2">
+          <span className="dir-serif-heading">Admin scope</span>
+          <CustomTooltip
+            text={
+              <>
+                Step 3 of four. A role says what somebody
+                <br />
+                may do. This says who they may do it to —
+                <br />
+                the whole company, chosen locations, or chosen departments.
+              </>
+            }
+            side="right"
+            className="whitespace-normal text-left"
+          >
+            <InfoIcon className="w-4 h-4 text-gray-500 cursor-pointer" />
+          </CustomTooltip>
+        </span>
+      }
     >
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
         {isLoading || peopleLoading ? (
@@ -252,15 +271,6 @@ const AdminScopePage = () => {
                 scopes.length
                   ? `${scopes.length} ${scopes.length === 1 ? 'person has' : 'people have'} a scope written down. Anybody not listed is treated as covering the whole company, which is what happens today.`
                   : 'Nobody has a scope yet, so every administrator covers the whole company — including people at other locations.'
-              }
-              status="coming-soon"
-              note={
-                <>
-                  Coming soon. This is saved on your company record and nothing acts on it yet: an
-                  administrator&rsquo;s scope is never checked, so it is a written record of who{' '}
-                  <em>should</em> manage what rather than a restriction. Decide it now and it is
-                  ready the day it arrives.
-                </>
               }
               aside={
                 dirty ? (

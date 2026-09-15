@@ -1,4 +1,4 @@
-import { CircleCheck, Globe, Info, Mail, MapPin, Phone, PhoneCall, UserRound } from 'lucide-react';
+import { CircleCheck, Globe, Mail, MapPin, Phone, PhoneCall, UserRound, X } from 'lucide-react';
 import { useDialpad } from '@/hooks/use-dialpad';
 
 import { type ReactNode } from 'react';
@@ -8,6 +8,8 @@ type VisitorProfileProps = {
   chat?: any;
   currentUserId?: string;
   asDrawerContent?: boolean;
+  /** When provided, a close button in the header collapses the panel. */
+  onClose?: () => void;
 };
 
 type VisitorTicket = {
@@ -224,7 +226,6 @@ const getVisitorProfileData = (chat: any, currentUserId?: string): VisitorProfil
 const SectionTitle = ({ title }: { title: string }) => (
   <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
     <span>{title}</span>
-    <Info className="h-3.5 w-3.5 text-muted-foreground" />
   </div>
 );
 
@@ -282,6 +283,7 @@ const VisitorProfile = ({
   chat,
   currentUserId,
   asDrawerContent = false,
+  onClose,
 }: VisitorProfileProps) => {
   const { makeCall } = useDialpad();
 
@@ -327,8 +329,19 @@ const VisitorProfile = ({
           onto a face. */}
       {/* 64px, matching the conversation header and the queue header beside it,
           so the three columns share one rule across the top of the page. */}
-      <div className="sticky top-0 z-10 flex min-h-16 items-center border-b border-border bg-white px-5">
+      <div className="sticky top-0 z-10 flex min-h-16 items-center justify-between bg-white px-5">
         <h3 className="text-sm font-semibold text-foreground">Visitor Profile</h3>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close profile"
+            title="Close"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
       </div>
       <div className="border-b border-border px-5 py-6">
         <div className="flex flex-col items-center text-center">

@@ -25,13 +25,15 @@
 
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Compass, Layers, Users } from 'lucide-react';
+import { ArrowRight, Compass, InfoIcon, Layers, Users } from 'lucide-react';
 
+import CustomTooltip from '@/components/custom/custom-tooltip';
 import { SettingCard, SettingRow } from '@/components/mcm/setting-card';
 import { Button } from '@/components/ui/button';
 import { AdminPage } from '@/pages/admin-settings/page-shell';
-import { ACCESS_STEPS, AreaNav, MATRIX_PATH } from '@/pages/admin-settings/roles/area-nav';
+import { ACCESS_STEPS, MATRIX_PATH } from '@/pages/admin-settings/roles/area-nav';
 import { SCOPE_LABEL, TIER_ORDER, tierInfo } from '@/lib/role-permission-defaults';
+import './access-control-theme.css';
 
 /** What each step decides, and what goes wrong when it is skipped. */
 const STEP_NOTES: Record<string, { decides: string; ifSkipped: string }> = {
@@ -63,10 +65,28 @@ const AccessControlPage = () => {
 
   return (
     <AdminPage
+      className="acc-theme"
       section="People"
-      title="How access works"
-      description="Who can do what, in four steps. Start here, then work down: the later steps assume the earlier ones have been answered."
-      actions={<AreaNav current="/admin-settings/access-control" />}
+      title={
+        <span className="flex items-center gap-2">
+          <span className="dir-serif-heading">How access works</span>
+          <CustomTooltip
+            text={
+              <>
+                Who can do what, in four steps. Start
+                <br />
+                here, then work down: the later steps
+                <br />
+                assume the earlier ones have been answered.
+              </>
+            }
+            side="right"
+            className="whitespace-normal text-left"
+          >
+            <InfoIcon className="w-4 h-4 text-gray-500 cursor-pointer" />
+          </CustomTooltip>
+        </span>
+      }
     >
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
         <SettingCard
@@ -105,15 +125,6 @@ const AccessControlPage = () => {
           title="Step 1 — the six kinds of person"
           icon={<Users className="h-4 w-4" />}
           description="Each name says how far that kind of person reaches, not how senior they are. Somebody who runs two departments and somebody who runs the company do the same sorts of thing to different sets of people."
-          status="coming-soon"
-          note={
-            <>
-              Coming soon: reach. There is no record yet of which locations or departments somebody
-              looks after, so a Location Admin&rsquo;s permissions currently apply to every
-              location. Step 3 is where you write it down, ready for the day it arrives. The
-              permissions themselves do work, inside this app.
-            </>
-          }
           aside={
             <Button type="button" variant="primary" onClick={() => navigate(MATRIX_PATH)}>
               See the full table
@@ -154,8 +165,7 @@ const AccessControlPage = () => {
           />
           <SettingRow
             label="3. How far the role reaches"
-            description="Which locations or departments it applies to. Written down on the Admin scope screen, and nothing acts on it yet, so today every role reaches the whole company."
-            status="coming-soon"
+            description="Which locations or departments it applies to. Written down on the Admin scope screen."
           />
         </SettingCard>
       </div>

@@ -18,12 +18,16 @@
 /* External Contacts page — scoped to specific class names below so it only
    touches this page. Specificity matches .mcm-page .btn.primary (3 classes)
    so this actually wins instead of losing back to the default blue. */
-.mcm-page .btn.primary.ext-black-btn {
-  background: #171717;
-  color: #fff;
+.mcm-page .btn.primary.ext-black-btn,
+.mcm-page .btn.primary.ext-black-btn:focus,
+.mcm-page .btn.primary.ext-black-btn:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
 }
 .mcm-page .btn.primary.ext-black-btn:hover {
-  background: #000;
+  background: #000 !important;
+  border-color: #000 !important;
 }
 
 /* External Contacts table skin: matches the .tbl/.tbl__* row spec used on
@@ -139,17 +143,19 @@
 }
 
 /* Secondary buttons (Export, Close, etc.) filled black to match .btn.primary. */
-.ext-theme .btn.ghost {
-  background: #171717;
-  border-color: #171717;
-  color: #fff;
+.ext-theme .btn.ghost,
+.ext-theme .btn.ghost:focus,
+.ext-theme .btn.ghost:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
 }
 .ext-theme .btn.ghost .ic {
-  color: #fff;
+  color: #fff !important;
 }
 .ext-theme .btn.ghost:hover {
-  background: #000;
-  border-color: #000;
+  background: #000 !important;
+  border-color: #000 !important;
   color: #fff;
 }
 

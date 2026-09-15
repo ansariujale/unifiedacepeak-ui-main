@@ -376,7 +376,7 @@ const CompanyRingTime = () => {
               different place, and an admin who changes one and not the other
               gets silence at the end of the call. */}
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ucass-primary-200 text-primary">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center text-primary">
               <PhoneCall className="h-4 w-4" />
             </div>
             <div className="min-w-[220px] flex-1">
@@ -391,7 +391,7 @@ const CompanyRingTime = () => {
             <Button
               type="button"
               variant="dark"
-              className="shrink-0"
+              className="shrink-0 rounded-full"
               onClick={() => navigate(NUMBERS_IN_USE_PATH)}
             >
               Check your numbers
@@ -406,6 +406,7 @@ const CompanyRingTime = () => {
             <Button
               type="button"
               variant="dark"
+              className="rounded-full"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

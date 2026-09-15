@@ -3626,7 +3626,7 @@ function CreateChatbotAgent() {
                         <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none">
+                    <DropdownMenuContent align="start" className="[&_[data-slot=dropdown-menu-item]]:focus:text-neutral-900! flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none">
                       {languageChoices.map((language) => {
                         const isSelected = language.value === selectedLanguage;
                         return (
@@ -3669,7 +3669,7 @@ function CreateChatbotAgent() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="start"
-                      className="flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
+                      className="[&_[data-slot=dropdown-menu-item]]:focus:text-neutral-900! flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
                     >
                       {useCaseTemplateOptions.map((option) => {
                         const isSelected = option.name === roleUseCase;
@@ -3994,7 +3994,7 @@ function CreateChatbotAgent() {
                 </p>
                 <div className="mt-4 flex h-10 min-w-0 items-center gap-2 rounded-full border! border-neutral-200! bg-white! pl-2 pr-3 shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-all focus-within:border-neutral-400!">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-red-600">
-                    <Search className="h-3.5 w-3.5" />
+                    <Search className="h-[18px] w-[18px]" strokeWidth={2.25} />
                   </span>
                   <input
                     value={knowledgeBaseSearch}
@@ -4996,7 +4996,10 @@ function CreateChatbotAgent() {
             })}
           </div>
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-600" />
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-red-600"
+              strokeWidth={2.25}
+            />
             <input
               value={reviewKnowledgeSearch}
               onChange={(event) =>

@@ -18,21 +18,13 @@ import { getRoleList, getUserList, validateUser } from '@/services/api';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import type { ISELECTVALUE } from '@/interfaces/api-interfaces';
-import { Plus, TrashBin } from '@/assets/icons';
+import { TrashBin } from '@/assets/icons';
 import { useGetSite } from '@/hooks/common';
 import OrderSummary from '../order-summary';
 import { Label } from '@/components/ui/label';
-import ErrorTooltip from '@/components/custom/error-tooltip';
 import { generateRandomExtension, handleAlert } from '@/lib/utils';
 import { Icon } from '@/assets/icons/icon';
-import CustomTooltip from '@/components/custom/custom-tooltip';
-import { Check, ChevronDown, InfoIcon } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { InfoIcon, Minus, Plus, UserPlus } from 'lucide-react';
 import { COMPANY_DEFAULTS_QUERY_KEY, fetchCompanyDefaults } from '@/lib/company-defaults';
 import { NEW_PERSON_ROLE_KEY, readNewPersonRole } from '@/lib/role-permission-defaults';
 import {
@@ -346,6 +338,21 @@ const AddUserInfo = forwardRef(function AddUserInfo(
 
   const MAX_USERS = 10;
 
+  /* Ten at a time, or fewer when the plan's own licence ceiling is the lower
+     of the two — the same figure the guard inside `handleAddUser` enforces,
+     said up front rather than only on the click that trips it. */
+  const planLicenceCap = Number(plan_info?.dataValues?.licenses) || 0;
+  /* A cap of 0 means the plan doesn't cap licences at all — and so does a plan
+     that hasn't loaded yet, which is why this reads the cap rather than
+     subtracting straight away: (0 - 0) would otherwise claim a ceiling of
+     nobody while the account details were still in flight. */
+  const licenceHeadroom =
+    planLicenceCap > 0
+      ? Math.max(0, planLicenceCap - (Number(dataGetMyPlanDetails?.license_detail?.total_licenses) || 0))
+      : null;
+  const maxPeopleAtOnce =
+    licenceHeadroom === null ? MAX_USERS : Math.max(1, Math.min(MAX_USERS, licenceHeadroom));
+
   /* One row per click — the quantity box this used to read from is gone, so
      this simply adds a single row, still behind the same plan/trial/licence
      guards as before. Files the row currently on screen away (it stays in
@@ -397,6 +404,16 @@ const AddUserInfo = forwardRef(function AddUserInfo(
 
     append({ ...userInitialState });
     setActiveIndex(currentCount);
+  };
+
+  /* Stepping the count down takes the last person back off the list. The row
+     on screen follows it if it was the one removed, so the form never ends up
+     pointing at an index that no longer exists. */
+  const handleRemoveLastUser = () => {
+    const lastIndex = fields.length - 1;
+    if (lastIndex <= 0) return;
+    remove(lastIndex);
+    setActiveIndex((prev) => (prev >= lastIndex ? lastIndex - 1 : prev));
   };
 
   /* Opens an already-added row back up in the form instead of its row below. */
@@ -506,131 +523,101 @@ const AddUserInfo = forwardRef(function AddUserInfo(
   }, [fields?.length]);
 
   return (
-    <div className="flex min-h-0 flex-col gap-2 overflow-y-auto">
-      <div className="flex flex-col gap-1 mt-1">
-        <div className="ppl-invite-actions flex flex-wrap items-center justify-end gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant={'outline'} size={'sm'} type="button" className="ppl-invite-btn">
-                Branches
-                <ChevronDown size={14} className="text-gray-700" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="border-transparent">
-              {companySiteList?.map((site: { name: string; uuid: string }) => (
-                <DropdownMenuItem
-                  key={site.uuid}
-                  className="ppl-row-menu-item justify-between"
-                  onSelect={() =>
-                    setValue(
-                      'site',
-                      { label: site.name, value: site.uuid },
-                      { shouldValidate: true },
-                    )
-                  }
-                >
-                  {site.name}
-                  {watch('site')?.value === site.uuid ? <Check size={14} /> : null}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {errors?.site?.value?.message ? (
-            <ErrorTooltip text={errors?.site?.value?.message} />
-          ) : null}
-        </div>
-
-        {/* {licenseInfo.extraCharge && (
-        <p className="text-grey-700 text-center text-sm">
-          Additional licenses to purchase: {licenseInfo.extraUnits}
-        </p>
-      )} */}
-        <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <div className="rounded-lg border border-transparent bg-white p-2 shadow-sm">
-            <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-gray-500">
-              Available to purchase
-            </div>
-            <div className="mt-0.5 text-lg font-bold leading-none text-gray-900">
-              {plan_info?.dataValues?.licenses !== 0
-                ? plan_info?.dataValues?.licenses -
-                  dataGetMyPlanDetails?.license_detail?.total_licenses
-                : 'Unlimited'}
-            </div>
-          </div>
-          <div className="rounded-lg border border-transparent bg-white p-2 shadow-sm">
-            <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-gray-500">
-              Unused licenses
-              <CustomTooltip text="License purchased" side="right">
-                <InfoIcon className="w-3 h-3 text-gray-500 cursor-pointer" />
-              </CustomTooltip>
-            </div>
-            <div className="mt-0.5 text-lg font-bold leading-none text-gray-900">
-              {licenseInfo?.available || 0}
-            </div>
-          </div>
-          <div className="rounded-lg border border-transparent bg-white p-2 shadow-sm">
-            <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-gray-500">
-              New licenses purchased
-            </div>
-            <div className="mt-0.5 text-lg font-bold leading-none text-gray-900">
-              {licenseInfo?.extraUnits || 0}
-            </div>
-          </div>
-        </div>
-        {licenseInfo?.hasLicenseMismatch ? (
-          <p className="text-amber-600 text-center text-xs">
-            Your plan lists {licenseInfo?.reportedFree} unused licence
-            {licenseInfo?.reportedFree === 1 ? '' : 's'}, but billing can only confirm{' '}
-            {licenseInfo?.enforcedFree}. We use the lower number so you are not blocked at checkout.
-          </p>
-        ) : null}
-
-        {/* Which role everybody on this form starts on, and why that one. Said
-            once at the top rather than repeated on every row: it is the same
-            answer for all of them, and it is a company-wide setting somebody
-            can go and change. */}
-        {roleDecision.reason ? (
-          <p className="mx-auto mt-1 flex max-w-3xl items-center justify-center gap-1 text-center text-xs text-gray-600">
-            {roleDecision.role ? (
-              <>
-                Starting role: <strong>&ldquo;{roleDecision.role.name}&rdquo;</strong>
-              </>
-            ) : (
-              'Starting role not set'
-            )}
-            <CustomTooltip
-              text={roleDecision.reason}
-              side="right"
-              className="max-w-[240px] whitespace-normal text-left leading-snug"
+    <div className="flex min-h-0 flex-col gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <span className="wz-field-k">How many people do you want to invite?</span>
+          {/* The count and the rows it stands for are the same thing — stepping
+              it up opens another person's fields, stepping it down takes the
+              last one back off. */}
+          <div className="wz-count">
+            <button
+              type="button"
+              onClick={handleRemoveLastUser}
+              disabled={fields.length <= 1}
+              aria-label="One fewer person"
             >
-              <InfoIcon className="w-3.5 h-3.5 text-gray-500 cursor-pointer" />
-            </CustomTooltip>
+              <Minus />
+            </button>
+            <span className="wz-count-v" aria-live="polite">
+              {fields.length}
+            </span>
+            <button type="button" onClick={handleAddUser} aria-label="One more person">
+              <Plus />
+            </button>
+          </div>
+          <p className="wz-hint">
+            You can add up to {maxPeopleAtOnce} {maxPeopleAtOnce === 1 ? 'person' : 'people'} at
+            once.
           </p>
-        ) : null}
-        {roleDecision.warning ? (
-          <p className="mx-auto max-w-3xl text-center text-xs font-medium text-amber-600">
-            {roleDecision.warning}
-          </p>
-        ) : null}
+        </div>
 
-        {/* One line saying what is wrong with the list as a whole, so somebody
-            scrolling ten rows knows there is something to find. */}
-        {clashes.length ? (
-          <p
-            role="status"
-            className="mx-auto mt-2 max-w-3xl rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs font-medium text-amber-800"
-          >
-            {summariseClashes(clashes)}
-          </p>
-        ) : null}
+        <div>
+          <CustomSelect
+            label="Location for everyone"
+            placeholder="Select location"
+            value={watch('site')}
+            options={(companySiteList || []).map((site: { name: string; uuid: string }) => ({
+              label: site.name,
+              value: site.uuid,
+            }))}
+            handleChange={(option: ISELECTVALUE | null) =>
+              setValue('site', option || { label: '', value: '' }, { shouldValidate: true })
+            }
+            error={errors?.site?.value?.message}
+            /* Rendered inline rather than portaled to <body> — a portaled menu
+               can't inherit this dialog's own accent tokens. */
+            menuPortalTarget={false}
+          />
+        </div>
       </div>
-      <div className="flex flex-col my-2 gap-3 pr-0 md:pr-3 lg:gap-2">
+
+      {licenseInfo?.hasLicenseMismatch ? (
+        <p className="wz-note wz-note--warn">
+          <InfoIcon aria-hidden="true" />
+          Your plan lists {licenseInfo?.reportedFree} unused licence
+          {licenseInfo?.reportedFree === 1 ? '' : 's'}, but billing can only confirm{' '}
+          {licenseInfo?.enforcedFree}. We use the lower number so you are not blocked at checkout.
+        </p>
+      ) : null}
+
+      {/* Which role everybody on this form starts on, and why that one. Said
+          once at the top rather than repeated on every row: it is the same
+          answer for all of them, and it is a company-wide setting somebody
+          can go and change. */}
+      {roleDecision.reason ? (
+        <p className={`wz-note${roleDecision.warning ? ' wz-note--warn' : ''}`}>
+          <InfoIcon aria-hidden="true" />
+          <span>{roleDecision.warning || roleDecision.reason}</span>
+        </p>
+      ) : null}
+
+      {/* One line saying what is wrong with the list as a whole, so somebody
+          scrolling ten rows knows there is something to find. */}
+      {clashes.length ? (
+        <p role="status" className="wz-note wz-note--warn">
+          <InfoIcon aria-hidden="true" />
+          <span>{summariseClashes(clashes)}</span>
+        </p>
+      ) : null}
+
+      <div className="flex flex-col gap-3">
         {/* The one open form — a fresh blank row, or whichever row "Edit"
             below was clicked on. */}
         <div
           key={activeIndex}
-          className="mcm-invitee grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-white p-3 md:grid-cols-2 xl:grid-cols-3"
+          className="mcm-invitee overflow-hidden rounded-xl border border-gray-200 bg-white"
         >
+          <div className="wz-person-head">
+            <span className="wz-person-mark" aria-hidden="true">
+              <UserPlus />
+            </span>
+            <div className="min-w-0">
+              <div className="wz-person-t">Person {activeIndex + 1}</div>
+              <div className="wz-person-d">Enter the details of the person to invite.</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2 xl:grid-cols-3">
           <div className="w-full">
             <Input
               label="First Name"
@@ -753,23 +740,10 @@ const AddUserInfo = forwardRef(function AddUserInfo(
             <Button
               type="button"
               variant={'outline'}
-              className="h-10 w-10 shrink-0 rounded-full border-0 bg-[#171717] text-white hover:bg-black hover:text-white"
+              className="h-10 w-10 shrink-0 rounded-full border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
               onClick={() => generateNewExtension(activeIndex)}
             >
               <Icon name="Refresh" className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div className="ppl-invite-actions col-span-2 flex flex-wrap items-center justify-end gap-2 xl:col-span-3">
-            <Button
-              variant={'outline'}
-              size={'sm'}
-              type="button"
-              className="ppl-invite-btn"
-              onClick={handleAddUser}
-            >
-              <Plus className="w-3 h-3 text-gray-700" />
-              Add User
             </Button>
           </div>
 
@@ -787,16 +761,17 @@ const AddUserInfo = forwardRef(function AddUserInfo(
             const description = describeRole(chosen);
             return (
               <p
-                className={`ppl-role-note col-span-2 truncate text-[10px] leading-snug ${caution ? 'font-medium text-amber-600' : 'text-gray-500'}`}
+                className={`ppl-role-note col-span-2 truncate text-[10px] leading-snug ${caution ? 'font-medium text-red-600' : 'text-gray-500'} xl:col-span-3`}
               >
                 {caution || description}
               </p>
             );
           })()}
+          </div>
         </div>
 
-        {/* Everyone already filed away — added via "Add User" above, or
-            sitting here since the form opened on a fresh blank row. */}
+        {/* Everyone already filed away — stepped past with the counter above,
+            or sitting here since the form opened on a fresh blank row. */}
         {fields.length > 1 ? (
           <div className="flex flex-col gap-2">
             {fields.map((field: any, index: number) => {

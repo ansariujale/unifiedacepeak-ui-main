@@ -84,7 +84,7 @@ const CompanyDetails = ({
     <div className="flex h-full w-full flex-col gap-3 overflow-y-auto pt-2 pr-1">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center text-primary">
             <Icon name="CompayIcon" className="h-5 w-5" />
           </div>
           <div>
@@ -163,10 +163,10 @@ const CompanyDetails = ({
           </p>
         </div>
       ) : (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+        <div className="rounded-lg border border-amber-200 bg-amber-50/10 p-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-            <p className="text-xs font-semibold text-gray-900">
+            <p className="text-xs font-semibold text-amber-900">
               {readiness.requiredMissing > 0
                 ? `${readiness.requiredMissing} thing${readiness.requiredMissing > 1 ? 's' : ''} still needed`
                 : 'Worth completing'}
@@ -174,12 +174,12 @@ const CompanyDetails = ({
           </div>
           <ul className="mt-2 space-y-2">
             {readiness.issues.map((issue) => (
-              <li key={issue.field} className="text-xs text-gray-700">
-                <span className="font-semibold text-gray-900">{issue.label}</span>
+              <li key={issue.field} className="text-xs text-amber-800">
+                <span className="font-semibold text-amber-900">{issue.label}</span>
                 {issue.severity === 'recommended' && (
-                  <span className="ml-1 text-gray-500">(optional)</span>
+                  <span className="ml-1 text-amber-700">(optional)</span>
                 )}
-                <span className="block text-gray-600">{issue.consequence}</span>
+                <span className="block text-amber-800">{issue.consequence}</span>
               </li>
             ))}
           </ul>

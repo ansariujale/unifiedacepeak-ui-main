@@ -1,5 +1,6 @@
 import { Icon, IconName } from '@/assets/icons/icon';
 import AlertConfirm from '@/components/custom/alert-confirm';
+import NumberWithFlag from '@/components/custom/number-with-flag';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,15 +98,17 @@ const Verification = ({
     {
       header: 'DID Number',
       accessorKey: 'did_number',
-      cell: ({ row }: any) => {
-        const { country = '', state = '' } = row?.original?.address || {};
-        const name = `${country}/${state}`;
-        return name;
-      },
+      cell: ({ row }: any) => <NumberWithFlag number={row?.original?.did_number} />,
     },
     {
-      header: 'Country/City',
-      accessorKey: 'country',
+      header: 'Country',
+      accessorKey: 'address.country',
+      cell: ({ row }: any) => row?.original?.address?.country || '',
+    },
+    {
+      header: 'City',
+      accessorKey: 'address.state',
+      cell: ({ row }: any) => row?.original?.address?.state || '',
     },
     {
       header: 'Status',

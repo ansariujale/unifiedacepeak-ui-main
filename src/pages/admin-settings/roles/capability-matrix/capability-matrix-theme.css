@@ -1,0 +1,68 @@
+/* What each role can do — visual polish only, scoped to `.cm-theme` so the
+   shared SettingCard/SettingRow primitives (used across every other Admin
+   settings screen) are untouched everywhere else. Content/copy is unchanged;
+   this only restyles the existing structure. */
+
+.cm-theme .mcm-adminpage-eyebrow {
+  color: #dc2626;
+}
+
+.cm-theme .mcm-setcard {
+  border: none;
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(17, 17, 17, 0.04),
+    0 8px 20px rgba(17, 17, 17, 0.06);
+  margin-bottom: 16px;
+}
+
+.cm-theme .mcm-setcard-h {
+  padding: 16px 18px 14px;
+  gap: 12px;
+  background: #f2f2f3;
+  border-bottom: 1px solid #e5e5e5;
+  border-radius: 14px 14px 0 0;
+}
+/* Card titles are the headline of each section — set apart from the
+   plain-bold row labels below with a heavier weight, a touch more size,
+   wider letter-spacing and a red accent bar, rather than the page title's
+   own italic serif (kept unique to the page itself). */
+.cm-theme .mcm-setcard-h h3 {
+  position: relative;
+  padding-left: 13px;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  color: #171717;
+}
+.cm-theme .mcm-setcard-h h3::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 1px;
+  bottom: 1px;
+  width: 3px;
+  border-radius: 2px;
+  background: #dc2626;
+}
+
+.cm-theme .mcm-setcard-icon {
+  display: none;
+}
+
+.cm-theme .mcm-setcard-body {
+  padding: 4px 18px 6px;
+}
+
+.cm-theme .mcm-setrow {
+  padding: 14px 2px;
+  border-radius: 10px;
+  transition: background-color 0.12s ease;
+}
+.cm-theme .mcm-setrow-desc {
+  font-size: 11px;
+}
+.cm-theme .mcm-setrow:hover {
+  background: #fafafa;
+}

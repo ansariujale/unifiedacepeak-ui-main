@@ -1,0 +1,23 @@
+/* Plain CSS backing the checkbox's visual states, independent of any
+   Tailwind arbitrary-variant class generation, so the box is guaranteed
+   to render even if utility classes get dropped somewhere in the pipeline. */
+[data-slot='checkbox'] {
+  background-color: #ffffff;
+  border: 1.5px solid #9ca3af;
+  border-radius: 6px;
+}
+[data-slot='checkbox'][data-state='checked'] {
+  background-color: #000000;
+  border-color: #000000;
+}
+[data-slot='checkbox'][data-state='checked'] [data-slot='checkbox-indicator'] {
+  color: #ffffff;
+}
+[data-slot='checkbox']:disabled[data-state='unchecked'] {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+[data-slot='checkbox']:disabled[data-state='checked'] {
+  background-color: #6b7280;
+  border-color: #6b7280;
+}

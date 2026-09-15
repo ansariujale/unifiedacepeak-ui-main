@@ -58,22 +58,19 @@
   color: #171717;
 }
 
-.ppl-red-theme .ppl-row-menu-trigger svg {
-  color: #dc2626;
-}
 .mcm-page .ppl-red-theme .fchip-select {
-  background: #171717;
-  border-color: #171717;
-  color: #fff;
+  background: #000 !important;
+  border: 1px solid #000 !important;
+  color: #fff !important;
   border-radius: 9999px;
 }
 .ppl-red-theme .fchip-select svg {
-  color: #fff;
+  color: #fff !important;
 }
 .mcm-page .ppl-red-theme .fchip-select:hover {
-  background: #000;
-  border-color: #000;
-  color: #fff;
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
 }
 
 /* KPI band: one bordered card sharing dividers between cells, per the
@@ -140,21 +137,62 @@
   white-space: nowrap;
   color: #171717;
 }
-.ppl-red-theme .btn.ghost {
-  background: #171717;
-  border-color: #171717;
-  color: #fff;
+/* Every header/footer button on this page (Groups, Export, Invite person,
+   Close, Edit, ...) is a plain <button class="btn ...">, not the shadcn
+   Button — so mcm-page.css's generic reset for plain buttons
+   (`button:not([data-slot='button']):...`) applies to all of them. That
+   reset is unlayered CSS with higher specificity (.mcm-page + button type +
+   3 :not() attribute selectors) than a 3-4-class page override, so it wins
+   background/border/color regardless of source order — same reason the
+   invite-dialog's own .btn.primary rule below already needs !important.
+   Pinning every state (rest/hover/focus/active) here rather than depending
+   on winning that fight through specificity alone. */
+.ppl-red-theme .btn.ghost,
+.ppl-red-theme .btn.ghost:focus,
+.ppl-red-theme .btn.ghost:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
 }
 .ppl-red-theme .btn.ghost .ic {
-  color: #fff;
+  color: #fff !important;
 }
 .ppl-red-theme .btn.ghost:hover {
-  background: #000;
-  border-color: #000;
-  color: #fff;
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
+}
+/* `.soft-accent` (mcm-page.css) sets its own pink-wash background on top of
+   the above — same fight, same fix. */
+.ppl-red-theme .btn.ghost.soft-accent,
+.ppl-red-theme .btn.ghost.soft-accent:focus,
+.ppl-red-theme .btn.ghost.soft-accent:active,
+.ppl-red-theme .btn.ghost.soft-accent .ic {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
+}
+.ppl-red-theme .btn.ghost.soft-accent:hover {
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
+}
+/* "Invite person" — explicit black in every state instead of routing
+   through --accent or relying on cascade order against the reset above. */
+.ppl-red-theme .btn.primary,
+.ppl-red-theme .btn.primary:focus,
+.ppl-red-theme .btn.primary:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
 }
 .ppl-red-theme .btn.primary:hover {
-  border-color: #fca5a5;
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
+}
+.ppl-red-theme .btn.primary .ic {
+  color: #fff !important;
 }
 
 .ppl-red-theme .panel-card {
@@ -211,22 +249,24 @@
   z-index: 1;
 }
 
+/* Maps the .tbl__action-btn spec onto the trigger this table actually
+   renders for row actions. */
 .ppl-row-menu-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: var(--surface);
-  color: var(--ink-3);
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  color: #737373;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 .ppl-row-menu-trigger:hover,
 .ppl-row-menu-trigger[data-state='open'] {
-  border-color: #fca5a5;
-  background: #fde2e2;
-  color: #dc2626;
+  background: #f5f5f5;
+  color: #171717;
 }
 
 .ppl-row-menu-item.ppl-row-menu-item {
@@ -258,13 +298,14 @@
   box-shadow: none !important;
 }
 
+/* No padding of its own: the wizard inside ships a full-bleed header, rail
+   and footer (invite-shell.css), all of which run to the dialog's edges. */
 .ppl-invite-theme {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
   width: 100%;
-  padding: 0 20px 16px;
 }
 /* Every icon in this form reads red — labels/buttons stay black, icons are
    the one consistent accent colour throughout. */
@@ -316,120 +357,19 @@
   background: #fff;
 }
 
-/* Stepper: sits right under the dialog title now, tighter padding, smaller
-   circles/text, narrower and left-anchored instead of centred so the two
-   steps sit closer together. */
 .ppl-invite-theme .mcm-invite {
-  /* Positioning context for .ppl-invite-actions below, which floats up onto
-     this same row rather than taking a row of its own. */
-  position: relative;
   /* .mcm-page paints the app-wide ground colour (#eef1f8) by default — this
      dialog wants plain white throughout instead. */
   background: #fff;
-}
-.ppl-invite-theme .mcm-invite > div:first-child {
-  padding: 2px 16px 4px;
-}
-.ppl-invite-theme .mcm-invite ol {
-  max-width: 380px;
-  margin-left: 0;
-  margin-right: auto;
-}
-.ppl-invite-theme .mcm-invite ol .rounded-full {
-  width: 24px;
-  height: 24px;
-}
-.ppl-invite-theme .mcm-invite ol p {
-  font-size: 12.5px;
-}
-.ppl-invite-theme .mcm-invite ol li {
-  min-height: unset !important;
-}
-
-/* Add User / Branches used to be pulled out of the document flow onto the
-   breadcrumb's own row via absolute positioning (top: 4px) — every time that
-   row's own height shrank (it kept needing to), the fixed offset went stale
-   and the buttons drifted out of alignment. Left in normal flow instead: a
-   compact row of their own, right-aligned, right above the KPI cards. */
-.ppl-invite-theme .mcm-invite .ppl-invite-actions {
-  margin-bottom: 6px;
-}
-.ppl-invite-theme .ppl-invite-btn {
-  background: #171717 !important;
-  border: 1px solid #171717 !important;
-  color: #fff !important;
-  border-radius: 9999px !important;
-}
-.ppl-invite-theme .ppl-invite-btn:hover {
-  background: #000 !important;
-  border-color: #000 !important;
-  color: #fff !important;
-}
-.ppl-invite-theme .ppl-invite-btn svg {
-  color: #fff !important;
-}
-
-/* Save & Continue / Submit — same reasoning: the shadcn Button underneath
-   ships its own colour utilities, which don't reliably lose to a plain class
-   override, so this is pinned with !important rather than left to depend on
-   cascade order. */
-.ppl-invite-theme .mcm-invite .btn.primary {
-  background: #171717 !important;
-  border-color: #171717 !important;
-  color: #fff !important;
-}
-.ppl-invite-theme .mcm-invite .btn.primary:hover {
-  background: #000 !important;
-  border-color: #000 !important;
-}
-
-/* License / summary block above the user rows: tighter vertical rhythm. */
-.ppl-invite-theme .mcm-invite p.text-center {
-  margin-top: 1px;
-  margin-bottom: 1px;
-}
-.ppl-invite-theme .mcm-invite .gap-1.mt-3 {
-  gap: 3px;
-  margin-top: 3px;
-}
-.ppl-invite-theme .mcm-invite .my-2.gap-3 {
-  margin-top: 4px;
-  margin-bottom: 4px;
-  gap: 6px;
-}
-
-/* License stat cards (Available to purchase / Unused / New purchased):
-   smaller, tighter version of the same .kpi/.kpis pattern the People list
-   page uses up top. */
-.ppl-invite-theme .mcm-invite .kpis {
-  margin-bottom: 6px;
-  gap: 10px;
-  background: transparent;
-  border: 0;
-}
-.ppl-invite-theme .mcm-invite .kpi {
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 8px 10px;
-}
-.ppl-invite-theme .mcm-invite .kpi .k {
-  font-size: 10.5px;
-  color: #4b5563;
-}
-.ppl-invite-theme .mcm-invite .kpi .v {
-  font-size: 18px;
-  margin-top: 2px;
 }
 
 /* Each invitee card: force the clean First/Last, Email/Phone, Role/Extension
    pairs the redesign asks for, regardless of viewport width — the shared
    component's own 3-column breakpoint would otherwise misalign those pairs
-   once this drawer is narrower than the full-width flow it also renders in. */
-.ppl-invite-theme .mcm-invite .mcm-invitee {
+   once this dialog is narrower than the full-width flow it also renders in. */
+.ppl-invite-theme .mcm-invite .mcm-invitee > .grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  padding: 8px;
 }
 /* Smaller labels/inputs to match — the fields were sized for a much wider
    full-page layout than this modal now uses. */
@@ -522,34 +462,6 @@
   border-radius: 10px !important;
 }
 
-/* Footer: Cancel / Save & Continue already stay fixed at the bottom (the
-   shared component's own layout — only the body scrolls). Reset sits
-   directly beneath as its own always-visible row, without reaching into
-   that shared footer's markup. */
-.ppl-invite-theme .mcm-invite > form > div:last-child {
-  background: #fff;
-}
-.ppl-invite-reset-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: #fff;
-  color: #171717;
-  font-size: 13px;
-  font-weight: 700;
-}
-.ppl-invite-reset-btn:hover {
-  background: #fde2e2;
-  border-color: #fca5a5;
-}
-.ppl-invite-reset-btn .ic {
-  color: #dc2626;
-}
-
 /* People table skin: matches the .tbl/.tbl__* row/pill spec used on the
    analytics tables (avatar+name+subtitle cell, uppercase header, status
    pill with dot). Scoped to this page only. */
@@ -585,7 +497,10 @@
   top: 0;
   z-index: 2;
   background: #fafafa;
-  padding: 13px 10px;
+  /* ai-tools-table.css (loaded globally via index.css) sets `.tbl__th`
+     padding with !important — only !important here can win that fight,
+     so the 13px 10px from the provided spec actually renders. */
+  padding: 13px 10px !important;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -651,8 +566,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.25rem;
+  color: #020617;
+}
+.ppl-red-theme .tbl__name:hover {
   color: #020617;
 }
 .ppl-red-theme .tbl__subtitle {
@@ -678,6 +596,12 @@
   padding: 0 6px;
   font-size: 11px;
   font-weight: 800;
+  cursor: pointer;
+  outline: none;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
 }
 .ppl-red-theme .tbl__pill-dot {
   width: 6px;

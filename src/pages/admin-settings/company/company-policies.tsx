@@ -292,7 +292,7 @@ const PolicyCard = ({
 }: PolicyCardProps) => (
   <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
     <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 p-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center text-primary">
         {icon}
       </div>
       <div className="flex min-w-[220px] flex-1 items-center gap-1.5">
@@ -320,8 +320,10 @@ const PolicyCard = ({
     <div className="flex flex-col gap-4 p-4">
       {children}
       <p
-        className={`rounded-lg border px-3 py-2 text-xs text-black ${
-          enforced ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
+        className={`rounded-lg border px-3 py-2 text-xs ${
+          enforced
+            ? 'border-green-200 bg-green-50/10 text-green-800'
+            : 'border-amber-200 bg-amber-50/10 text-amber-900'
         }`}
       >
         {enforcementNote}
@@ -414,6 +416,7 @@ const CompanyPolicies = () => {
           <div className="flex flex-col gap-1">
             <div className="max-w-[220px]">
               <CustomSelect
+                inputClass="co-grey-select"
                 label={label}
                 options={RETENTION_MODE_OPTIONS}
                 value={selectedOption(RETENTION_MODE_OPTIONS, value.mode)}
@@ -520,6 +523,7 @@ const CompanyPolicies = () => {
               <div className="flex flex-col gap-1">
                 <div className="max-w-[220px]">
                   <CustomSelect
+                    inputClass="co-grey-select"
                     label="Prompt language"
                     options={LANGUAGE_OPTIONS}
                     value={selectedOption(LANGUAGE_OPTIONS, form.default_language)}
@@ -612,6 +616,7 @@ const CompanyPolicies = () => {
                 <div className="max-w-[220px]">
                   <CustomSelect
                     className="gap-2.5"
+                    inputClass="co-grey-select"
                     label={<span className="underline decoration-gray-300">Recording mode</span>}
                     options={RECORDING_MODE_OPTIONS}
                     value={selectedOption(RECORDING_MODE_OPTIONS, form.recording_mode)}
@@ -742,6 +747,7 @@ const CompanyPolicies = () => {
               <div className="flex flex-col gap-1">
                 <div className="max-w-[320px]">
                   <CustomSelect
+                    inputClass="co-grey-select"
                     label="Default for new users"
                     options={INTERNATIONAL_OPTIONS}
                     value={selectedOption(
@@ -773,6 +779,7 @@ const CompanyPolicies = () => {
             <Button
               type="button"
               variant="dark"
+              className="rounded-full"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

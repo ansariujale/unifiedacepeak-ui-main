@@ -478,7 +478,10 @@ const People = () => {
                       <CustomAvatar name={row.name} image={row.image} size="30" />
                       <span className="tbl__agent-meta">
                         <span className="tbl__name">{row.name}</span>
-                        {row.jobTitle ? <span className="tbl__subtitle">{row.jobTitle}</span> : null}
+                        {/* Job title is already the Role column right next to this
+                            cell — repeating it here as a second subtitle line was
+                            bloating every row past the 52.67px spec height, which
+                            is why only ~2 rows fit before the table had to scroll. */}
                         {row.email ? <span className="tbl__subtitle">{row.email}</span> : null}
                       </span>
                     </span>
@@ -777,18 +780,18 @@ const People = () => {
           bouncing to Admin — the console keeps you in Directory. */}
       {inviting && (
         <Dialog open={inviting} onOpenChange={(val) => !val && setInviting(false)}>
-          <DialogContent className="ppl-invite-dialog flex w-[92vw] max-w-[720px] max-h-[85vh] flex-col gap-0 overflow-hidden p-0">
-            <DialogTitle className="ppl-serif-heading flex items-center gap-2 px-5 py-3 text-xl text-gray-900">
-              Invite people
-            </DialogTitle>
+          <DialogContent className="ppl-invite-dialog mcm-wizard-modal flex flex-col gap-0 overflow-hidden p-0">
+            {/* The wizard draws its own heading, beside the mark and the line
+                saying which company these people are being added to. Radix
+                still needs a title in the tree for the dialog to be announced,
+                so this one is there for screen readers only. */}
+            <DialogTitle className="sr-only">Invite people</DialogTitle>
             <div className="ppl-invite-theme">
-              <div className="min-h-0 flex-1 flex flex-col">
-                <AddUsers
-                  key={inviteFormKey}
-                  setDrawerState={() => setInviting(false)}
-                  onReset={() => setInviteFormKey((key) => key + 1)}
-                />
-              </div>
+              <AddUsers
+                key={inviteFormKey}
+                setDrawerState={() => setInviting(false)}
+                onReset={() => setInviteFormKey((key) => key + 1)}
+              />
             </div>
           </DialogContent>
         </Dialog>

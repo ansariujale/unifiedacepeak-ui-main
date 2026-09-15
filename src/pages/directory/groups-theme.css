@@ -109,12 +109,20 @@
   color: #334155;
 }
 
-.grp-theme .btn.primary {
-  background: #171717;
-  color: #fff;
+/* Plain <button class="btn ..."> (not the shadcn Button), so mcm-page.css's
+   generic reset for plain buttons — unlayered, higher specificity than a
+   3-class page override — wins background/color regardless of source order.
+   !important on every state avoids depending on winning that fight. */
+.grp-theme .btn.primary,
+.grp-theme .btn.primary:focus,
+.grp-theme .btn.primary:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
 }
 .grp-theme .btn.primary:hover {
-  background: #000;
+  background: #000 !important;
+  border-color: #000 !important;
 }
 
 /* Create-group dialog: same shape as the People page's own centred modal
@@ -145,11 +153,19 @@
 /* Extension refresh icon — solid black at rest, same as at rest on hover
    (no colour change either way). department-info.tsx is shared with the
    platform's own department screen, so this only touches the icon here. */
-.grp-create-theme .grp-ext-refresh-btn,
+/* Rolls its own extension number. A tinted chip rather than the black square
+   it used to be — the wizard around it has one accent, and a solid black
+   button beside a red one reads as a second, more important control. */
+.grp-create-theme .grp-ext-refresh-btn {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+  border-radius: 999px !important;
+}
 .grp-create-theme .grp-ext-refresh-btn:hover {
-  background: #171717 !important;
-  border-color: #171717 !important;
-  color: #fff !important;
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #b91c1c !important;
 }
 
 /* Tighter vertical rhythm so the form fits with less scrolling — the fields
@@ -201,18 +217,20 @@
 
 
 /* Secondary buttons (Export, Close, etc.) filled black to match .btn.primary. */
-.grp-theme .btn.ghost {
-  background: #171717;
-  border-color: #171717;
-  color: #fff;
+.grp-theme .btn.ghost,
+.grp-theme .btn.ghost:focus,
+.grp-theme .btn.ghost:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
 }
 .grp-theme .btn.ghost .ic {
-  color: #fff;
+  color: #fff !important;
 }
 .grp-theme .btn.ghost:hover {
-  background: #000;
-  border-color: #000;
-  color: #fff;
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
 }
 
 /* Page head (title + actions) filled white like the stats band and the

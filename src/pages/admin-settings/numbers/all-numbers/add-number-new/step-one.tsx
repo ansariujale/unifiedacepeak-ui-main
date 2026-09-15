@@ -514,7 +514,7 @@ const StepOne = ({ formInstance, setStatus, setFeatures, isFaxNumber, setIsFaxNu
             <div className="flex w-full flex-col gap-2">
               <Label>Fax Number</Label>
               <RadioGroup
-                className="flex items-center gap-6"
+                className="fax-number-radio flex items-center gap-6"
                 value={isFaxNumber ? 'yes' : 'no'}
                 onValueChange={(value) => {
                   setIsFaxNumber(value === 'yes');
@@ -529,7 +529,7 @@ const StepOne = ({ formInstance, setStatus, setFeatures, isFaxNumber, setIsFaxNu
                   <RadioGroupItem
                     value="yes"
                     id="fax-number-yes"
-                    className="h-4 w-4 border-red-600! bg-white! shadow-none! ring-0! data-[state=checked]:border-red-600! data-[state=checked]:bg-white! data-[state=checked]:shadow-none! data-[state=checked]:ring-0! focus-visible:ring-0! focus-visible:shadow-none!"
+                    className="h-4 w-4 border-black! bg-white! shadow-none! ring-0! data-[state=checked]:border-black! data-[state=checked]:bg-white! data-[state=checked]:shadow-none! data-[state=checked]:ring-0! focus-visible:ring-0! focus-visible:shadow-none!"
                   />
                   <Label className="cursor-pointer" htmlFor="fax-number-yes">
                     Yes
@@ -539,7 +539,7 @@ const StepOne = ({ formInstance, setStatus, setFeatures, isFaxNumber, setIsFaxNu
                   <RadioGroupItem
                     value="no"
                     id="fax-number-no"
-                    className="h-4 w-4 border-red-600! bg-white! shadow-none! ring-0! data-[state=checked]:border-red-600! data-[state=checked]:bg-white! data-[state=checked]:shadow-none! data-[state=checked]:ring-0! focus-visible:ring-0! focus-visible:shadow-none!"
+                    className="h-4 w-4 border-black! bg-white! shadow-none! ring-0! data-[state=checked]:border-black! data-[state=checked]:bg-white! data-[state=checked]:shadow-none! data-[state=checked]:ring-0! focus-visible:ring-0! focus-visible:shadow-none!"
                   />
                   <Label className="cursor-pointer" htmlFor="fax-number-no">
                     No

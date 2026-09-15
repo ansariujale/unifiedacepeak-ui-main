@@ -69,19 +69,37 @@
   }
 }
 
+/* Plain <button class="btn ..."> (not the shadcn Button), so mcm-page.css's
+   generic reset for plain buttons — unlayered, higher specificity than a
+   3-class page override — wins background/color regardless of source order.
+   !important on every state avoids depending on winning that fight. */
+.blk-theme .btn.primary,
+.blk-theme .btn.primary:focus,
+.blk-theme .btn.primary:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
+}
+.blk-theme .btn.primary:hover {
+  background: #000 !important;
+  border-color: #000 !important;
+}
+
 /* Secondary buttons (Export, Close, etc.) filled black to match .btn.primary. */
-.blk-theme .btn.ghost {
-  background: #171717;
-  border-color: #171717;
-  color: #fff;
+.blk-theme .btn.ghost,
+.blk-theme .btn.ghost:focus,
+.blk-theme .btn.ghost:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
 }
 .blk-theme .btn.ghost .ic {
-  color: #fff;
+  color: #fff !important;
 }
 .blk-theme .btn.ghost:hover {
-  background: #000;
-  border-color: #000;
-  color: #fff;
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
 }
 
 /* Page head (title + actions) filled white like the stats band and the

@@ -77,7 +77,7 @@ const GreetingNotification: FC<IGREETINGPROPS> = () => {
   };
 
   return (
-    <div className="user-settings-template-greetings flex h-[calc(100vh_-_15rem)] flex-col gap-4 overflow-auto pt-2">
+    <div className="user-settings-template-greetings flex flex-col gap-4 pt-2">
       <SettingCard
         title="Recorded messages"
         description="What a caller hears at each point. Each one is off until you turn it on and choose a recording."

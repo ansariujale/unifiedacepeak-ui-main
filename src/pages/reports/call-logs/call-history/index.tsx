@@ -48,6 +48,8 @@ type CallHistoryProps = {
   fetcherKey?: string;
   tableMaxHeight?: string;
   tableCustomClass?: string;
+  /** Leave the range to the host page — a second picker lets the log drift from its figures. */
+  hideDateFilter?: boolean;
 };
 
 const EMPTY_CALL_HISTORY_FILTERS: { key: string; value: string }[] = [];
@@ -133,6 +135,7 @@ const CallHistory = ({
   fetcherKey = 'callListingLog',
   tableMaxHeight,
   tableCustomClass = '',
+  hideDateFilter = false,
 }: CallHistoryProps = {}) => {
   const tableRef = useRef<any>(null);
   const { user } = useUser();
@@ -836,12 +839,14 @@ const CallHistory = ({
           Icon={<SearchLine className=" text-gray-700" />}
         />
       </div>
-      <DateDropdown
-        {...{
-          dropdownVal,
-          setDropdownVal,
-        }}
-      />
+      {!hideDateFilter && (
+        <DateDropdown
+          {...{
+            dropdownVal,
+            setDropdownVal,
+          }}
+        />
+      )}
       <Button
         type="button"
         variant="outline"
@@ -866,7 +871,7 @@ const CallHistory = ({
         type="button"
         variant="outline"
         onClick={handleFilter}
-        className="cursor-pointer flex items-center justify-center min-h-9 min-w-9 max-w-9 max-h-9 rounded-lg w-9 h-9 bg-white border border-primary text-primary hover:bg-primary hover:text-white"
+        className="cursor-pointer flex items-center justify-center min-h-9 min-w-9 max-w-9 max-h-9 rounded-lg w-9 h-9 bg-white border border-black text-black hover:bg-black hover:text-white"
       >
         <FilterIcon className="w-5 h-5" />
       </Button>
@@ -876,19 +881,19 @@ const CallHistory = ({
   const callHistoryContent = (
     <div className={`w-full flex flex-col gap-2 ${embedded ? '' : 'p-3'}`}>
       {!tableOnly && (
-        <div className="flex gap-3 overflow-x-auto pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 md:grid-cols-5">
+        <div className="ch-tabs flex gap-3 overflow-x-auto pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 md:grid-cols-5">
           {tabs.map((tab) => (
             <div
               key={tab.label}
               onClick={() => handleTabClick(tab.label)}
-              className={`cursor-pointer flex min-h-10 min-w-[10.75rem] flex-col items-center justify-center gap-1 rounded-lg border p-3 py-2 text-center transition-all duration-200 sm:min-w-0  ${
+              className={`ch-tab${activeTab === tab.label ? ' is-active' : ''} cursor-pointer flex min-h-10 min-w-[10.75rem] flex-col items-center justify-center gap-1 rounded-lg border p-3 py-2 text-center transition-all duration-200 sm:min-w-0  ${
                 activeTab === tab.label
                   ? 'border-ucass-primary-200 bg-ucass-primary-200/40 '
                   : 'border-gray-200 hover:bg-gray-50 bg-white'
               }`}
             >
               <div
-                className={`min-w-8  px-1 rounded-full flex items-center justify-center  text-base font-semibold leading-none `}
+                className={`ch-tab-v min-w-8  px-1 rounded-full flex items-center justify-center  text-base font-semibold leading-none `}
                 //   ${
                 //     activeTab === tab.label
                 //       ? 'bg-primary text-white border-primary'
@@ -899,7 +904,7 @@ const CallHistory = ({
                 {tab.count}
               </div>
               <span
-                className={`mt-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 ${
+                className={`ch-tab-k mt-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 ${
                   activeTab === tab.label ? 'text-primary' : 'text-gray-600'
                 }`}
               >
@@ -1000,9 +1005,9 @@ const CallHistory = ({
 
   if (embedded) {
     return (
-      <div className="flex min-h-0 w-full flex-col gap-3">
+      <div className="ch-embedded flex min-h-0 w-full flex-col gap-3">
         {!tableOnly && (
-          <div className="flex flex-wrap items-center justify-end gap-2">{Filters}</div>
+          <div className="ch-toolbar flex flex-wrap items-center justify-end gap-2">{Filters}</div>
         )}
         {callHistoryContent}
       </div>

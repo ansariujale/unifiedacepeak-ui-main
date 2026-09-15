@@ -56,6 +56,19 @@ export const OrganizationContext = createContext<OrganizationContextType>({
 /** Domain is taken from the current route (window.location.origin). */
 const getDomain = () => window.location.origin;
 
+/* Hosts the API cannot resolve a tenant for. It matches the "website settings"
+   record on the domain this request names, so a host it has never been told
+   about - a dev machine, or a preview deployment on its platform's throwaway
+   hostname - comes back 422 and the app renders the maintenance screen. Both
+   are the same site as the configured domain, just reached by another name, so
+   ask for that one instead. A real custom domain is left alone: there the
+   origin IS the tenant, which is what makes multi-tenancy work. */
+const isTenantlessHost = (hostname: string) =>
+  hostname === 'localhost' ||
+  hostname.endsWith('.localhost') ||
+  hostname === '127.0.0.1' ||
+  hostname.endsWith('.vercel.app');
+
 export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
   const [mainSiteInfo, setMainSiteInfo] = useState<MainSiteInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,7 +97,7 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchMainSiteInfo = useCallback(async () => {
     const configuredDomain = (getEnv() as { VITE_APP_DOMAIN?: string }).VITE_APP_DOMAIN;
-    const domain = getDomain().includes('localhost')
+    const domain = isTenantlessHost(window.location.hostname)
       ? `https://${configuredDomain || 'ucaas.acepeak.com'}`
       : getDomain();
     try {

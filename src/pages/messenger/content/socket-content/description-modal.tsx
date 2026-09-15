@@ -995,7 +995,7 @@ const DescriptionModal = ({
               </div>
             </div>
 
-            <TabsList className="flex h-12 w-full rounded-none border-t border-slate-100 bg-white p-0">
+            <TabsList className="flex h-auto w-full flex-wrap items-center justify-start gap-2 rounded-none border-t border-slate-100 bg-white px-3 py-2.5">
               {selectedChat?.isGroupChat ? (
                 <InfoTabTrigger value="members">Members</InfoTabTrigger>
               ) : null}
@@ -1095,7 +1095,7 @@ const HeaderActionButton = ({
 const InfoTabTrigger = ({ value, children }: { value: InfoTab; children: ReactNode }) => (
   <TabsTrigger
     value={value}
-    className="h-full flex-1 rounded-none border-0 px-2 text-xs font-semibold text-slate-500 shadow-none transition-colors data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-none"
+    className="shrink-0 rounded-full border-0 px-3.5 py-1.5 text-[13px] font-semibold text-[#64748b] bg-[#f5f5f5] shadow-none transition-colors hover:bg-[#fff1f2] hover:text-primary data-[state=active]:bg-[#0b1220] data-[state=active]:text-white data-[state=active]:shadow-none"
   >
     {children}
   </TabsTrigger>

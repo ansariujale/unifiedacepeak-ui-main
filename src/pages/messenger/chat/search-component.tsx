@@ -241,7 +241,7 @@ const SearchComponent = ({
         value={inputValue}
         autoFocus
         placeholder="Search messages..."
-        className="w-full h-9 pl-9 pr-3 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+        className="w-full h-9 pl-9 pr-3 text-sm border border-gray-200 rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
         onChange={(e) => {
           const val = e.target.value;
           setInputValue(val);

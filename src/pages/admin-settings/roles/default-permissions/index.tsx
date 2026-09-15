@@ -30,14 +30,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, ShieldCheck, UserPlus } from 'lucide-react';
+import { InfoIcon, KeyRound, ShieldCheck, UserPlus } from 'lucide-react';
 
 import CustomSelect from '@/components/custom/custom-select';
+import CustomTooltip from '@/components/custom/custom-tooltip';
 import Loader from '@/components/custom/loader';
 import { SettingCard, SettingRow } from '@/components/mcm/setting-card';
 import { Button } from '@/components/ui/button';
 import { AdminPage } from '@/pages/admin-settings/page-shell';
-import { AreaNav } from '@/pages/admin-settings/roles/area-nav';
 import { extractPlanFeatures, useCompanyFeatures } from '@/hooks/rbac';
 import { handleAlert } from '@/lib/utils';
 import {
@@ -57,6 +57,7 @@ import {
   tierInfo,
   type RoleTier,
 } from '@/lib/role-permission-defaults';
+import './default-permissions-theme.css';
 
 /** A role as the platform's list hands it back. */
 interface PlatformRole {
@@ -212,10 +213,28 @@ const DefaultPermissionsPage = () => {
 
   return (
     <AdminPage
+      className="dp-theme"
       section="People"
-      title="Default permissions"
-      description="Step 4 of four. What each kind of person should be able to do on their first day, and why. Write a recommendation down as a role, then pick it when adding people."
-      actions={<AreaNav current="/admin-settings/default-permissions" />}
+      title={
+        <span className="flex items-center gap-2">
+          <span className="dir-serif-heading">Default permissions</span>
+          <CustomTooltip
+            text={
+              <>
+                Step 4 of four. What each kind of person
+                <br />
+                should be able to do on their first day, and why.
+                <br />
+                Write a recommendation down as a role, then pick it when adding people.
+              </>
+            }
+            side="right"
+            className="whitespace-normal text-left"
+          >
+            <InfoIcon className="w-4 h-4 text-gray-500 cursor-pointer" />
+          </CustomTooltip>
+        </span>
+      }
     >
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
         {loading ? (
@@ -374,16 +393,9 @@ const DefaultPermissionsPage = () => {
               title="What a role cannot say here"
               icon={<KeyRound className="h-4 w-4" />}
               description="Some things belong to one named person rather than to their role, because one person needs them and the rest of the team does not. A person record here has nowhere to keep them."
-              status="coming-soon"
-              note="Coming soon. They are listed here so nobody spends an afternoon looking for a switch that is not there. Each one needs a place on the person record before it can be set at all."
             >
               {PER_PERSON_GAPS.map((gap) => (
-                <SettingRow
-                  key={gap.id}
-                  label={gap.label}
-                  description={gap.why}
-                  status="coming-soon"
-                />
+                <SettingRow key={gap.id} label={gap.label} />
               ))}
             </SettingCard>
           </>

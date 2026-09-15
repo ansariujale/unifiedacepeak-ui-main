@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useSocketEvents } from '@/hooks/use-socket-events';
 import { useUser } from '@/hooks/use-user';
+import DateRangeMenu from '@/components/custom/date-range-menu';
+import { handleDate } from '@/components/custom/date-dropdown/constant';
 import moment from 'moment';
 import {
   Bell,
@@ -519,18 +521,20 @@ const ListItem = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 min-w-[200px]">
                   <DropdownMenuItem
-                    className="flex items-center gap-3 p-2 text-xs font-normal cursor-pointer rounded-md hover:bg-gray-50"
+                    className="group flex items-center gap-3 p-2 text-xs font-normal cursor-pointer rounded-md hover:bg-[#fff1f2]"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleUnread({ chatId: chat?.chatId, type: 'read' }, true);
                     }}
                   >
                     {/* <LetterOpenedLine className="text-gray-900 w-4 h-4" /> */}
-                    <LetterOpenedLine className="w-3.5 h-3.5 text-gray-600" />
-                    <span className="text-gray-700">Mark as read</span>
+                    <LetterOpenedLine className="w-3.5 h-3.5 text-gray-900 transition-colors group-hover:text-primary" />
+                    <span className="text-gray-900 transition-colors group-hover:text-primary">
+                      Mark as read
+                    </span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="flex items-center gap-3 p-2 text-xs font-normal cursor-pointer rounded-md hover:bg-gray-50"
+                    className="group flex items-center gap-3 p-2 text-xs font-normal cursor-pointer rounded-md hover:bg-[#fff1f2]"
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleFavorite(chat);
@@ -538,18 +542,22 @@ const ListItem = ({
                   >
                     {isFavorited ? (
                       <>
-                        <StarOff className="w-3.5 h-3.5 text-gray-600" />
-                        <span className="text-gray-700">Remove from favorites</span>
+                        <StarOff className="w-3.5 h-3.5 text-gray-900 transition-colors group-hover:text-primary" />
+                        <span className="text-gray-900 transition-colors group-hover:text-primary">
+                          Remove from favorites
+                        </span>
                       </>
                     ) : (
                       <>
-                        <Star className="w-3.5 h-3.5 text-gray-600" />
-                        <span className="text-gray-700">Add to favorites</span>
+                        <Star className="w-3.5 h-3.5 text-gray-900 transition-colors group-hover:text-primary" />
+                        <span className="text-gray-900 transition-colors group-hover:text-primary">
+                          Add to favorites
+                        </span>
                       </>
                     )}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="flex items-center gap-3 p-2 text-xs font-normal cursor-pointer rounded-md hover:bg-gray-50"
+                    className="group flex items-center gap-3 p-2 text-xs font-normal cursor-pointer rounded-md hover:bg-[#fff1f2]"
                     onClick={(e) => {
                       e.stopPropagation();
                       togglePinConversation(chat);
@@ -557,20 +565,24 @@ const ListItem = ({
                   >
                     {isConversationPinned ? (
                       <>
-                        <PinOff className="w-3.5 h-3.5 text-gray-600" />
-                        <span className="text-gray-700">Unpin conversation</span>
+                        <PinOff className="w-3.5 h-3.5 text-gray-900 transition-colors group-hover:text-primary" />
+                        <span className="text-gray-900 transition-colors group-hover:text-primary">
+                          Unpin conversation
+                        </span>
                       </>
                     ) : (
                       <>
-                        <Pin className="w-3.5 h-3.5 text-gray-600" />
-                        <span className="text-gray-700">Pin conversation</span>
+                        <Pin className="w-3.5 h-3.5 text-gray-900 transition-colors group-hover:text-primary" />
+                        <span className="text-gray-900 transition-colors group-hover:text-primary">
+                          Pin conversation
+                        </span>
                       </>
                     )}
                   </DropdownMenuItem>
 
                   {!isOwnChat && (
                     <DropdownMenuItem
-                      className="flex items-center gap-3 p-2 text-xs font-normal cursor-pointer rounded-md hover:bg-gray-50"
+                      className="group flex items-center gap-3 p-2 text-xs font-normal cursor-pointer rounded-md hover:bg-[#fff1f2]"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleMute(chat);
@@ -578,13 +590,17 @@ const ListItem = ({
                     >
                       {isMuted ? (
                         <>
-                          <Bell className="w-3.5 h-3.5 text-gray-600" />
-                          <span className="text-gray-700">Unmute conversation</span>
+                          <Bell className="w-3.5 h-3.5 text-gray-900 transition-colors group-hover:text-primary" />
+                          <span className="text-gray-900 transition-colors group-hover:text-primary">
+                            Unmute conversation
+                          </span>
                         </>
                       ) : (
                         <>
-                          <BellOff className="w-3.5 h-3.5 text-gray-600" />
-                          <span className="text-gray-700">Mute conversation</span>
+                          <BellOff className="w-3.5 h-3.5 text-gray-900 transition-colors group-hover:text-primary" />
+                          <span className="text-gray-900 transition-colors group-hover:text-primary">
+                            Mute conversation
+                          </span>
                         </>
                       )}
                     </DropdownMenuItem>
@@ -610,6 +626,7 @@ const ListItem = ({
 const SidebarContent = ({
   activeTab,
   setActiveTab,
+  chatType,
   setChatType,
   setselectedChannelType,
   isAgentChat = false,
@@ -617,6 +634,7 @@ const SidebarContent = ({
 }: {
   activeTab: ChatTab;
   setActiveTab: (tab: ChatTab) => void;
+  chatType?: any;
   setChatType: (type: any) => void;
   setselectedChannelType: (type: any) => void;
   isAgentChat?: boolean;
@@ -624,6 +642,8 @@ const SidebarContent = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [dateFilter, setDateFilter] = useState('All');
+  const DATE_PRESETS = ['All', 'Today', 'Yesterday', 'Last 7 Days', 'This Month'];
 
   const [statusFilter] = useState<MessageStatus>('all');
   const {
@@ -911,6 +931,18 @@ const SidebarContent = ({
     });
   };
 
+  const filterByDate = (arr: any[]) => {
+    if (dateFilter === 'All') return arr;
+    const { from, to } = handleDate(dateFilter);
+    if (!from || !to) return arr;
+    const rangeStart = moment(from, 'YYYY-MM-DD').startOf('day').valueOf();
+    const rangeEnd = moment(to, 'YYYY-MM-DD').endOf('day').valueOf();
+    return (arr || []).filter((chat: any) => {
+      const timestamp = getChatTimestamp(chat, draftsByKey?.[`${chat?.chatId || ''}_main`]?.updatedAt || 0);
+      return timestamp >= rangeStart && timestamp <= rangeEnd;
+    });
+  };
+
   const groupList = useMemo(() => {
     const sortByPinnedAndTime = (arr: any[]) =>
       [...arr].sort((a: any, b: any) => {
@@ -936,7 +968,7 @@ const SidebarContent = ({
           id: 1,
           label: '',
           shouldVisible: visibleChats.length > 0,
-          data: sortByPinnedAndTime(filterByStatus(filterByName(visibleChats))),
+          data: sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(visibleChats)))),
         },
       ];
     }
@@ -950,13 +982,13 @@ const SidebarContent = ({
           id: 1,
           label: 'Favorites',
           shouldVisible: favorites.length > 0,
-          data: sortByPinnedAndTime(filterByStatus(filterByName(favorites))),
+          data: sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(favorites)))),
         },
         {
           id: 2,
           label: 'Team',
           shouldVisible: teamChats.length > 0,
-          data: sortByPinnedAndTime(filterByStatus(filterByName(teamChats))),
+          data: sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(teamChats)))),
         },
         {
           id: 3,
@@ -965,7 +997,7 @@ const SidebarContent = ({
           label: '',
           shouldVisible: directMessages.length > 0 || availableUsers.length > 0,
           data: [
-            ...sortByPinnedAndTime(filterByStatus(filterByName(directMessages))),
+            ...sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(directMessages)))),
             ...filterByStatus(filterByName(availableUsers)),
           ],
         },
@@ -975,7 +1007,7 @@ const SidebarContent = ({
           id: 1,
           label: 'Team',
           shouldVisible: teamChats.length > 0,
-          data: sortByPinnedAndTime(filterByStatus(filterByName(teamChats))),
+          data: sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(teamChats)))),
         },
       ],
       direct: [
@@ -986,7 +1018,7 @@ const SidebarContent = ({
           label: '',
           shouldVisible: directMessages.length > 0 || availableUsers.length > 0,
           data: [
-            ...sortByPinnedAndTime(filterByStatus(filterByName(directMessages))),
+            ...sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(directMessages)))),
             ...filterByStatus(filterByName(availableUsers)),
           ],
         },
@@ -996,7 +1028,7 @@ const SidebarContent = ({
           id: 1,
           label: 'Favorites',
           shouldVisible: favorites.length > 0,
-          data: sortByPinnedAndTime(filterByStatus(filterByName(favorites))),
+          data: sortByPinnedAndTime(filterByDate(filterByStatus(filterByName(favorites)))),
         },
       ],
     };
@@ -1009,6 +1041,7 @@ const SidebarContent = ({
     directMessages,
     searchQuery,
     statusFilter,
+    dateFilter,
     user?.uuid,
     availableUsers,
     isAgentChat,
@@ -1090,7 +1123,7 @@ const SidebarContent = ({
 
   return (
     <div className="w-full h-full min-h-0 bg-white flex flex-col">
-      <div className="mcm-chat-head flex items-center justify-between border-b border-[var(--mcm-line)]">
+      <div className="mcm-chat-head flex items-center justify-between px-3.5 py-3">
         <div className="flex gap-3 w-full">
           <div className="flex items-center justify-between gap-2 w-full">
             <div
@@ -1118,7 +1151,12 @@ const SidebarContent = ({
                   }}
                   placeholder="Search chats…"
                   aria-label="Search chats"
-                  className="h-[34px] w-[190px] max-w-[46vw] rounded-[9px] border border-[var(--mcm-accent-edge)] bg-white px-3 text-[13px] text-gray-900 outline-none shadow-[0_1px_3px_rgba(17,17,17,0.06)] placeholder:text-[var(--mcm-ink-4)]"
+                  onFocus={(e) => {
+                    e.currentTarget.style.outline = 'none';
+                    e.currentTarget.style.borderColor = 'var(--mcm-accent-edge)';
+                  }}
+                  style={{ outline: 'none', borderColor: 'var(--mcm-accent-edge)' }}
+                  className="h-[34px] w-[190px] max-w-[46vw] rounded-full border bg-white px-4 text-[13px] text-gray-900 shadow-[0_1px_3px_rgba(17,17,17,0.06)] placeholder:text-[var(--mcm-ink-4)]"
                 />
               ) : (
                 <button
@@ -1131,6 +1169,12 @@ const SidebarContent = ({
                   <SearchLine className="w-[15px] h-[15px]" />
                 </button>
               )}
+              <DateRangeMenu
+                options={DATE_PRESETS.map((preset) => ({ label: preset, value: preset }))}
+                value={dateFilter}
+                onChange={setDateFilter}
+                label="Filter by date"
+              />
               {!isAgentChat ? (
                 <>
                   {chatAccess?.access?.DIRECT_MESSAGE || chatAccess?.access?.TEAM_MESSAGE ? (
@@ -1146,7 +1190,7 @@ const SidebarContent = ({
                       <DropdownMenuContent>
                         {chatAccess?.access?.DIRECT_MESSAGE && (
                           <DropdownMenuItem
-                            className="cursor-pointer"
+                            className="cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary"
                             onClick={() => {
                               setShowCreateChatModal('direct');
                             }}
@@ -1156,7 +1200,7 @@ const SidebarContent = ({
                         )}
                         {chatAccess?.access?.TEAM_MESSAGE && (
                           <DropdownMenuItem
-                            className="cursor-pointer"
+                            className="cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary"
                             onClick={() => {
                               setShowCreateChatModal('team');
                             }}
@@ -1176,16 +1220,19 @@ const SidebarContent = ({
                     </button>
                   )}
                   <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <div className="mcm-chat-iconbtn">
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" className="mcm-chat-iconbtn mcm-chat-iconbtn--black" aria-label="Filter">
                         <FilterIcon className="w-[15px] h-[15px]" />
-                      </div>
+                      </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent>
+                    <DropdownMenuContent className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 min-w-[200px]">
                       {ChatChannels?.map((item: any, index: number) => {
                         return (
                           <DropdownMenuItem
                             key={index}
+                            className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
+                              chatType === item.value ? 'bg-gray-100 text-gray-900' : ''
+                            }`}
                             onClick={() => {
                               setChatType(item.value);
                               setselectedChannelType(item);
@@ -1199,6 +1246,9 @@ const SidebarContent = ({
                         ? allowedOmniChannels.map((item: any, index: number) => (
                             <DropdownMenuItem
                               key={index}
+                              className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
+                                chatType === item.type ? 'bg-gray-100 text-gray-900' : ''
+                              }`}
                               onClick={() => {
                                 setChatType(item.type);
                                 setselectedChannelType(item);
@@ -1221,10 +1271,12 @@ const SidebarContent = ({
       {/* Same element carries the rule and the scroll, so a tab's -mb-px
           underline lands on it — as .panel-tabs does on the phone console. */}
       {!isAgentChat ? (
-        <div className="mcm-chat-tabs flex shrink-0 gap-0 overflow-x-auto border-b border-[var(--mcm-line)]">
+        <div className="mcm-chat-tabs flex shrink-0 overflow-x-auto border-b border-[var(--mcm-line)]">
           {tabOptions.map((tab) => (
             <button
               key={tab.value}
+              role="tab"
+              aria-selected={activeTab === tab.value}
               className={activeTab === tab.value ? 'on' : ''}
               onClick={() => {
                 setActiveTab(tab.value);
@@ -1303,6 +1355,7 @@ const SidebarContent = ({
         <SideDrawer
           width="450px"
           isHeader
+          centered
           isOpen={showCreateChatModal === 'direct'}
           handleClose={() => setShowCreateChatModal('')}
           content={
@@ -1317,8 +1370,9 @@ const SidebarContent = ({
       )}
       {showCreateChatModal === 'team' && (
         <SideDrawer
-          width="450px"
+          width="820px"
           isHeader
+          centered
           isOpen={showCreateChatModal === 'team'}
           handleClose={() => setShowCreateChatModal('')}
           content={
@@ -1423,7 +1477,13 @@ const Messenger = ({ mode = 'messenger' }: { mode?: MessengerMode }) => {
       return;
     }
 
-    if (chatType !== normalizedChatTypeInUrl) {
+    // All Channels never writes a `chatType` URL param (the branch above
+    // strips it back out the moment it appears), so `normalizedChatTypeInUrl`
+    // can never equal 'all_channels' — without this guard the block below
+    // saw a permanent mismatch and looped: navigate → param reappears →
+    // stripped → mismatch again → setSelectedChat(null) on every cycle,
+    // wiping out row selection almost as soon as it was made.
+    if (chatType !== 'all_channels' && chatType !== normalizedChatTypeInUrl) {
       setSelectedChat(null);
       if (chatType === 'chat') {
         navigate(location.pathname);
@@ -1481,6 +1541,7 @@ const Messenger = ({ mode = 'messenger' }: { mode?: MessengerMode }) => {
               <SidebarContent
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
+                chatType={chatType}
                 setChatType={setChatType}
                 setselectedChannelType={setselectedChannelType}
                 isAgentChat={isAgentChat}

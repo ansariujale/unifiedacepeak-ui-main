@@ -1,7 +1,17 @@
 import { getSessionChat } from '@/services/api';
 import { SentimentAnalysisCard } from '@/components/custom/hover-portal-card';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, Download, Loader2, MessageSquare, Phone, Sparkles, X } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Check,
+  Copy,
+  Download,
+  Loader2,
+  MessageSquare,
+  Phone,
+  Sparkles,
+  X,
+} from 'lucide-react';
 
 type SessionIntent = { label: string; summary: string };
 type SentimentKey = 'positive' | 'neutral' | 'negative';
@@ -152,19 +162,52 @@ const getSentimentScores = (session: any) => {
   }));
 };
 
+const HandoffIcon = (props: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    {...props}
+  >
+    <path d="M4.2 8.2A8.6 8.6 0 0 1 19.2 6.8" />
+    <path d="M20 16.4A8.6 8.6 0 0 1 5 17.8" />
+    <path d="M2.4 5.2v3.2h3.2" />
+    <path d="M21.8 19.4v-3.2h-3.2" />
+    <circle cx="12" cy="9.4" r="2.3" />
+    <path d="M8.5 15.3a3.6 3.6 0 0 1 7 0" />
+  </svg>
+);
+
+const getOutcomeIcon = (outcome: string) => {
+  if (outcome === 'Resolved') return Check;
+  if (outcome === 'Handoff') return HandoffIcon;
+  if (outcome === 'Callback') return ArrowUpRight;
+  return X;
+};
+
+const getOutcomeTextClass = (outcome: string) => {
+  if (outcome === 'Resolved') return 'text-emerald-600';
+  if (outcome === 'Handoff') return 'text-blue-600';
+  if (outcome === 'Callback') return 'text-amber-600';
+  return 'text-red-600';
+};
+
+const getOutcomeRingClass = (outcome: string) => {
+  if (outcome === 'Resolved') return 'border-emerald-500';
+  if (outcome === 'Handoff') return 'border-blue-500';
+  if (outcome === 'Callback') return 'border-amber-500';
+  return 'border-red-500';
+};
+
 const getOutcome = (session: any) => {
   if (session?.status === 'active') return 'Active';
   if (session?.handoff) return 'Handoff';
   if (session?.scheduledCallback) return 'Callback';
   return 'Resolved';
-};
-
-const getOutcomeClass = (outcome: string) => {
-  if (outcome === 'Resolved') return 'bg-green-50 text-green-700';
-  if (outcome === 'Handoff') return 'bg-amber-50 text-amber-700';
-  if (outcome === 'Callback') return 'bg-neutral-100 text-neutral-700';
-  if (outcome === 'Active') return 'bg-red-50 text-red-600';
-  return 'bg-red-50 text-red-600';
 };
 
 const getContactTitle = (session: any) => {
@@ -329,12 +372,13 @@ const AiSessionDetailDrawer = ({
                     label="Channel"
                     value={
                       session?.channel === 'call' ? (
-                        <span className="flex items-center gap-1.5">
-                          <Phone className="h-3.5 w-3.5 text-red-600" strokeWidth={2.5} /> Voice
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-indigo-50 px-2 py-0.5 text-[10.5px] font-semibold text-indigo-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                          Voice
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1.5">
-                          <MessageSquare className="h-3.5 w-3.5 text-neutral-600" strokeWidth={2.5} />{' '}
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-teal-50 px-2 py-0.5 text-[10.5px] font-semibold text-teal-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
                           Chat
                         </span>
                       )
@@ -384,15 +428,35 @@ const AiSessionDetailDrawer = ({
                   <DetailItem label="Intent" value={selectedIntents[0]?.label || 'Not analyzed'} />
                   <DetailItem
                     label="Outcome"
-                    value={
-                      <span
-                        className={`inline-flex rounded-[9px] px-[9px] py-[3px] text-[11px] font-bold ${getOutcomeClass(
-                          getOutcome(session),
-                        )}`}
-                      >
-                        {getOutcome(session)}
-                      </span>
-                    }
+                    value={(() => {
+                      const outcome = getOutcome(session);
+                      const OutcomeIcon = getOutcomeIcon(outcome);
+                      // The handoff mark draws its own ring, so it skips the
+                      // bordered circle the other outcomes sit in.
+                      const isHandoff = outcome === 'Handoff';
+                      return (
+                        <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-neutral-900">
+                          {isHandoff ? (
+                            <OutcomeIcon
+                              className={`h-4 w-4 shrink-0 ${getOutcomeTextClass(outcome)}`}
+                            />
+                          ) : (
+                            <span
+                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] ${getOutcomeRingClass(
+                                outcome,
+                              )} ${getOutcomeTextClass(outcome)}`}
+                            >
+                              {outcome === 'Active' ? (
+                                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+                              ) : (
+                                <OutcomeIcon className="h-2.5 w-2.5 shrink-0" strokeWidth={2.75} />
+                              )}
+                            </span>
+                          )}
+                          {outcome}
+                        </span>
+                      );
+                    })()}
                   />
                   <DetailItem
                     label="CSAT"
@@ -523,7 +587,7 @@ const AiSessionDetailDrawer = ({
               <button
                 type="button"
                 onClick={() => copyText(transcriptText)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3.5 text-xs font-semibold text-neutral-700 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-5 text-sm font-semibold text-neutral-700 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
               >
                 <Copy className="h-3.5 w-3.5" />
                 Copy
@@ -536,7 +600,7 @@ const AiSessionDetailDrawer = ({
                     transcriptText,
                   )
                 }
-                className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full bg-neutral-900! px-3.5 text-xs font-semibold text-white! transition-colors hover:bg-neutral-800!"
+                className="ml-auto inline-flex h-10 items-center gap-1.5 rounded-full bg-neutral-900! px-5 text-sm font-semibold text-white! transition-colors hover:bg-neutral-800!"
               >
                 <Download className="h-3.5 w-3.5" />
                 Download

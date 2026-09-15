@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { X } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 import TableManager from '@/components/custom/table-manager';
 import TableSearchHeader from '@/components/custom/table-search-header';
 import {
@@ -28,7 +28,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Loader from '@/components/custom/loader';
 import { handleAlert } from '@/lib/utils';
 import AlertConfirm from '@/components/custom/alert-confirm';
-import { Trash2 } from 'lucide-react';
 import Flag from '@/components/flag';
 
 export const DUMMY_IDENTITIES = [
@@ -501,7 +500,7 @@ const Identities = ({
             confirmBtnClassName: 'rounded-full bg-red-600 hover:bg-red-700 text-white border-red-600',
             closeBtnClassName:
               'rounded-full border border-gray-200 text-gray-700! hover:bg-gray-50! hover:text-gray-700! focus-visible:ring-0! shadow-none!',
-            className: 'sm:w-1/2 md:w-1/2 lg:w-2/5 bg-white!',
+            className: 'sm:w-2/5 md:w-1/3 lg:w-[30%] bg-white!',
           }}
         />
       )}

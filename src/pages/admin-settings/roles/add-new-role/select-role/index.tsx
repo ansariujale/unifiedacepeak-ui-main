@@ -5,6 +5,8 @@ import { FC, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import ErrorTooltip from '@/components/custom/error-tooltip';
+import CustomTooltip from '@/components/custom/custom-tooltip';
+import { InfoIcon } from 'lucide-react';
 import { PermissionsAccordion } from '../role-permissions';
 import { ROLE_DESCRIPTION_MAX_LENGTH, ROLE_NAME_MAX_LENGTH } from '../schema';
 import { sanitizePlainTextInput } from '@/lib/utils';
@@ -71,6 +73,7 @@ const SelectRole: FC<any> = ({
                   label="Enter Role Name"
                   error={errors?.name?.message}
                   maxLength={ROLE_NAME_MAX_LENGTH}
+                  className="border-gray-300 focus:border-gray-400 focus:ring-0 hover:border-gray-400"
                 />
               </div>
             </div>
@@ -96,16 +99,10 @@ const SelectRole: FC<any> = ({
                   <div className="relative w-full">
                     <div className="flex">
                       <textarea
-                        className={`border normal-case focus:outline-none
-  disabled:bg-gray-300 disabled:text-slate-500 disabled:border-gray-200 disabled:shadow-none
+                        className="border-0 normal-case focus:outline-none
+  disabled:bg-gray-300 disabled:text-slate-500 disabled:shadow-none
   text-gray-700 placeholder:text-gray-700 bg-white text-sm
-  rounded-xl w-full p-3 min-h-10 resize-none
-  ${
-    errors?.description
-      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-      : 'border-gray-300 focus:border-primary hover:border-primary'
-  }
-`}
+  rounded-xl w-full p-3 min-h-10 resize-none focus:ring-0"
                         placeholder="Enter description"
                         rows={6}
                         maxLength={ROLE_DESCRIPTION_MAX_LENGTH}
@@ -122,8 +119,23 @@ const SelectRole: FC<any> = ({
       {!viewPermission && (
         <div className="flex w-full flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
           <div className="flex w-full flex-col gap-3">
-            <h5 className="font-semibold text-gray-900 text-md">
+            <h5 className="flex items-center gap-2 font-semibold text-gray-900 text-md">
               Select a role to use as a starting point.
+              <CustomTooltip
+                text={
+                  <>
+                    These decide what this app shows, not
+                    <br />
+                    what the platform allows — untick
+                    <br />
+                    something and it hides, it isn&rsquo;t sealed off.
+                  </>
+                }
+                side="right"
+                className="whitespace-normal text-left"
+              >
+                <InfoIcon className="w-4 h-4 shrink-0 text-gray-500 cursor-pointer" />
+              </CustomTooltip>
             </h5>
             <RadioGroup
               className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4"
@@ -137,7 +149,7 @@ const SelectRole: FC<any> = ({
                       <RadioGroupItem
                         value={role.role_uuid}
                         id={role?.uuid}
-                        className="cursor-pointer"
+                        className="size-[18px] cursor-pointer border shadow-none"
                       />
                       <Label htmlFor={role?.uuid} className="cursor-pointer break-words">
                         {role.name}

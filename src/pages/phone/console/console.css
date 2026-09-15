@@ -614,8 +614,8 @@
   height: 34px;
   width: 190px;
   max-width: 46vw;
-  padding: 0 12px;
-  border-radius: 9px;
+  padding: 0 16px;
+  border-radius: 999px;
   border: 1px solid var(--accent-edge);
   background: #fff;
   font-size: 13px;

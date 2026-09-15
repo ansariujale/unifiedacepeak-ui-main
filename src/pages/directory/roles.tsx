@@ -4,7 +4,7 @@ import { deleteCustomRole, userRolesList } from '@/services/api';
 import { handleAlert } from '@/lib/utils';
 import { useUser } from '@/hooks/use-user';
 import { Ic } from '@/components/mcm/icons';
-import SideDrawer from '@/components/custom/side-drawer';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import AlertConfirm from '@/components/custom/alert-confirm';
 import AddNewRole from '@/pages/admin-settings/roles/add-new-role';
 import AssignUsersModal from '@/pages/admin-settings/roles/assign-users-modal';
@@ -134,7 +134,7 @@ const Roles = () => {
         }
         actions={
           isAdmin ? (
-            <button type="button" className="btn primary soft-accent" onClick={() => setCreating(true)}>
+            <button type="button" className="btn primary" onClick={() => setCreating(true)}>
               <Ic n="plus" />
               New role
             </button>
@@ -247,21 +247,35 @@ const Roles = () => {
       </DirectoryPage>
 
       {(creating || editing) && (
-        <SideDrawer
-          isOpen={creating || Boolean(editing)}
-          title={editing ? `Update role (${editing?.name || ''})` : 'New role'}
-          width="min(980px, 80vw)"
-          isTab={false}
-          enableResponsive
-          handleClose={closeForm}
-          content={
-            <AddNewRole
-              drawerState={creating || Boolean(editing)}
-              roleData={editing || null}
-              setDrawerState={closeForm}
-            />
-          }
-        />
+        <Dialog open={creating || Boolean(editing)} onOpenChange={(val) => !val && closeForm()}>
+          <DialogContent className="rol-modal-theme flex w-[92vw] max-w-[760px] max-h-[85vh] flex-col gap-0 overflow-hidden bg-white p-0">
+            <DialogTitle className="dir-serif-heading flex items-center gap-2 px-5 py-4 text-gray-900">
+              {editing ? `Update role (${editing?.name || ''})` : 'New role'}
+              <CustomTooltip
+                text={
+                  <>
+                    A role decides what somebody can see and
+                    <br />
+                    change. Name it, describe it, then start from
+                    <br />
+                    an existing role or build the permissions below.
+                  </>
+                }
+                side="right"
+                className="whitespace-normal text-left"
+              >
+                <InfoIcon className="w-4 h-4 shrink-0 text-gray-500 cursor-pointer" />
+              </CustomTooltip>
+            </DialogTitle>
+            <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 lg:px-5">
+              <AddNewRole
+                drawerState={creating || Boolean(editing)}
+                roleData={editing || null}
+                setDrawerState={closeForm}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {assigning ? (

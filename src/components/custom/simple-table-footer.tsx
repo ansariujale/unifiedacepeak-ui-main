@@ -47,7 +47,7 @@ const SimpleTableFooter = ({
   const pageNumbers = Array.from({ length: end - start }, (_, i) => start + i);
 
   return (
-    <div className="z-10 flex w-full flex-col gap-2 rounded-b-xl border-t border-t-[#f0f0f0] bg-white px-[18px] py-2.5 text-[12.5px] text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+    <div className="z-10 flex w-full flex-col gap-2 rounded-b-xl border-t border-t-[#f0f0f0] bg-white px-[18px] pt-3 pb-1.5 text-[12.5px] text-slate-500 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap items-center gap-3">
         <span className="flex items-center gap-1.5">
           <div className="w-16 tableSelect tableSelect--sm">

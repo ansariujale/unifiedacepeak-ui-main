@@ -680,7 +680,7 @@ const CompanyHolidayApply = () => {
     <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center text-primary">
             <CalendarCheck2 className="h-5 w-5" />
           </div>
           <div className="flex min-w-0 items-center gap-1.5">
@@ -710,6 +710,7 @@ const CompanyHolidayApply = () => {
           type="button"
           variant="dark"
           size="sm"
+          className="rounded-full"
           onClick={() => setOpen((previous) => !previous)}
           disabled={running}
         >
@@ -730,9 +731,9 @@ const CompanyHolidayApply = () => {
       </div>
 
       {!loadingCompany && companyHolidays.length === 0 && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+        <div className="mt-3 flex w-fit items-start gap-2 self-start rounded-lg border border-amber-200 bg-amber-50/10 p-3">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-          <p className="text-xs text-gray-700">
+          <p className="text-xs text-amber-800">
             There are no company holidays yet. Add some to the list above and save them first.
           </p>
         </div>
@@ -873,6 +874,7 @@ const CompanyHolidayApply = () => {
                   type="button"
                   variant="dark"
                   size="sm"
+                  className="rounded-full"
                   onClick={() => {
                     stopped.current = true;
                   }}
@@ -884,6 +886,7 @@ const CompanyHolidayApply = () => {
                 type="button"
                 variant="dark"
                 size="sm"
+                className="rounded-full"
                 onClick={start}
                 disabled={running || loadingLines || !companyHolidays.length}
               >

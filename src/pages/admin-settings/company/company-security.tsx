@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, ShieldCheck, Timer, Network, Info, UserMinus, Search } from 'lucide-react';
+import {
+  KeyRound,
+  ShieldCheck,
+  ShieldAlert,
+  Timer,
+  Network,
+  Info,
+  Lock,
+  UserMinus,
+  Search,
+} from 'lucide-react';
 
 import Loader from '@/components/custom/loader';
 import { Button } from '@/components/ui/button';
@@ -283,6 +293,7 @@ interface SecurityCardProps {
   icon: React.ReactNode;
   title: string;
   summary: string;
+  summaryAsTooltip?: boolean;
   enforced: boolean;
   enforcementNote: string;
   children: React.ReactNode;
@@ -292,21 +303,39 @@ const SecurityCard = ({
   icon,
   title,
   summary,
+  summaryAsTooltip,
   enforced,
   enforcementNote,
   children,
 }: SecurityCardProps) => (
-  <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-    <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 p-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ucass-primary-200 text-primary">
-        {icon}
-      </div>
+  <div className="rounded-xl border border-gray-200 bg-white shadow-md transition-shadow hover:shadow-lg">
+    <div className="flex flex-wrap items-center gap-1.5 border-b border-gray-200 p-4">
+      <div className="flex h-6 w-6 shrink-0 items-center justify-center text-primary">{icon}</div>
       <div className="flex min-w-[220px] flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-base font-semibold text-gray-900">{title}</p>
           <StatusBadge enforced={enforced} />
+          {summaryAsTooltip && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                style={{
+                  background: '#fdf7f5',
+                  border: 'none',
+                  color: '#000',
+                  boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                }}
+              >
+                {summary}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
-        <p className="text-xs text-gray-500">{summary}</p>
+        {!summaryAsTooltip && <p className="text-xs text-gray-500">{summary}</p>}
       </div>
     </div>
     <div className="flex flex-col gap-4 p-4">
@@ -314,8 +343,8 @@ const SecurityCard = ({
       <p
         className={`rounded-lg border px-3 py-2 text-xs ${
           enforced
-            ? 'border-green-200 bg-green-50 text-green-800'
-            : 'border-red-200 bg-red-50 text-red-800'
+            ? 'border-green-200 bg-green-50/50 text-green-800'
+            : 'border-red-200 bg-red-50/50 text-black'
         }`}
       >
         {enforcementNote}
@@ -325,7 +354,7 @@ const SecurityCard = ({
 );
 
 const textareaClass =
-  'w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm outline-none placeholder:text-gray-400 hover:border-primary focus:border-primary disabled:bg-gray-100 disabled:text-slate-500';
+  'w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm outline-none placeholder:text-gray-400 hover:border-primary/50 focus:border-primary/70 focus:shadow-[0_0_0_2px_#fee2e2] disabled:bg-gray-100 disabled:text-slate-500';
 
 const CompanySecurity = () => {
   const queryClient = useQueryClient();
@@ -538,44 +567,42 @@ const CompanySecurity = () => {
 
   return (
     <section className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-gray-200/15">
-      <div className="flex items-center gap-1.5 px-4 pt-3">
-        <p className="text-lg font-semibold text-gray-900">Company security</p>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
-          </TooltipTrigger>
-          <TooltipContent
-            side="right"
-            className="w-max max-w-[280px] [text-wrap:pretty] text-black"
-            style={{
-              background: '#fdf7f5',
-              border: 'none',
-              color: '#000',
-              boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
-            }}
-          >
-            Company-wide security rules. Your own password and devices are under My Account
-            instead.
-          </TooltipContent>
-        </Tooltip>
-      </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-3 sm:px-4">
         <div className="mx-auto flex w-full max-w-[1040px] min-h-0 flex-col gap-4">
+          <div className="flex items-center gap-1.5 px-1">
+            <p className="text-lg font-semibold text-gray-900">Company security</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                style={{
+                  background: '#fdf7f5',
+                  border: 'none',
+                  color: '#000',
+                  boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                }}
+              >
+                Company-wide security rules. Your own password and devices are under My Account
+                instead.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
           {/* Loud, once, at the top — then specifically again on every card. */}
-          <div className="rounded-xl border border-red-300 bg-red-50 p-4">
-            <p className="text-sm font-semibold text-red-900">
-              None of this is switched on yet. Do not treat this page as protection.
-            </p>
-            <p className="mt-1 text-xs text-red-800">
-              Every setting below is written into a stored record and nothing else reads it. There
-              is no MFA prompt in the sign-in flow, no inactivity timer, no IP check on requests and
-              no SAML handler anywhere in this product. Recording &ldquo;MFA required&rdquo; here
-              does not make anyone get an MFA challenge. All five settings need work in the backend
-              and the sign-in layer before they take effect. Until then this page is a written-down
-              intention — useful for agreeing the policy and for handing the values to whoever
-              builds the enforcement, and useless as a defence.
-            </p>
+          <div className="flex items-start gap-2.5 rounded-xl border border-red-300 bg-red-50/50 p-4">
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+            <div>
+              <p className="text-sm font-semibold text-red-900">
+                None of this is switched on yet. Do not treat this page as protection.
+              </p>
+              <p className="mt-1 text-xs text-black">
+                These settings are saved but not enforced yet — nothing in the sign-in flow reads
+                them. Treat this page as policy planning, not active protection.
+              </p>
+            </div>
           </div>
 
           {isError && (
@@ -584,8 +611,8 @@ const CompanySecurity = () => {
                 We could not load the saved security settings
               </p>
               <p className="text-xs text-gray-500">
-                What you see below are the built-in defaults, not your saved values. Reload before
-                you save, or you may overwrite settings you cannot currently see.
+                This is showing default settings, not the ones you saved. Please reload the page
+                before saving, or you could overwrite settings you can&apos;t currently see.
               </p>
             </div>
           )}
@@ -604,8 +631,9 @@ const CompanySecurity = () => {
             icon={<ShieldCheck className="h-5 w-5" />}
             title="Require multi-factor authentication"
             summary="Whether everyone signing in with a password must also pass a second check."
+            summaryAsTooltip
             enforced={false}
-            enforcementNote="Saved only, and this is the one to be clearest about: turning this on does not make anyone get an MFA prompt. There is no second factor in the sign-in flow at all — no enrolment, no codes, no authenticator. Someone with a valid password gets in exactly as they do today. Until the auth layer reads this key, an account is protected by its password alone."
+            enforcementNote="Saved only — no MFA prompt fires yet, so a valid password alone still signs someone in."
           >
             <div className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
               <div className="flex flex-col gap-1">
@@ -613,11 +641,8 @@ const CompanySecurity = () => {
                   Require MFA for password sign-in
                 </p>
                 <p className="text-xs text-gray-500">
-                  On by default, which is Dialpad&rsquo;s posture: there MFA is mandatory for every
-                  user who is not signing in through SSO, and cannot be switched off. Genesys treats
-                  it as optional and applies it to native logins only — an SSO user is never
-                  prompted, because the identity provider has already done the checking. Recording
-                  the stricter of the two is the safer intent to write down.
+                  On by default — the stricter posture, since some competitors let SSO users skip
+                  it.
                 </p>
               </div>
               <Switch
@@ -631,8 +656,9 @@ const CompanySecurity = () => {
             icon={<UserMinus className="h-5 w-5" />}
             title="MFA exception list"
             summary="The named people who would be allowed to sign in without the second check."
+            summaryAsTooltip
             enforced={false}
-            enforcementNote="Saved only. Nothing reads this list, so being on it changes nothing today — and neither does being off it, because MFA is not running in the first place. The admin rule below is applied here in the browser, which stops the list being built wrongly; it is not a guarantee, since nothing stops the underlying record being written another way."
+            enforcementNote="Saved only — nothing reads this list yet, so being on or off it changes nothing today. The admin rule below is enforced in the browser, not guaranteed at the record level."
           >
             {!form.mfa_required && (
               <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
@@ -643,15 +669,12 @@ const CompanySecurity = () => {
             )}
 
             <p className="text-xs text-gray-500">
-              Dialpad&rsquo;s hard rule: Company, Office and Regional Admins can never be added to
-              the exception list — the accounts with the most power are the ones that must not skip
-              the second factor. This account&rsquo;s equivalents are the Admin and Sub-Admin roles,
-              plus any custom role with &ldquo;admin&rdquo; in its name. Those rows are locked
-              below.
+              Admin, Sub-Admin and any role with &ldquo;admin&rdquo; in its name can never be
+              exempted — those rows are locked below.
             </p>
 
             {Boolean(exemptAdmins.length) && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+              <p className="w-fit max-w-full self-start rounded-lg border border-red-200 bg-red-50/50 px-3 py-2 text-xs text-red-800">
                 {exemptAdmins.map((person) => person.name).join(', ')}{' '}
                 {exemptAdmins.length === 1 ? 'is' : 'are'} on this list but now hold an admin role —
                 most likely promoted after being added. Untick{' '}
@@ -661,7 +684,7 @@ const CompanySecurity = () => {
 
             <Input
               placeholder="Search people by name, extension, email or role"
-              className="mcm-pill-input pl-8"
+              className="mcm-pill-input rounded-full border border-transparent pl-8 shadow-none hover:border-red-300 focus:border-red-300 focus:ring-0"
               Icon={<Search className="h-3.5 w-3.5 text-gray-500" />}
               IconPosition="left-0 pl-3 inset-y-0"
               value={peopleSearch}
@@ -721,8 +744,9 @@ const CompanySecurity = () => {
             icon={<Timer className="h-5 w-5" />}
             title="Idle timeout"
             summary="How long someone can leave the console untouched before they are signed out."
+            summaryAsTooltip
             enforced={false}
-            enforcementNote="Saved only. There is no inactivity timer in this app — no activity tracking, no countdown, no automatic sign-out. A session left open on an unlocked laptop stays open. Whatever number you set here, the real behaviour today is unchanged."
+            enforcementNote="Saved only — there's no inactivity timer yet, so sessions stay open no matter what you set here."
           >
             <div className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
               <div className="flex flex-col gap-1">
@@ -751,17 +775,15 @@ const CompanySecurity = () => {
                     onChange={(event) => updateForm({ idle_timeout_minutes: event.target.value })}
                   />
                   <p className="text-xs text-gray-500">
-                    Between {IDLE_MIN_MINUTES} minutes and {IDLE_MAX_MINUTES} minutes (8 hours) —
-                    the same range Genesys allows, which it stores as 300 to 28800 seconds. Stored
-                    here in seconds too.
+                    {IDLE_MIN_MINUTES}–{IDLE_MAX_MINUTES} minutes, same as Genesys — stored in
+                    seconds here too.
                   </p>
                 </div>
                 <div className="flex flex-col justify-center">
-                  <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
-                    Genesys forces HIPAA-enabled organisations down to {IDLE_HIPAA_MINUTES} minutes
-                    and does not let them choose. This platform has no HIPAA flag, so nothing is
-                    forced here. If you are handling health data, set {IDLE_HIPAA_MINUTES} yourself
-                    — and remember it will not be applied until the timer is actually built.
+                  <p className="rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-xs text-gray-600 shadow-sm">
+                    No HIPAA flag here, so nothing is forced. Handling health data? Set{' '}
+                    {IDLE_HIPAA_MINUTES} minutes yourself — same as Genesys enforces — though it
+                    won&rsquo;t apply until the timer is built.
                   </p>
                 </div>
               </div>
@@ -772,8 +794,9 @@ const CompanySecurity = () => {
             icon={<Network className="h-5 w-5" />}
             title="IP allowlist"
             summary="The networks people are allowed to sign in from, written as IPv4 CIDR blocks."
+            summaryAsTooltip
             enforced={false}
-            enforcementNote="Saved only — and this is the setting most likely to be misread as protection. There is no IP check anywhere: not at sign-in, not on API requests. Someone on any network can sign in exactly as they can today, whatever is in this box. Note also that this platform's backend has no authorisation middleware at all right now, so an IP rule enforced in the browser would be no rule at all. This list is a record of intent for whoever builds the check."
+            enforcementNote="Saved only — no IP check runs anywhere yet, so anyone can sign in from any network regardless of this list."
           >
             <div className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
               <div className="flex flex-col gap-1">
@@ -816,17 +839,14 @@ const CompanySecurity = () => {
                   )}
                 </div>
 
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <div className="rounded-lg border border-amber-200 bg-amber-50/10 p-3">
                   <p className="text-xs font-semibold text-amber-900">
                     You can lock yourself out with this list.
                   </p>
-                  <p className="mt-1 text-xs text-amber-800">
-                    Genesys refuses to save an allowlist that does not cover the address the admin
-                    is saving from, precisely because getting it wrong locks you out of your own
-                    account. This page cannot do that check: a browser does not know its own public
-                    IP without asking an outside service, and nothing here does. So the check falls
-                    to you. Find your public IP, confirm it sits inside one of the blocks above, and
-                    remember that a home connection&rsquo;s address usually changes over time.
+                  <p className="mt-1 text-xs text-black">
+                    This page can&rsquo;t detect your public IP, so it can&rsquo;t warn you the way
+                    Genesys does. Check yours falls inside one of the blocks above — home IPs
+                    change over time.
                   </p>
                   <label className="mt-3 flex cursor-pointer items-start gap-2">
                     <Checkbox
@@ -846,17 +866,16 @@ const CompanySecurity = () => {
             icon={<KeyRound className="h-5 w-5" />}
             title="Single sign-on (SAML)"
             summary="Where your identity provider lives, so sign-in can be handed over to it."
+            summaryAsTooltip
             enforced={false}
-            enforcementNote="Saved only, and further from working than the rest. There is no SAML anywhere in this product — no assertion handling, no metadata endpoint, no redirect to an identity provider. Filling these in does not create an SSO login and does not change how anyone signs in. Treat this card as somewhere to keep the values until SSO is actually built."
+            enforcementNote="Saved only — no SAML/SSO exists yet, so these values don't change how anyone signs in."
           >
             <div className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-semibold text-gray-900">Record SAML SSO details</p>
                 <p className="text-xs text-gray-500">
-                  Your identity provider gives you these when you add this platform as an
-                  application. The certificate is a public key, not a secret — but this record is
-                  ordinary account data, not a secrets store, so do not paste anything private into
-                  it.
+                  From your identity provider when you add this platform as an application. Not a
+                  secrets store — don&rsquo;t paste anything private here.
                 </p>
               </div>
               <Switch
@@ -872,6 +891,7 @@ const CompanySecurity = () => {
                     <Input
                       label="IdP Entity ID (Issuer)"
                       placeholder="https://idp.example.com/saml/metadata"
+                      className="shadow-md"
                       value={form.sso_idp_entity_id}
                       error={errors.sso_idp_entity_id}
                       onChange={(event) => updateForm({ sso_idp_entity_id: event.target.value })}
@@ -884,6 +904,7 @@ const CompanySecurity = () => {
                     <Input
                       label="IdP SSO URL"
                       placeholder="https://idp.example.com/saml/sso"
+                      className="shadow-md"
                       value={form.sso_idp_sso_url}
                       error={errors.sso_idp_sso_url}
                       onChange={(event) => updateForm({ sso_idp_sso_url: event.target.value })}
@@ -930,8 +951,7 @@ const CompanySecurity = () => {
                       onChange={(event) => updateForm({ sso_single_logout_uri: event.target.value })}
                     />
                     <p className="text-xs text-gray-500">
-                      Optional. Signing out here would also end the session at the provider. Leave
-                      blank if your provider does not offer one.
+                      Optional — also ends the provider session. Leave blank if unsupported.
                     </p>
                   </div>
                 </div>
@@ -941,16 +961,30 @@ const CompanySecurity = () => {
 
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 p-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-600">
-                <Info className="h-5 w-5" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center text-gray-600">
+                <Lock className="h-5 w-5" />
               </div>
               <div className="flex min-w-[220px] flex-1 flex-col gap-1">
-                <p className="text-base font-semibold text-gray-900">
+                <p className="flex items-center gap-1 text-base font-semibold text-gray-900">
                   Things you cannot change, on the platforms this page follows
-                </p>
-                <p className="text-xs text-gray-500">
-                  Worth knowing when you are comparing, and worth knowing because there is no
-                  setting for them anywhere.
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="right"
+                      className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                      style={{
+                        background: '#fdf7f5',
+                        border: 'none',
+                        color: '#000',
+                        boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                      }}
+                    >
+                      Worth knowing when you are comparing, and worth knowing because there is no
+                      setting for them anywhere.
+                    </TooltipContent>
+                  </Tooltip>
                 </p>
               </div>
             </div>
@@ -976,25 +1010,22 @@ const CompanySecurity = () => {
                   is why the idle timeout above is modelled on Genesys, which does let you choose.
                 </p>
               </div>
-              <p className="rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-gray-700">
-                These three describe Genesys and Dialpad, not this platform. What this platform does
-                about password history, failed sign-ins and session length has not been confirmed
-                from the code — the sign-in behaviour lives in the backend, which is not visible
-                from here. Do not read them as descriptions of what is protecting you now.
+              <p className="rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-xs text-black">
+                These three describe Genesys and Dialpad, not this platform. This platform&apos;s own
+                behaviour for password history, failed sign-ins and session length lives in the
+                backend and is unconfirmed here — do not read these as current protections.
               </p>
             </div>
           </div>
 
           <div className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-gray-500">
-              Saved to the reserved &ldquo;{COMPANY_DEFAULT_TEMPLATE_NAME}&rdquo; record under
-              <span className="font-semibold"> settings.company_security</span>. Everything else in
-              that record is left untouched. Saving records the policy; it does not switch anything
-              on.
+              Saved to the reserved &ldquo;{COMPANY_DEFAULT_TEMPLATE_NAME}&rdquo; record under <span className="font-semibold">settings.company_security</span>. Everything else in that record is left untouched. Saving records the policy; it does not switch anything on.
             </p>
             <Button
               type="button"
               variant="dark"
+              className="rounded-full"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
             >

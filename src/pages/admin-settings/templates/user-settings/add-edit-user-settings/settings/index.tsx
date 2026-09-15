@@ -88,7 +88,7 @@ const SettingPermission: FC<any> = ({ data }) => {
 
   return (
     <>
-      <div className="user-settings-template-settings flex h-[calc(100vh_-_15rem)] flex-col gap-4 overflow-auto">
+      <div className="user-settings-template-settings flex flex-col gap-4">
         <div className="user-settings-template-settings-name-wrap mt-2 w-full max-w-sm">
           <Input
             label="Name"
@@ -104,7 +104,12 @@ const SettingPermission: FC<any> = ({ data }) => {
           note="Saved, but not used by any call yet — it only feeds opening hours once that's on."
           description="The country and clock everything else is measured against - opening hours, holidays, and the times shown in reports."
           aside={
-            <Button type="button" variant="dark" onClick={() => openModal('regionalModal')}>
+            <Button
+              type="button"
+              variant="dark"
+              className="rounded-full"
+              onClick={() => openModal('regionalModal')}
+            >
               Change
             </Button>
           }
@@ -138,6 +143,7 @@ const SettingPermission: FC<any> = ({ data }) => {
             <Button
               type="button"
               variant="dark"
+              className="rounded-full"
               onClick={() => openModal('bussinessHoursModal')}
             >
               Change
@@ -166,6 +172,7 @@ const SettingPermission: FC<any> = ({ data }) => {
             <Button
               type="button"
               variant="dark"
+              className="rounded-full"
               onClick={() => openModal('automaticRecordingModal')}
             >
               Change
@@ -242,7 +249,12 @@ const SettingPermission: FC<any> = ({ data }) => {
           note="This one does reach the call: it is the number shown on the other person's phone."
           description="What shows on the other person's phone when somebody here calls out."
           aside={
-            <Button type="button" variant="dark" onClick={() => openModal('displayNumberModal')}>
+            <Button
+              type="button"
+              variant="dark"
+              className="rounded-full"
+              onClick={() => openModal('displayNumberModal')}
+            >
               Change
             </Button>
           }

@@ -25,7 +25,16 @@ import AllChannelsChats from './all-channels-chats';
 import { Plus, Copy } from 'lucide-react';
 import { CHANNELS_ICON, ChatChannels } from '../constants';
 import { canUseOmniChannel, getAllowedOmniChannels } from '../omni-permissions';
+import ChatPageHeader from '../shared/chat-page-header';
 type ChannelType = keyof typeof CHANNELS_ICON;
+
+const CHANNEL_LABELS: Record<string, string> = {
+  whatsapp: 'WhatsApp',
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  messenger: 'Facebook',
+  telegram: 'Telegram',
+};
 
 const Sidebar = ({
   handleChatType = () => null,
@@ -85,6 +94,104 @@ const Sidebar = ({
     selectedChannelType?.phone ||
     selectedChannelType?.number ||
     '';
+
+  // Website and All Channels carry their own header (the same one the Chat
+  // tab uses — see `ChatPageHeader`), so they render full-bleed instead of
+  // sitting inside `PageSidebarLayout`'s generic bar. Everything else
+  // (WhatsApp, Instagram, Facebook, Telegram) keeps that shared frame.
+  if (chatType === 'captain') {
+    return (
+      <CaptainChats
+        setSelectedChat={setSelectedChat}
+        selectedChat={selectedChat}
+        isCompactLayout={isCompactLayout}
+        handleChatType={handleChatType}
+        setselectedChannelType={setselectedChannelType}
+        allowedOmniChannels={allowedOmniChannels}
+      />
+    );
+  }
+
+  if (chatType === 'all_channels') {
+    return (
+      <AllChannelsChats
+        setSelectedChat={setSelectedChat}
+        selectedChat={selectedChat}
+        isCompactLayout={isCompactLayout}
+        handleChatType={handleChatType}
+        setselectedChannelType={setselectedChannelType}
+        allowedOmniChannels={allowedOmniChannels}
+      />
+    );
+  }
+
+  // Facebook / Instagram / WhatsApp / Telegram: same header shell as
+  // Chat/Website/All Channels (no jump to PageSidebarLayout's different
+  // chrome when a channel shortcut is clicked) — the channel's own list
+  // component keeps rendering its rows and search exactly as before.
+  if (['whatsapp', 'instagram', 'facebook', 'messenger', 'telegram'].includes(chatType)) {
+    const channelListProps = {
+      setSelectedChat,
+      selectedChat,
+      selectedChannelType,
+      isCompactLayout,
+    };
+    return (
+      <div className="flex h-full min-h-0 w-full flex-col bg-white">
+        <ChatPageHeader
+          title={CHANNEL_LABELS[chatType] || capitalizeFirstLetter(chatType)}
+          searchQuery=""
+          onSearchChange={() => null}
+          showSearch={false}
+          actions={
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="mcm-chat-iconbtn" aria-label="Switch channel">
+                  <FilterIcon className="h-3.75 w-3.75" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {ChatChannels?.map((item: any, index: number) => (
+                  <DropdownMenuItem
+                    key={index}
+                    className="cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary"
+                    onClick={() => {
+                      handleChatType(item.value);
+                      setselectedChannelType(null);
+                    }}
+                  >
+                    {item.icon()} {item.label}
+                  </DropdownMenuItem>
+                ))}
+                {allowedOmniChannels.map((item: any, index: number) => (
+                  <DropdownMenuItem
+                    key={index}
+                    className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
+                      item.type === chatType ? 'bg-gray-100 text-gray-900' : ''
+                    }`}
+                    onClick={() => {
+                      handleChatType(item.type);
+                      setselectedChannelType(item);
+                    }}
+                  >
+                    {CHANNELS_ICON[item?.type as ChannelType]} {capitalizeFirstLetter(item.type)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          }
+        />
+        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+          {chatType === 'whatsapp' && canViewWhatsapp && <WhatsappChats {...channelListProps} />}
+          {(chatType === 'facebook' || chatType === 'messenger') && canViewFacebook && (
+            <FBChats {...channelListProps} />
+          )}
+          {chatType === 'telegram' && canViewTelegram && <TelegramChats {...channelListProps} />}
+          {chatType === 'instagram' && canViewInstagram && <InstaChats {...channelListProps} />}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <PageSidebarLayout
@@ -160,23 +267,16 @@ const Sidebar = ({
           {(chatAccess?.access?.DIRECT_MESSAGE || chatAccess?.access?.TEAM_MESSAGE) &&
           !['instagram', 'facebook', 'messenger', 'telegram'].includes(chatType) ? (
             <DropdownMenu>
-              <DropdownMenuTrigger>
-                {
-                  <div
-                    className={
-                      'cursor-pointer flex items-center justify-center rounded-full w-10 h-10 bg-gray-100 text-gray-900/80 hover:bg-primary hover:text-white'
-                    }
-                    onClick={handleAddButtonClick}
-                  >
-                    <Plus width={18} height={18} />
-                  </div>
-                }
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="mcm-chat-iconbtn" aria-label="Add" onClick={handleAddButtonClick}>
+                  <Plus width={15} height={15} />
+                </button>
               </DropdownMenuTrigger>
               {chatType === 'chat' && (
-                <DropdownMenuContent>
+                <DropdownMenuContent className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 min-w-[200px]">
                   {chatAccess?.access?.DIRECT_MESSAGE && (
                     <DropdownMenuItem
-                      className="cursor-pointer"
+                      className="cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary"
                       onClick={() => {
                         setShowCreateChatModal('direct');
                       }}
@@ -186,7 +286,7 @@ const Sidebar = ({
                   )}
                   {chatAccess?.access?.TEAM_MESSAGE && (
                     <DropdownMenuItem
-                      className="cursor-pointer"
+                      className="cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary"
                       onClick={() => {
                         setShowCreateChatModal('team');
                       }}
@@ -201,16 +301,19 @@ const Sidebar = ({
           ) : null}
 
           <DropdownMenu>
-            <DropdownMenuTrigger>
-              <div className="cursor-pointer flex items-center justify-center rounded-full w-10 h-10 bg-gray-100 text-gray-900/80 hover:bg-primary hover:text-white">
-                <FilterIcon className="w-6 h-6" />
-              </div>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="mcm-chat-iconbtn" aria-label="Filter">
+                <FilterIcon className="w-[15px] h-[15px]" />
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent className="bg-white rounded-lg shadow-lg border border-gray-200 p-1 min-w-[200px]">
               {ChatChannels?.map((item: any, index: number) => {
                 return (
                   <DropdownMenuItem
                     key={index}
+                    className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
+                      chatType === item.value ? 'bg-gray-100 text-gray-900' : ''
+                    }`}
                     onClick={() => {
                       handleChatType(item.value);
                       setselectedChannelType(item);
@@ -224,6 +327,9 @@ const Sidebar = ({
                 ? allowedOmniChannels.map((item: any, index: number) => (
                     <DropdownMenuItem
                       key={index}
+                      className={`cursor-pointer transition-colors focus:bg-[#fff1f2] focus:text-primary ${
+                        chatType === item.type ? 'bg-gray-100 text-gray-900' : ''
+                      }`}
                       onClick={() => {
                         handleChatType(item.type);
                         setselectedChannelType(item);
@@ -275,12 +381,8 @@ const Sidebar = ({
             {chatType === 'website' && (
               <WebsiteChats setSelectedChat={setSelectedChat} selectedChat={selectedChat} isCompactLayout={isCompactLayout} />
             )}
-            {chatType === 'captain' && (
-              <CaptainChats setSelectedChat={setSelectedChat} selectedChat={selectedChat} isCompactLayout={isCompactLayout} />
-            )}
-            {chatType === 'all_channels' && (
-              <AllChannelsChats setSelectedChat={setSelectedChat} selectedChat={selectedChat} isCompactLayout={isCompactLayout} />
-            )}
+            {/* 'captain' and 'all_channels' return earlier with their own
+                full-bleed header — see above. */}
           </div>
           {showCreateChatModal === 'direct' && (
             <SideDrawer

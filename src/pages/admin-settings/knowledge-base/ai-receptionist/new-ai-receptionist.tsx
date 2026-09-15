@@ -2858,7 +2858,7 @@ function NewAiReceptionistPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="w-[140px] bg-white border border-slate-200 shadow-lg rounded-xl p-1 z-50 animate-none"
+                className="[&_[data-slot=dropdown-menu-item]]:focus:text-neutral-900! w-[140px] bg-white border border-slate-200 shadow-lg rounded-xl p-1 z-50 animate-none"
               >
                 <DropdownMenuItem
                   onClick={() => handleStatusChange('live')}
@@ -3046,14 +3046,14 @@ function NewAiReceptionistPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-[190px] rounded-2xl! border! border-red-100! bg-white p-1.5 shadow-lg z-50 animate-none"
+                  className="[&_[data-slot=dropdown-menu-item]]:focus:text-neutral-900! flex w-[190px] flex-col gap-1 rounded-2xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
                 >
                   {menuActions.map((action) => (
                     <DropdownMenuItem
                       key={action.key}
                       onClick={action.onClick}
                       className={cx(
-                        'flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium hover:bg-red-50!',
+                        'flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium hover:bg-[#f3f4f6]! focus:bg-[#f3f4f6]!',
                         action.className,
                       )}
                     >
@@ -3115,7 +3115,7 @@ function NewAiReceptionistPage() {
 
   return (
     <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#efefef] text-neutral-900">
-      <div className="flex min-h-[92px] items-center justify-between border-b border-neutral-200 bg-white px-7">
+      <div className="flex min-h-[74px] items-center justify-between border-b border-neutral-200 bg-white px-7 py-2">
         <div className="flex items-center gap-3">
           <div>
             <button
@@ -3141,7 +3141,7 @@ function NewAiReceptionistPage() {
                 fontStyle: 'italic',
                 fontWeight: 400,
                 fontSize: '27px',
-                lineHeight: '41px',
+                lineHeight: '34px',
                 color: 'rgb(23, 23, 23)',
               }}
             >
@@ -3155,7 +3155,7 @@ function NewAiReceptionistPage() {
             onClick={() => {
               setView('analytics');
             }}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border! border-neutral-200! bg-white! px-2.5 text-sm font-semibold text-neutral-700! shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-200! hover:bg-red-50! hover:text-red-600!"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full border! border-neutral-200! bg-white! px-5 text-sm font-semibold text-neutral-700! shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-200! hover:bg-red-50! hover:text-red-600!"
           >
             <TrendingUp className="h-4 w-4 shrink-0" />
             <span>Analytics</span>
@@ -3165,7 +3165,7 @@ function NewAiReceptionistPage() {
             onClick={() => {
               openReceptionistForm(null, 'create');
             }}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-neutral-900! px-3 text-sm font-semibold text-white! shadow-none transition-colors hover:bg-neutral-800!"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-neutral-900! px-5 text-sm font-semibold text-white! shadow-none transition-colors hover:bg-neutral-800!"
           >
             <Plus className="h-4 w-4 shrink-0" />
             <span>Create New Receptionist</span>
@@ -3173,7 +3173,7 @@ function NewAiReceptionistPage() {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-auto bg-[#efefef] px-7 py-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-auto bg-[#efefef] px-7 pt-4 pb-6">
         <div>
           <div className="mb-3 flex items-center gap-2.5">
             <h2 className="text-[12.5px] font-semibold uppercase tracking-[0.05em] text-red-600">
@@ -3251,7 +3251,7 @@ function NewAiReceptionistPage() {
                 <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center">
                   <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full border! border-neutral-200! bg-white! pl-2 pr-3 shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-all focus-within:border-neutral-400! sm:max-w-[320px]">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-red-600">
-                      <Search className="h-3.5 w-3.5" />
+                      <Search className="h-[18px] w-[18px]" strokeWidth={2.25} />
                     </span>
                     <input
                       value={search}
@@ -3281,14 +3281,14 @@ function NewAiReceptionistPage() {
                       aria-hidden="true"
                       className="absolute top-1 bottom-1 rounded-full bg-white! shadow-[0_1px_4px_rgba(17,17,17,.18)] border! border-neutral-200! transition-all duration-200 ease-out"
                       style={{
-                        left: statusFilter === 'all' ? '4px' : '62px',
-                        width: statusFilter === 'all' ? '56px' : '76px',
+                        left: statusFilter === 'all' ? '4px' : '86px',
+                        width: statusFilter === 'all' ? '80px' : '96px',
                       }}
                     />
                     <button
                       type="button"
                       onClick={() => setStatusFilter('all')}
-                      className={`relative z-10 flex h-8 w-[56px] shrink-0 items-center justify-center gap-1.5 rounded-full px-2 text-xs font-semibold transition-colors ${
+                      className={`relative z-10 flex h-8 w-[80px] shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-xs font-semibold transition-colors ${
                         statusFilter === 'all'
                           ? 'text-neutral-950!'
                           : 'text-neutral-500! hover:text-red-600!'
@@ -3304,7 +3304,7 @@ function NewAiReceptionistPage() {
                     <button
                       type="button"
                       onClick={() => setStatusFilter('live')}
-                      className={`relative z-10 flex h-8 w-[76px] shrink-0 items-center justify-center gap-1.5 rounded-full px-2 text-xs font-semibold transition-colors ${
+                      className={`relative z-10 flex h-8 w-[96px] shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-xs font-semibold transition-colors ${
                         statusFilter === 'live'
                           ? 'text-neutral-950!'
                           : 'text-neutral-500! hover:text-red-600!'
@@ -6345,7 +6345,7 @@ function NewAiReceptionistBuilder({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
+              className="[&_[data-slot=dropdown-menu-item]]:focus:text-neutral-900! flex w-[var(--radix-dropdown-menu-trigger-width)] max-h-[320px] flex-col gap-1 overflow-y-auto rounded-xl! border! border-neutral-200! bg-white p-1.5 shadow-lg z-50 animate-none"
             >
               {useCaseTemplateOptions.map((option) => {
                 const isSelected = option.name === roleUseCase;
@@ -6488,7 +6488,7 @@ function NewAiReceptionistBuilder({
             {/* Search Input */}
             <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full border! border-neutral-200! bg-white! pl-2 pr-3 shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-all focus-within:border-neutral-400!">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-red-600">
-                <Search className="h-3.5 w-3.5" />
+                <Search className="h-[18px] w-[18px]" strokeWidth={2.25} />
               </span>
               <input
                 type="text"
@@ -6504,7 +6504,7 @@ function NewAiReceptionistBuilder({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border! border-neutral-200! bg-white! px-4 text-sm font-semibold text-neutral-700! shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-300!"
+                  className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border! border-neutral-200! bg-white! px-5 text-sm font-semibold text-neutral-700! shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-300!"
                 >
                   Gender: {GENDER_FILTER_OPTIONS.find((opt) => opt.key === genderFilter)?.label}
                   <ChevronDown className="h-3.5 w-3.5 opacity-60" />
@@ -6512,7 +6512,7 @@ function NewAiReceptionistBuilder({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="flex w-[200px] max-h-[280px] flex-col gap-1 overflow-y-auto bg-white border! border-neutral-200! shadow-lg rounded-xl! p-1.5 z-50 animate-none"
+                className="[&_[data-slot=dropdown-menu-item]]:focus:text-neutral-900! flex w-[200px] max-h-[280px] flex-col gap-1 overflow-y-auto bg-white border! border-neutral-200! shadow-lg rounded-xl! p-1.5 z-50 animate-none"
               >
                 {GENDER_FILTER_OPTIONS.map((opt) => {
                   const isSelected = opt.key === genderFilter;
@@ -6540,7 +6540,7 @@ function NewAiReceptionistBuilder({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border! border-neutral-200! bg-white! px-4 text-sm font-semibold text-neutral-700! shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-300!"
+                  className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border! border-neutral-200! bg-white! px-5 text-sm font-semibold text-neutral-700! shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-colors hover:border-red-300!"
                 >
                   {LOCALE_FILTER_OPTIONS.find((opt) => opt.key === localeFilter)?.label}
                   <ChevronDown className="h-3.5 w-3.5 opacity-60" />
@@ -6548,7 +6548,7 @@ function NewAiReceptionistBuilder({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="flex w-[200px] max-h-[280px] flex-col gap-1 overflow-y-auto bg-white border! border-neutral-200! shadow-lg rounded-xl! p-1.5 z-50 animate-none"
+                className="[&_[data-slot=dropdown-menu-item]]:focus:text-neutral-900! flex w-[200px] max-h-[280px] flex-col gap-1 overflow-y-auto bg-white border! border-neutral-200! shadow-lg rounded-xl! p-1.5 z-50 animate-none"
               >
                 {LOCALE_FILTER_OPTIONS.map((opt) => {
                   const isSelected = opt.key === localeFilter;
@@ -7209,7 +7209,7 @@ function NewAiReceptionistBuilder({
                 </p>
                 <div className="mt-4 flex h-10 min-w-0 items-center gap-2 rounded-full border! border-neutral-200! bg-white! pl-2 pr-3 shadow-[0_1px_2px_rgba(0,0,0,.03)] transition-all focus-within:border-neutral-400!">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-red-600">
-                    <Search className="h-3.5 w-3.5" />
+                    <Search className="h-[18px] w-[18px]" strokeWidth={2.25} />
                   </span>
                   <input
                     type="text"
@@ -8272,7 +8272,10 @@ function NewAiReceptionistBuilder({
             })}
           </div>
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-600" />
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-red-600"
+              strokeWidth={2.25}
+            />
             <input
               value={reviewKnowledgeSearch}
               onChange={(event) =>

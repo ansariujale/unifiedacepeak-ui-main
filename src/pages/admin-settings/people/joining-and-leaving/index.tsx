@@ -34,6 +34,7 @@ import { COMPANY_DEFAULTS_QUERY_KEY, fetchCompanyDefaults } from '@/lib/company-
 import { NEW_PERSON_ROLE_KEY, readNewPersonRole } from '@/lib/role-permission-defaults';
 import { decideInviteRole, describeRole } from '@/lib/invite-role';
 import { EXPORT_LIMITS } from '@/lib/user-roster-export';
+import './joining-and-leaving-theme.css';
 
 const JoiningAndLeaving = () => {
   const navigate = useNavigate();
@@ -89,6 +90,7 @@ const JoiningAndLeaving = () => {
 
   return (
     <AdminPage
+      className="jal-theme"
       section="People"
       title={
         <span className="flex items-center gap-2">
@@ -236,21 +238,13 @@ const JoiningAndLeaving = () => {
                   </Button>
                 }
               />
-              <SettingRow
-                label="Who held a number last, and when it was freed"
-                description="Nothing records it. When somebody is removed their number is simply unassigned, with no note of whose it was — so a number that went with somebody who left cannot be traced back to them. Established systems keep this as a reserved-numbers list. Until the platform stores it, exporting the people list before you remove anybody is the only way to keep the link."
-                status="coming-soon"
-              />
+              <SettingRow label="Who held a number last, and when it was freed" />
               <SettingRow
                 label="Calls that were forwarded to them"
                 description="Anybody whose calls were being sent to the removed person has their forwarding repointed at you — the administrator doing the removing. That is the platform's own behaviour and it is not optional, so it is worth checking those people afterwards rather than discovering it through their call history."
                 status="active"
               />
-              <SettingRow
-                label="Getting somebody back"
-                description="You cannot, from inside the product. Their record is kept rather than destroyed, but nothing lists removed people and nothing restores them, so removing somebody is final as far as this app is concerned. Established systems give you three days to change your mind. Until that exists, treat the confirmation as the last chance."
-                status="coming-soon"
-              />
+              <SettingRow label="Getting somebody back" />
               <SettingRow
                 label="Their data"
                 description="Call history stays for your records. Voicemail, recordings and messages go with them."
@@ -262,22 +256,14 @@ const JoiningAndLeaving = () => {
               title="Changing the address somebody signs in with"
               icon={<Mail className="h-4 w-4" />}
               description="People marry, companies rebrand, and the address on an account stops matching the person."
-              status="coming-soon"
-              note="The platform has no way to change an email address once an account exists — not the person's own, and not an administrator's on their behalf. The field is shown but cannot be edited, which is honest rather than helpful."
             >
-              <SettingRow
-                label="What to do in the meantime"
-                description="Add the person again on the new address and remove the old account. Their call history goes with the old account, so export the people list first if you need the record, and expect their reports to start from zero. It is worth doing deliberately rather than discovering it halfway through."
-                status="coming-soon"
-              />
+              <SettingRow label="What to do in the meantime" />
             </SettingCard>
 
             <SettingCard
               title="One person handling another's calls"
               icon={<CalendarClock className="h-4 w-4" />}
               description="An assistant answering on somebody else's behalf, seeing their voicemail, and taking their calls on their direct line."
-              status="coming-soon"
-              note="Not built, and deliberately not offered as a setting. Nothing stores a pairing between two people and nothing in the call path would read one, so a switch here would save an answer that never reaches a single call. A screen that appears to work and does not is worse than an absence."
             >
               <SettingRow
                 label="What works today instead"
@@ -316,12 +302,7 @@ const JoiningAndLeaving = () => {
                   each with the reason. Somebody who notices a gap in a
                   spreadsheet otherwise assumes the data was lost. */}
               {EXPORT_LIMITS.map((limit) => (
-                <SettingRow
-                  key={limit.id}
-                  label={limit.label}
-                  description={limit.why}
-                  status="coming-soon"
-                />
+                <SettingRow key={limit.id} label={limit.label} />
               ))}
             </SettingCard>
           </>

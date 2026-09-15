@@ -193,9 +193,14 @@ const NumbersByLine: FC<NumbersByLineProps> = ({
                               don't respond to an ancestor's text-align for their
                               own position), which is why this column alone stayed
                               left-aligned while every plain-text column centered
-                              correctly. */}
-                          <div className="inline-flex items-center gap-2">
-                            <NumberWithFlag number={did?.did_number} />
+                              correctly. flex-col, not row: the number was
+                              wrapping onto two lines fighting the Primary badge
+                              for the same row's width — stacking them gives the
+                              number its own full-width line. */}
+                          <div className="inline-flex flex-col items-center gap-1">
+                            <span className="whitespace-nowrap">
+                              <NumberWithFlag number={did?.did_number} />
+                            </span>
                             {/* Not a stored flag — the platform has none. It is the
                                 first number on the line, which is the one people
                                 mean when they say "the Support number". */}

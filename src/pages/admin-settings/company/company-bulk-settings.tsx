@@ -35,6 +35,7 @@ import {
   CheckCircle2,
   Info,
   MinusCircle,
+  Save,
   Search,
   Users,
   XCircle,
@@ -91,12 +92,6 @@ const INTERNATIONAL_OPTIONS: { label: string; value: InternationalCallingChoice 
   { label: 'Allowed to call other countries', value: 'allow' },
   { label: 'Not allowed to call other countries', value: 'block' },
 ];
-
-/* The switch reads none of these today, so the same sentence is true of every
-   one of them. It is written once and shown on each, rather than being softened
-   into something vaguer that an admin could read as "it works". */
-const COMING_SOON_NOTE =
-  'Coming soon. This is written onto each person the same way their own settings page writes it, so it is saved and waiting — but the call switch does not read it yet, so what a caller hears does not change.';
 
 type FieldId =
   | 'recording_automatic'
@@ -176,7 +171,7 @@ const FieldRow = ({
   disabled: boolean;
   control: React.ReactNode;
 }) => (
-  <SettingRow label={label} description={description} status="coming-soon">
+  <SettingRow label={label} description={description}>
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <label className="flex cursor-pointer items-center gap-2">
         <Checkbox checked={included} onCheckedChange={onToggle} disabled={disabled} />
@@ -361,47 +356,41 @@ const CompanyBulkSettings = () => {
     (preview?.changed || 0) > 0;
 
   return (
-    <section className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-gray-200/15">
-      <div className="flex items-center gap-1.5 px-4 pt-3">
-        <p className="text-lg font-semibold text-gray-900">Apply to many people</p>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
-          </TooltipTrigger>
-          <TooltipContent
-            side="right"
-            className="w-max max-w-[280px] [text-wrap:pretty] text-black"
-            style={{
-              background: '#fdf7f5',
-              border: 'none',
-              color: '#000',
-              boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
-            }}
-          >
-            Sets the same answer on everybody at once, instead of opening each person in turn.
-          </TooltipContent>
-        </Tooltip>
-      </div>
-
+    <section className="bulk-settings-page flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-gray-200/15">
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-3 sm:px-4">
         <div className="mx-auto flex w-full min-h-0 max-w-[1040px] flex-col gap-4">
+          <div className="flex items-center gap-1.5 px-1">
+            <p className="text-lg font-semibold text-gray-900">Apply to many people</p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 shrink-0 cursor-help text-gray-400" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="w-max max-w-[280px] [text-wrap:pretty] text-black"
+                style={{
+                  background: '#fdf7f5',
+                  border: 'none',
+                  color: '#000',
+                  boxShadow: '0 6px 20px rgba(17,17,17,0.18)',
+                }}
+              >
+                Sets the same answer on everybody at once, instead of opening each person in turn.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
           <div className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white p-3">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+            <Save className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
             <p className="text-xs text-gray-700">
-              <span className="font-semibold text-gray-900">What this writes.</span> Each person you
-              pick is saved with only the settings you ticked changed — everything else on their
-              record is written back exactly as it was. Somebody already set the way you asked is
-              counted and left alone rather than saved again. This is the same change their own
-              settings page makes, so it is recorded on the person, but it does not yet change what
-              a caller hears.
+              <span className="font-semibold text-gray-900">What this writes.</span> Only the
+              settings you tick are changed — everything else stays exactly as it was.
             </p>
           </div>
 
           <SettingCard
             title="Choose what to change"
             description="Tick a setting to include it in this run. Anything left unticked is not touched on anyone."
-            status="coming-soon"
-            note={COMING_SOON_NOTE}
           >
             <FieldRow
               included={include.recording_automatic}
@@ -411,6 +400,7 @@ const CompanyBulkSettings = () => {
               description="Whether each person's calls start recording on their own, and in which direction."
               control={
                 <CustomSelect
+                  inputClass="co-grey-select"
                   options={RECORDING_OPTIONS}
                   value={RECORDING_OPTIONS.find(
                     (option) => option.value === draft.recording_automatic,
@@ -484,6 +474,7 @@ const CompanyBulkSettings = () => {
               description="Whether each person may phone numbers outside your own country. Refusing somebody always works; allowing them never reaches past the company list under Company → Calling, which stays the ceiling."
               control={
                 <CustomSelect
+                  inputClass="co-grey-select"
                   options={INTERNATIONAL_OPTIONS}
                   value={INTERNATIONAL_OPTIONS.find(
                     (option) => option.value === draft.international_calling,
@@ -513,6 +504,11 @@ const CompanyBulkSettings = () => {
                   value={draft.ring_seconds}
                   error={ringError}
                   disabled={running}
+                  className={
+                    ringError
+                      ? ''
+                      : 'hover:border-primary/50 focus:border-primary/70 focus:shadow-[0_0_0_2px_#fee2e2]'
+                  }
                   onChange={(event) =>
                     setDraft((previous) => ({ ...previous, ring_seconds: event.target.value }))
                   }
@@ -535,7 +531,7 @@ const CompanyBulkSettings = () => {
               <div className="w-full sm:max-w-[280px]">
                 <Input
                   placeholder="Search by name, extension or email"
-                  className="mcm-pill-input pl-8"
+                  className="mcm-pill-input rounded-full border border-transparent pl-8 shadow-none hover:border-primary focus:border-primary focus:ring-0"
                   Icon={<Search className="h-3.5 w-3.5 text-gray-500" />}
                   IconPosition="left-0 pl-3 inset-y-0"
                   value={search}
@@ -632,7 +628,13 @@ const CompanyBulkSettings = () => {
                 People are saved one at a time, so a long list takes a moment. Please leave this
                 page open until it finishes.
               </p>
-              <Button type="button" variant="dark" onClick={() => run()} disabled={!canRun}>
+              <Button
+                type="button"
+                variant="dark"
+                className="rounded-full"
+                onClick={() => run()}
+                disabled={!canRun}
+              >
                 {running
                   ? 'Applying...'
                   : `Apply to ${preview?.changed || 0} ${

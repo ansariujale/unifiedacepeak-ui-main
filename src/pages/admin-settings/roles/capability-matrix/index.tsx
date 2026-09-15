@@ -24,11 +24,11 @@
  */
 
 import { Fragment, useMemo } from 'react';
-import { Check, Minus, ScrollText, Table2 } from 'lucide-react';
+import { Check, InfoIcon, Minus, ScrollText, Table2 } from 'lucide-react';
 
+import CustomTooltip from '@/components/custom/custom-tooltip';
 import { SettingCard, SettingRow } from '@/components/mcm/setting-card';
 import { AdminPage } from '@/pages/admin-settings/page-shell';
-import { AreaNav } from '@/pages/admin-settings/roles/area-nav';
 import {
   PRINCIPLES,
   SCOPE_LABEL,
@@ -36,6 +36,7 @@ import {
   capabilityMatrix,
   tierInfo,
 } from '@/lib/role-permission-defaults';
+import './capability-matrix-theme.css';
 
 /* A yes and a no, told apart by shape as well as by colour — a table read at a
    glance by somebody who cannot distinguish green from grey still has to work. */
@@ -59,10 +60,28 @@ const CapabilityMatrixPage = () => {
 
   return (
     <AdminPage
+      className="cm-theme"
       section="People"
-      title="What each role can do"
-      description="Every capability in the product, and which kind of person gets it. Read the five principles above the table and the rest follows from them."
-      actions={<AreaNav current="/admin-settings/capability-matrix" />}
+      title={
+        <span className="flex items-center gap-2">
+          <span className="dir-serif-heading">What each role can do</span>
+          <CustomTooltip
+            text={
+              <>
+                Every capability in the product, and
+                <br />
+                which kind of person gets it. Read the five
+                <br />
+                principles above the table and the rest follows from them.
+              </>
+            }
+            side="right"
+            className="whitespace-normal text-left"
+          >
+            <InfoIcon className="w-4 h-4 text-gray-500 cursor-pointer" />
+          </CustomTooltip>
+        </span>
+      }
     >
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
         <SettingCard

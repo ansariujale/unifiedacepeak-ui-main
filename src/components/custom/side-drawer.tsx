@@ -16,6 +16,10 @@ interface SideDrawerProps {
   enableResponsive?: boolean;
   isCloseIcon?: boolean;
   headerClassName?: string;
+  /** Renders as a centered modal card (fade + scale in) instead of a panel
+      sliding in from the right edge — for short, focused forms like "New
+      Message" where anchoring to a screen edge adds no meaning. */
+  centered?: boolean;
 }
 
 const SideDrawer: FC<SideDrawerProps> = ({
@@ -32,6 +36,7 @@ const SideDrawer: FC<SideDrawerProps> = ({
   enableResponsive = false,
   isCloseIcon = true,
   headerClassName = '',
+  centered = false,
 }) => {
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
@@ -50,6 +55,74 @@ const SideDrawer: FC<SideDrawerProps> = ({
       ? responsiveWidth || width || '90%'
       : width
     : width;
+
+  if (centered) {
+    return (
+      <div
+        data-state={isOpen ? 'open' : 'closed'}
+        className={cn(
+          'fixed inset-0 z-30 flex items-center justify-center bg-black/50 p-4 transition-opacity',
+          'data-[state=closed]:pointer-events-none data-[state=closed]:opacity-0',
+          'data-[state=open]:opacity-100',
+          backgroundStyle,
+        )}
+        onClick={handleClose}
+      >
+        <div
+          data-state={isOpen ? 'open' : 'closed'}
+          className={cn(
+            'relative flex max-h-[85vh] w-full flex-col gap-4 rounded-2xl bg-white p-0 shadow-2xl transition-all duration-200',
+            'data-[state=closed]:scale-95 data-[state=closed]:opacity-0',
+            'data-[state=open]:scale-100 data-[state=open]:opacity-100',
+          )}
+          style={{ width: finalWidth || '450px' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {title && (
+            <div
+              className={cn(
+                'flex min-h-11 items-center justify-between gap-1.5 px-5 pt-5 text-gray-900',
+                isCloseIcon && 'pr-16',
+                headerClassName,
+              )}
+            >
+              <h5 className="flex items-center justify-between truncate text-base font-semibold">
+                {title}
+              </h5>
+            </div>
+          )}
+          {isCloseIcon && (
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Close"
+              title="Close"
+              className={cn(
+                'absolute right-4 top-4 z-10 flex h-10 w-10 cursor-pointer items-center justify-center',
+                'rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors',
+                'hover:bg-gray-100 hover:text-gray-900',
+                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+              )}
+            >
+              <Icon name="CloseIcon" className="h-4 w-4" />
+            </button>
+          )}
+          <div
+            className={cn(
+              'flex min-h-0 w-full flex-1 flex-col gap-4 overflow-auto px-5 pb-5',
+              /* When there's no `title`, the caller renders its own heading as
+                 the first thing inside `content` — without this, that heading
+                 sits flush against the card's rounded top edge. */
+              !title && 'pt-5',
+            )}
+          >
+            {content}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {isHeader && (

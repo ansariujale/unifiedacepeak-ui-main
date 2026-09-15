@@ -53,12 +53,34 @@
   }
 }
 
-.loc-theme .btn.primary {
-  background: #171717;
-  color: #fff;
+/* Plain <button class="btn ..."> (not the shadcn Button), so mcm-page.css's
+   generic reset for plain buttons — unlayered, higher specificity than a
+   3-class page override — wins background/color regardless of source order.
+   !important on every state avoids depending on winning that fight. */
+.loc-theme .btn.primary,
+.loc-theme .btn.primary:focus,
+.loc-theme .btn.primary:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
 }
 .loc-theme .btn.primary:hover {
-  background: #000;
+  background: #000 !important;
+  border-color: #000 !important;
+}
+/* `.soft-accent` (mcm-page.css) sets its own pink-wash background on top —
+   same fight, same fix. */
+.loc-theme .btn.primary.soft-accent,
+.loc-theme .btn.primary.soft-accent:focus,
+.loc-theme .btn.primary.soft-accent:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
+}
+.loc-theme .btn.primary.soft-accent:hover {
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff;
 }
 
 /* Locations table skin: matches the .tbl/.tbl__* row spec used on the

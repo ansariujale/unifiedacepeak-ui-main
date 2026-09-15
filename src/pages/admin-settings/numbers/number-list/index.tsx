@@ -814,7 +814,11 @@ const NumberList = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="border-neutral-200! bg-white! text-black!">
                   {menuActions.map((action: any) => (
-                    <DropdownMenuItem key={action.id} onClick={action.cb}>
+                    <DropdownMenuItem
+                      key={action.id}
+                      onClick={action.cb}
+                      className="focus:bg-gray-100! focus:text-black!"
+                    >
                       <Icon name={action.icon as IconName} className="w-4 h-4" />
                       {action.tooltipText}
                     </DropdownMenuItem>
@@ -959,7 +963,9 @@ const NumberList = () => {
                 view.key === 'all' ? '-mt-2 ident-table--all-numbers' : ''
               } ${
                 view.key === 'in-use' || view.key === 'inventory' ? 'ident-table--numbers-list' : ''
-              } ${view.isArchive ? 'ident-table--released' : ''}`}
+              } ${view.key === 'in-use' ? 'ident-table--in-use' : ''} ${
+                view.isArchive ? 'ident-table--released' : ''
+              }`}
             >
               <TableManager
                 {...{

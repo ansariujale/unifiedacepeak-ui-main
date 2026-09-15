@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Activity, BarChart3, CalendarDays, RefreshCw } from 'lucide-react';
+import { ArrowUpRight, BarChart3, Info, RefreshCw, Users } from 'lucide-react';
 import TableManager from '@/components/custom/table-manager';
 import Timer from '@/components/timer';
 import { isMonitoringCallForMember } from '@/pages/monitoring/live-call-helpers';
 import PerfStatCard from './stat-card';
+import Sparkline from './sparkline';
 import type { QueueCallStats } from '@/hooks/use-call-stats';
 import { formatSecsToClock } from './format';
 import buildQueueRows from './queue-rows';
@@ -33,7 +34,7 @@ const STATUS_STYLES: Record<string, string> = {
  */
 const HOUR_MS = 60 * 60 * 1000;
 
-const callVolumeSeries = (rows: any[], queueUuid?: string): number[] => {
+export const callVolumeSeries = (rows: any[], queueUuid?: string): number[] => {
   if (!Array.isArray(rows) || rows.length === 0) return [];
 
   const buckets = new Map<number, number>();
@@ -57,37 +58,6 @@ const callVolumeSeries = (rows: any[], queueUuid?: string): number[] => {
     series.push(running);
   }
   return series;
-};
-
-/**
- * The hero's background curve, drawn from the same cumulative series the cards
- * use. It is a chart, not decoration — so when there is no history behind it
- * (fewer than two hours of calls in the range) the hero simply has no curve.
- *
- * The path is emitted in a 0..1 space and stretched by the SVG, which is what
- * lets the marker be positioned in plain percentages on top of it.
- */
-const buildHeroWave = (points: number[]) => {
-  if (!points || points.length < 2) return null;
-
-  const peak = Math.max(...points, 1);
-  // Kept off the floor and off the ceiling so the curve reads as a band of
-  // movement across the card rather than a graph clipped by its own box.
-  const coords = points.map((value, index) => ({
-    x: index / (points.length - 1),
-    y: 0.88 - (value / peak) * 0.62,
-  }));
-
-  let d = `M${coords[0].x.toFixed(4)},${coords[0].y.toFixed(4)}`;
-  for (let i = 0; i < coords.length - 1; i += 1) {
-    const from = coords[i];
-    const to = coords[i + 1];
-    const midX = (from.x + to.x) / 2;
-    d += ` C${midX.toFixed(4)},${from.y.toFixed(4)} ${midX.toFixed(4)},${to.y.toFixed(4)} ${to.x.toFixed(4)},${to.y.toFixed(4)}`;
-  }
-
-  const last = coords[coords.length - 1];
-  return { d, markerX: last.x, markerY: last.y };
 };
 
 /** Whole-percent share, guarding the empty day so it reads 0% and not NaN. */
@@ -118,113 +88,16 @@ const getMemberStatus = (member: any, usersOnlineStatus: any[], activeQueueCalls
  * into the ~30 other pages on the same sheet.
  */
 const QA_CSS = `
-.mcm-page .qa-wrap { display:flex; flex-direction:column; gap:16px; padding:16px 22px 26px; }
+.mcm-page .qa-wrap { display:flex; flex-direction:column; gap:22px; padding:20px 22px 40px; }
 
-/* ---- hero ---- */
-.mcm-page .qa-hero {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  /* Column, so the stat strip stays on the floor of the card while the top
-     block takes up the slack when the panel beside it is the taller of the two. */
-  display: flex;
-  flex-direction: column;
+/* ---- the three summaries, side by side ---- */
+.mcm-page .qa-mid-grid {
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,0.95fr);
+  gap:18px; align-items:stretch;
 }
-.mcm-page .qa-hero-top {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0,1fr) minmax(70px,0.55fr) minmax(0,auto);
-  align-items: center;
-  gap: 18px;
-  padding: 20px 22px 22px;
-  flex: 1;
-}
-.mcm-page .qa-eyebrow {
-  display:block; font-size:10.5px; font-weight:800; letter-spacing:.11em;
-  text-transform:uppercase; color:var(--ink-4);
-}
-.mcm-page .qa-hero-name {
-  margin: 7px 0 0;
-  font-size: clamp(26px, 2.4vw, 36px);
-  font-weight: 800;
-  letter-spacing: -.045em;
-  line-height: 1.02;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-.mcm-page .qa-hero-meta {
-  display:flex; align-items:center; gap:8px; margin-top:9px;
-  font-size:13px; font-weight:600; color:var(--ink-3);
-}
-.mcm-page .qa-hero-meta i {
-  width:9px; height:9px; border-radius:99px; background:var(--accent); flex:none;
-}
+@media (max-width: 1240px) { .mcm-page .qa-mid-grid { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } }
+@media (max-width: 820px) { .mcm-page .qa-mid-grid { grid-template-columns:minmax(0,1fr); } }
 
-/* the curve sits behind the whole row, the marker rides its last point */
-/* The right inset keeps the marker's outer ring off the service-level block,
-   which the curve otherwise runs straight into at its last point. No
-   min-height: the row is sized by the text beside it, so a queue with no
-   history to plot doesn't hold the card open around an empty column. */
-.mcm-page .qa-hero-art { position:relative; align-self:stretch; margin-right:24px; }
-.mcm-page .qa-hero-wave {
-  position:absolute; inset:0; width:100%; height:100%;
-  color: var(--accent); opacity:.5; pointer-events:none;
-}
-.mcm-page .qa-hero-pulse {
-  position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px;
-  border-radius:99px; background:var(--accent); pointer-events:none;
-}
-.mcm-page .qa-hero-pulse::before,
-.mcm-page .qa-hero-pulse::after {
-  content:''; position:absolute; inset:-16px; border-radius:99px;
-  border:1px solid var(--accent); opacity:.28;
-}
-.mcm-page .qa-hero-pulse::after { inset:-34px; opacity:.14; }
-@media (prefers-reduced-motion: no-preference) {
-  .mcm-page .qa-hero-pulse::before { animation: qa-pulse 2.8s ease-out infinite; }
-  .mcm-page .qa-hero-pulse::after  { animation: qa-pulse 2.8s ease-out .6s infinite; }
-}
-@keyframes qa-pulse {
-  0%   { transform: scale(.55); opacity:.42; }
-  70%  { opacity:.06; }
-  100% { transform: scale(1.15); opacity:0; }
-}
-
-.mcm-page .qa-hero-sl { min-width:150px; }
-.mcm-page .qa-hero-sl-v {
-  margin-top:7px; font-size:clamp(26px,2.2vw,34px); font-weight:800;
-  letter-spacing:-.045em; line-height:1; font-variant-numeric:tabular-nums;
-}
-.mcm-page .qa-hero-sl-v.tone-good, .mcm-page .qa-glance-sl-v.tone-good { color:var(--live); }
-.mcm-page .qa-hero-sl-v.tone-warn, .mcm-page .qa-glance-sl-v.tone-warn { color:var(--warn); }
-.mcm-page .qa-hero-sl-v.tone-crit, .mcm-page .qa-glance-sl-v.tone-crit { color:var(--crit); }
-.mcm-page .qa-hero-sl-v.tone-muted, .mcm-page .qa-glance-sl-v.tone-muted { color:var(--ink-4); }
-.mcm-page .qa-hero-sl-target { margin-top:6px; font-size:12px; font-weight:600; color:var(--ink-3); }
-.mcm-page .qa-meter {
-  margin-top:8px; height:4px; border-radius:99px; background:var(--surface-3); overflow:hidden;
-}
-.mcm-page .qa-meter i { display:block; height:100%; border-radius:99px; background:currentColor; }
-
-/* The stat strip now runs across roughly two thirds of the row rather than
-   the whole of it, so it tightens a step to keep all five upright and on one
-   line each. The labels keep their ellipsis as the backstop. */
-.mcm-page .qa-hero .kpi-card { padding:13px 12px; gap:5px; }
-.mcm-page .qa-hero .kpi-card__label { font-size:10.5px; letter-spacing:.05em; }
-.mcm-page .qa-hero .kpi-card__value { font-size:22px; }
-.mcm-page .qa-hero .kpi-card__description { font-size:11px; }
-
-/* ---- top row: the two summaries, side by side ---- */
-.mcm-page .qa-top-grid {
-  display:grid; grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); gap:16px;
-  align-items:stretch;
-}
-@media (max-width: 1180px) { .mcm-page .qa-top-grid { grid-template-columns:minmax(0,1fr); } }
-@media (max-width: 1020px) {
-  .mcm-page .qa-hero-top { grid-template-columns:minmax(0,1fr); }
-  .mcm-page .qa-hero-art { display:none; }
-}
 .mcm-page .qa-panel { box-shadow:var(--shadow-sm); display:flex; flex-direction:column; }
 /* Just the glyph — no tinted chip behind it, so the panel heads read as
    titles with a mark rather than as another piece of card furniture. */
@@ -233,10 +106,105 @@ const QA_CSS = `
   color:var(--accent-ink);
 }
 .mcm-page .qa-head-icon svg { width:16px; height:16px; }
+.mcm-page .qa-head-link {
+  margin-left:auto; display:inline-flex; align-items:center; gap:5px;
+  font-size:11.5px; font-weight:700; color:var(--accent-ink); cursor:pointer;
+}
+.mcm-page .qa-head-link svg { width:12px; height:12px; }
+.mcm-page .qa-head-link:hover { text-decoration:underline; }
+.mcm-page .qa-head-note { margin-left:auto; font-size:11.5px; font-weight:600; color:var(--ink-3); }
+
+/* ---- queue overview (the compact list) ---- */
+.mcm-page .qa-mini { padding:4px 18px 16px; overflow-x:auto; }
+.mcm-page .qa-mini table { width:100%; border-collapse:collapse; }
+.mcm-page .qa-mini th {
+  padding:8px 6px; text-align:right; white-space:nowrap;
+  font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ink-4); border-bottom:1px solid var(--line-2);
+}
+.mcm-page .qa-mini th:first-child, .mcm-page .qa-mini td:first-child { text-align:left; }
+.mcm-page .qa-mini td {
+  padding:11px 6px; text-align:right; white-space:nowrap;
+  font-size:12.5px; font-weight:600; color:var(--ink-2);
+  font-variant-numeric:tabular-nums; border-bottom:1px solid var(--line-2);
+}
+.mcm-page .qa-mini tbody tr:last-child td { border-bottom:0; }
+.mcm-page .qa-mini-name {
+  display:inline-flex; align-items:center; gap:8px; min-width:0;
+  font-size:12.5px; font-weight:700; color:var(--ink); cursor:pointer; text-align:left;
+}
+.mcm-page .qa-mini-name:hover { color:var(--accent-ink); }
+.mcm-page .qa-mini-name i { width:8px; height:8px; border-radius:99px; flex:none; background:currentColor; }
+.mcm-page .qa-mini-name.tone-good i { color:var(--live); }
+.mcm-page .qa-mini-name.tone-warn i { color:var(--warn); }
+.mcm-page .qa-mini-name.tone-crit i { color:var(--crit); }
+.mcm-page .qa-mini-name.tone-muted i { color:var(--ink-4); }
+.mcm-page .qa-mini-sla { font-weight:700; }
+.mcm-page .qa-mini-sla.tone-good { color:var(--live); }
+.mcm-page .qa-mini-sla.tone-warn { color:var(--warn); }
+.mcm-page .qa-mini-sla.tone-crit { color:var(--crit); }
+.mcm-page .qa-mini-sla.tone-muted { color:var(--ink-4); }
+
+/* ---- performance trend ---- */
+.mcm-page .qa-trend { display:flex; flex-direction:column; flex:1; padding:10px 18px 18px; }
+.mcm-page .qa-trend-art { flex:1; min-height:150px; color:var(--accent); }
+.mcm-page .qa-trend-art svg { width:100%; height:100%; display:block; }
+.mcm-page .qa-trend-empty {
+  flex:1; min-height:150px; display:grid; place-items:center; text-align:center;
+  font-size:12px; font-weight:600; color:var(--ink-4);
+}
+.mcm-page .qa-trend-foot {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;
+  padding-top:16px; margin-top:14px; border-top:1px solid var(--line-2);
+}
+.mcm-page .qa-trend-foot > div { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.mcm-page .qa-trend-foot b {
+  font-size:21px; font-weight:800; letter-spacing:-.03em; line-height:1;
+  font-variant-numeric:tabular-nums; color:var(--ink);
+}
+.mcm-page .qa-trend-foot b.tone-good { color:var(--live); }
+.mcm-page .qa-trend-foot b.tone-warn { color:var(--warn); }
+.mcm-page .qa-trend-foot b.tone-crit { color:var(--crit); }
+.mcm-page .qa-trend-foot b.tone-muted { color:var(--ink-4); }
+.mcm-page .qa-trend-foot span { font-size:11px; font-weight:600; color:var(--ink-3); }
+
+/* ---- agent summary ---- */
+.mcm-page .qa-agents {
+  display:flex; flex-direction:column; align-items:center; gap:20px;
+  padding:18px; flex:1;
+}
+.mcm-page .qa-donut { position:relative; flex:none; width:148px; height:148px; }
+.mcm-page .qa-donut svg { transform:rotate(-90deg); }
+.mcm-page .qa-donut-mid {
+  position:absolute; inset:0; display:grid; place-content:center; text-align:center;
+}
+.mcm-page .qa-donut-v {
+  font-size:30px; font-weight:800; letter-spacing:-.045em; line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.mcm-page .qa-donut-k { margin-top:6px; font-size:10.5px; font-weight:600; color:var(--ink-3); }
+.mcm-page .qa-agent-keys { display:flex; flex-direction:column; gap:13px; width:100%; }
+.mcm-page .qa-agent-keys > div {
+  display:flex; align-items:center; gap:10px; font-size:12.5px; font-weight:600;
+  color:var(--ink-2);
+}
+.mcm-page .qa-agent-keys i { width:9px; height:9px; border-radius:99px; flex:none; }
+.mcm-page .qa-agent-keys b { margin-left:auto; font-weight:700; font-variant-numeric:tabular-nums; }
+
+/* ---- sample-activity notice ---- */
+.mcm-page .qa-banner {
+  display:flex; align-items:flex-start; gap:10px; margin:0;
+  padding:13px 16px; border-radius:12px;
+  background:var(--accent-wash); border:1px solid var(--accent-edge);
+  font-size:12.5px; font-weight:600; line-height:1.5; color:var(--accent-ink);
+}
+.mcm-page .qa-banner svg { width:15px; height:15px; flex:none; margin-top:1px; }
+
+/* ---- the full table ---- */
 .mcm-page .qa-table-body { padding:6px 0 0; min-width:0; }
 .mcm-page .qa-legend {
   display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
-  gap:8px 22px; padding:14px 16px 16px;
+  gap:8px 22px; padding:14px 16px 18px;
 }
 .mcm-page .qa-legend span {
   display:inline-flex; align-items:center; gap:7px;
@@ -244,37 +212,29 @@ const QA_CSS = `
 }
 .mcm-page .qa-legend i { width:8px; height:8px; border-radius:99px; background:currentColor; }
 
-/* ---- today at a glance ---- */
-.mcm-page .qa-glance { display:flex; align-items:center; gap:18px; padding:20px 18px; flex:1; }
-.mcm-page .qa-donut { position:relative; flex:none; width:132px; height:132px; }
-.mcm-page .qa-donut svg { transform:rotate(-90deg); }
-.mcm-page .qa-donut-mid {
-  position:absolute; inset:0; display:grid; place-content:center; text-align:center;
+/* Live status, in the column the queue's media type used to sit in — every
+   queue on this account is voice, so the slot was spending a column on a
+   constant. The grade is the same one the SLA meter and the row dot read. */
+.mcm-page .queues-table .qt-status {
+  display:inline-flex; align-items:center; white-space:nowrap;
+  padding:4px 10px; border-radius:999px;
+  font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
 }
-.mcm-page .qa-donut-v {
-  font-size:27px; font-weight:800; letter-spacing:-.045em; line-height:1;
-  font-variant-numeric:tabular-nums;
+.mcm-page .queues-table .qt-status.tone-good { background:var(--live-wash,#ecfdf5); color:var(--live); }
+.mcm-page .queues-table .qt-status.tone-warn { background:var(--warn-wash,#fffbeb); color:var(--warn); }
+.mcm-page .queues-table .qt-status.tone-crit { background:var(--crit-wash,#fef2f2); color:var(--crit); }
+.mcm-page .queues-table .qt-status.tone-muted { background:var(--surface-3); color:var(--ink-4); }
+
+/* Interacting carries a utilisation read underneath it — how much of the
+   queue's roster is on a call right now, which is the same two numbers the
+   cell already shows, drawn. */
+.mcm-page .queues-table .qt-util { display:flex; flex-direction:column; gap:5px; align-items:center; }
+.mcm-page .queues-table .qt-util-bar {
+  position:relative; display:block; width:54px; height:4px;
+  border-radius:99px; background:var(--surface-3); overflow:hidden;
 }
-.mcm-page .qa-donut-k { margin-top:5px; font-size:10.5px; font-weight:600; color:var(--ink-3); }
-.mcm-page .qa-glance-keys { display:flex; flex-direction:column; gap:11px; min-width:0; flex:1; }
-.mcm-page .qa-glance-keys > div {
-  display:flex; align-items:center; gap:9px; font-size:12.5px; font-weight:600;
-}
-.mcm-page .qa-glance-keys i { width:9px; height:9px; border-radius:99px; flex:none; }
-.mcm-page .qa-glance-keys b { margin-left:auto; font-weight:700; font-variant-numeric:tabular-nums; }
-.mcm-page .qa-glance-sl {
-  flex:none; width:150px; padding-left:18px; border-left:1px solid var(--line-2); text-align:center;
-}
-.mcm-page .qa-glance-sl .qa-head-icon { margin:0 auto; }
-.mcm-page .qa-glance-sl-k { margin-top:9px; font-size:12.5px; font-weight:700; color:var(--ink-2); }
-.mcm-page .qa-glance-sl-v {
-  margin-top:7px; font-size:30px; font-weight:800; letter-spacing:-.045em; line-height:1;
-  font-variant-numeric:tabular-nums;
-}
-.mcm-page .qa-glance-sl-t { margin-top:7px; font-size:11.5px; font-weight:600; color:var(--ink-3); }
-@media (max-width: 620px) {
-  .mcm-page .qa-glance { flex-wrap:wrap; }
-  .mcm-page .qa-glance-sl { width:100%; padding:16px 0 0; border-left:0; border-top:1px solid var(--line-2); }
+.mcm-page .queues-table .qt-util-bar i {
+  display:block; height:100%; border-radius:99px; background:var(--accent);
 }
 
 /* ---- footer ---- */
@@ -295,6 +255,7 @@ const QueuesActivityTab = ({
   cdrByQueueUuid,
   cdrRows,
   isCdrSampled,
+  isSampleActivity,
   usersOnlineStatus,
   isLoading,
   selectedQueueUuid,
@@ -309,6 +270,9 @@ const QueuesActivityTab = ({
   /** Raw CDR rows for the selected range — the source of the cards' history. */
   cdrRows?: any[];
   isCdrSampled?: boolean;
+  /** The account has no calls of its own yet, so the volume figures on this
+   *  tab are the demo dataset rather than its own history. */
+  isSampleActivity?: boolean;
   usersOnlineStatus: any[];
   isLoading: boolean;
   selectedQueueUuid: string | null;
@@ -325,33 +289,11 @@ const QueuesActivityTab = ({
 
   const selectedRow = rows.find((row) => row.uuid === selectedQueueUuid) || null;
 
-  // Prefer the queue with a live interacting call; when nothing is in progress
-  // right now (common outside peak hours) fall back to who handled the most
-  // today instead of always reading "—".
-  const queuesWithInteracting = rows.filter((row) => row.interacting > 0);
-  const busiestQueue = queuesWithInteracting.length
-    ? queuesWithInteracting.reduce((top, row) => (row.interacting > top.interacting ? row : top))
-    : rows.reduce((top: (typeof rows)[number] | null, row) => {
-        if (row.handledToday === null) return top;
-        if (!top || (top.handledToday ?? -1) < row.handledToday) return row;
-        return top;
-      }, null);
-
-  const longestWaitingQueue = rows.reduce((top: (typeof rows)[number] | null, row) => {
-    if (row.longestWaitTimestamp === null) return top;
-    if (!top || top.longestWaitTimestamp === null) return row;
-    return row.longestWaitTimestamp < top.longestWaitTimestamp ? row : top;
-  }, null);
   const slaRows = rows.filter((row) => row.sla !== null);
-  const lowestSlaQueue = slaRows.reduce(
-    (worst: (typeof rows)[number] | null, row) =>
-      !worst || (row.sla as number) < (worst.sla as number) ? row : worst,
-    null,
-  );
   const totalMembers = new Set(rows.flatMap((row) => row.memberKeys)).size;
 
-  // Available Now — dedupe by agent, not by queue: an agent on 3 queues was
-  // getting counted 3x by summing each queue's available_count directly.
+  // Agent summary counts one agent once, not once per queue: an agent on three
+  // queues was getting counted three times by summing each queue's own count.
   const distinctMembersByKey = new Map<string, any>();
   queues.forEach((queue) => {
     (queue.members || []).forEach((member: any) => {
@@ -360,44 +302,61 @@ const QueuesActivityTab = ({
         distinctMembersByKey.set(String(key), member);
     });
   });
-  const totalAvailable = Array.from(distinctMembersByKey.values()).filter(
-    (member) => getMemberStatus(member, usersOnlineStatus, activeQueueCalls) === 'Available',
-  ).length;
+  const agentCounts = Array.from(distinctMembersByKey.values()).reduce(
+    (acc, member) => {
+      const status = getMemberStatus(member, usersOnlineStatus, activeQueueCalls);
+      if (status === 'On Call') acc.onCall += 1;
+      else if (status === 'Available') acc.onQueue += 1;
+      else acc.offline += 1;
+      return acc;
+    },
+    { onQueue: 0, onCall: 0, offline: 0 },
+  );
+  const totalAgents = distinctMembersByKey.size;
+  const totalAvailable = agentCounts.onQueue;
+  const agentSlices = [
+    { key: 'On queue', value: agentCounts.onQueue, color: 'var(--accent)' },
+    { key: 'On call', value: agentCounts.onCall, color: 'var(--accent-ink)' },
+    { key: 'Offline', value: agentCounts.offline, color: 'var(--surface-3)' },
+  ];
 
   const totalInteracting = rows.reduce((sum, row) => sum + row.interacting, 0);
 
-  // The hero's headline service level. Averaged across the queues that report
-  // one rather than across all queues, so a queue with no calls yet can't drag
-  // the figure to zero.
+  // The headline service level. Averaged across the queues that report one
+  // rather than across all queues, so a queue with no calls yet can't drag the
+  // figure to zero.
   const avgSla = slaRows.length
     ? slaRows.reduce((sum, row) => sum + (row.sla as number), 0) / slaRows.length
     : null;
   const avgSlaTone = queueTone(avgSla);
 
-  // "Today at a glance" is the same CDR the table's volume columns come from,
-  // summed across queues — the three slices are the only outcomes the call log
-  // actually distinguishes, so nothing here is invented to fill the ring.
-  const glance = rows.reduce(
+  // The trend card's figures are the same CDR the table's volume columns come
+  // from, summed across queues — nothing here is derived from anything the call
+  // log doesn't already record. Handle time is weighted by each queue's own
+  // answered count, so a quiet queue with one long call can't skew the average.
+  const totals = rows.reduce(
     (acc, row) => {
       const cdr = cdrByQueueUuid?.[row.uuid];
       if (!cdr) return acc;
       acc.offered += cdr.total;
       acc.handled += cdr.answered;
       acc.abandoned += cdr.missed;
+      if (cdr.avgHandleSec !== null && cdr.answered > 0) {
+        acc.handleSecs += cdr.avgHandleSec * cdr.answered;
+        acc.handleCalls += cdr.answered;
+      }
       return acc;
     },
-    { offered: 0, handled: 0, abandoned: 0 },
+    { offered: 0, handled: 0, abandoned: 0, handleSecs: 0, handleCalls: 0 },
   );
-  const glanceOther = Math.max(0, glance.offered - glance.handled - glance.abandoned);
-  const glanceSlices = [
-    { key: 'Handled', value: glance.handled, color: 'var(--live)' },
-    { key: 'Abandoned', value: glance.abandoned, color: 'var(--hold)' },
-    { key: 'Other', value: glanceOther, color: 'var(--ai)' },
-  ];
+  const avgHandleSec = totals.handleCalls ? totals.handleSecs / totals.handleCalls : null;
+  const abandonPct = totals.offered ? share(totals.abandoned, totals.offered) : null;
 
-  const heroWave = buildHeroWave(
-    busiestQueue ? callVolumeSeries(cdrRows || [], busiestQueue.uuid) : [],
-  );
+  /** Calls building through the range, across every queue — the one piece of
+   *  history this tab holds, and the only thing the trend card draws. */
+  const trendSeries = callVolumeSeries(cdrRows || []);
+
+  const tableRef = useRef<HTMLElement | null>(null);
 
   // The footer's "last updated" is a real reading, not a decoration: the stamp
   // moves when the live figures move, and the label re-renders on its own so it
@@ -407,8 +366,8 @@ const QueuesActivityTab = ({
     totalInteracting,
     totalAvailable,
     totalMembers,
-    glance.offered,
-    glance.handled,
+    totals.offered,
+    totals.handled,
     Math.round(avgSla ?? -1),
   ].join('|');
   const updatedAtRef = useRef(Date.now());
@@ -428,67 +387,6 @@ const QueuesActivityTab = ({
       : updatedAgoSecs < 90
         ? `${updatedAgoSecs}s ago`
         : `${Math.round(updatedAgoSecs / 60)}m ago`;
-
-  const heroStats: {
-    key: string;
-    label: string;
-    value: ReactNode;
-    helper?: string;
-    description: string;
-    tone?: 'warn' | 'critical';
-  }[] = [
-    {
-      key: 'longest',
-      label: 'Longest waiting',
-      value:
-        longestWaitingQueue && longestWaitingQueue.longestWaitTimestamp !== null ? (
-          <Timer startTime={longestWaitingQueue.longestWaitTimestamp} />
-        ) : (
-          '00:00'
-        ),
-      description:
-        longestWaitingQueue && longestWaitingQueue.longestWaitTimestamp !== null
-          ? longestWaitingQueue.name
-          : 'nobody waiting',
-      // Same 2-minute breach line the KPI band grades "Longest wait" on.
-      tone:
-        longestWaitingQueue?.longestWaitTimestamp &&
-        Date.now() - longestWaitingQueue.longestWaitTimestamp > 120000
-          ? 'critical'
-          : undefined,
-    },
-    {
-      key: 'lowest-sla',
-      label: 'Lowest SLA today',
-      value: lowestSlaQueue ? `${Math.round(lowestSlaQueue.sla as number)}%` : '—',
-      description: lowestSlaQueue ? lowestSlaQueue.name : 'no service level yet',
-      tone: lowestSlaQueue
-        ? (lowestSlaQueue.sla as number) < 60
-          ? 'critical'
-          : (lowestSlaQueue.sla as number) < 80
-            ? 'warn'
-            : undefined
-        : undefined,
-    },
-    {
-      key: 'members',
-      label: 'Total members',
-      value: String(totalMembers),
-      description: 'across all queues',
-    },
-    {
-      key: 'available',
-      label: 'Available now',
-      value: String(totalAvailable),
-      description: 'free to take a call',
-    },
-    {
-      key: 'interacting',
-      label: 'Total interacting',
-      value: String(totalInteracting),
-      description: 'on a call right now',
-    },
-  ];
 
   const columns = [
     {
@@ -510,9 +408,26 @@ const QueuesActivityTab = ({
       ),
     },
     {
-      header: 'Media',
-      accessorKey: 'media',
-      cell: () => <span className="qt-mute">Voice</span>,
+      /* Every queue on this account is voice, so this slot used to spend a
+         column on a constant. It now carries the row's standing, graded on the
+         same service level the meter further along the row draws. */
+      header: 'Live status',
+      accessorKey: 'sla',
+      id: 'liveStatus',
+      cell: ({ row }: any) => {
+        const tone = queueTone(row.original.sla);
+        return (
+          <span className={`qt-status tone-${tone}`}>
+            {tone === 'good'
+              ? 'Healthy'
+              : tone === 'warn'
+                ? 'At risk'
+                : tone === 'crit'
+                  ? 'Critical'
+                  : 'No calls'}
+          </span>
+        );
+      },
     },
     { header: 'Waiting', accessorKey: 'waiting' },
     {
@@ -526,7 +441,25 @@ const QueuesActivityTab = ({
         ),
     },
     { header: 'Members', accessorKey: 'membersCount' },
-    { header: 'Interacting', accessorKey: 'interacting' },
+    {
+      header: 'Interacting',
+      accessorKey: 'interacting',
+      /* The count with its own share of the roster underneath — "2" and "2 of
+         3 members busy" are the same reading, and the bar is the one the eye
+         catches while scanning the column. */
+      cell: ({ row }: any) => {
+        const members = row.original.membersCount || 0;
+        const pct = members ? Math.min(100, (row.original.interacting / members) * 100) : 0;
+        return (
+          <span className="qt-util">
+            {row.original.interacting}
+            <span className="qt-util-bar" aria-hidden="true">
+              <i style={{ width: `${pct}%` }} />
+            </span>
+          </span>
+        );
+      },
+    },
     {
       header: 'Offered',
       accessorKey: 'offered',
@@ -681,143 +614,149 @@ const QueuesActivityTab = ({
     <div className="qa-wrap">
       <style>{QA_CSS}</style>
 
-      {/* The two summaries share the top row and the table takes the whole
-          width beneath them — it has twelve columns and was the one thing on
-          the page that could actually use the room. */}
-      <div className="qa-top-grid">
-        {/* The hero answers the two questions the room asks first — which queue
-          is carrying the day, and are we hitting the service level — at a size
-          you can read from a desk away. Everything smaller sits under it. */}
-        <section className="qa-hero">
-          <div className="qa-hero-top">
-            <div className="qa-hero-lead">
-              <span className="qa-eyebrow">Busiest queue</span>
-              <h2 className="qa-hero-name">{busiestQueue ? busiestQueue.name : '—'}</h2>
-              <div className="qa-hero-meta">
-                <i aria-hidden="true" />
-                {busiestQueue
-                  ? busiestQueue.interacting > 0
-                    ? `${busiestQueue.interacting} interacting now`
-                    : `${busiestQueue.handledToday ?? 0} handled today`
-                  : 'no queue activity yet'}
-              </div>
-            </div>
-
-            {/* The curve is that queue's call volume building through the range;
-              the marker rides its latest point. No history, no curve. */}
-            <div className="qa-hero-art" aria-hidden="true">
-              {heroWave && (
-                <>
-                  <svg
-                    className="qa-hero-wave"
-                    viewBox="0 0 1 1"
-                    preserveAspectRatio="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d={heroWave.d}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  </svg>
-                  <span
-                    className="qa-hero-pulse"
-                    style={{
-                      left: `${heroWave.markerX * 100}%`,
-                      top: `${heroWave.markerY * 100}%`,
-                    }}
-                  />
-                </>
-              )}
-            </div>
-
-            <div className="qa-hero-sl">
-              <span className="qa-eyebrow">Service level today</span>
-              <div className={`qa-hero-sl-v tone-${avgSlaTone}`}>
-                {avgSla === null ? '—' : `${Math.round(avgSla)}%`}
-              </div>
-              <div className="qa-hero-sl-target">Target: 80%</div>
-              <div className={`qa-meter tone-${avgSlaTone}`}>
-                <i
-                  style={{
-                    width: `${Math.min(100, Math.max(0, Math.round(avgSla ?? 0)))}%`,
-                    background:
-                      avgSlaTone === 'good'
-                        ? 'var(--live)'
-                        : avgSlaTone === 'warn'
-                          ? 'var(--warn)'
-                          : avgSlaTone === 'crit'
-                            ? 'var(--crit)'
-                            : 'var(--ink-4)',
-                  }}
-                />
-              </div>
-            </div>
+      {/* Three reads of the same feed, side by side: the queues as a list, the
+          day as a curve, and the roster as a ring. The full table takes the
+          whole width beneath them — it has twelve columns and was the one
+          thing on the page that could actually use the room. */}
+      <div className="qa-mid-grid">
+        <section className="panel-card qa-panel">
+          <div className="pc-head">
+            <h3>Queue overview</h3>
+            <button
+              type="button"
+              className="qa-head-link"
+              onClick={() => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            >
+              View all queues
+              <ArrowUpRight aria-hidden="true" />
+            </button>
           </div>
-
-          {/* The shared KPI Overview card, seated inside the hero — `--flush`
-            drops its own frame so the two read as one card. */}
-          <div className="kpi-grid kpi-grid--flush">
-            {heroStats.map((stat) => (
-              <div key={stat.key} className="kpi-card">
-                <span className="kpi-card__label">{stat.label}</span>
-                <span className="kpi-card__value-row">
-                  <span
-                    className={`kpi-card__value${stat.tone ? ` kpi-card__value--${stat.tone}` : ''}`}
-                  >
-                    {stat.value}
-                  </span>
-                  {stat.helper && (
-                    <span className="kpi-card__helper">
-                      <span className="kpi-card__helper-dot" />
-                      {stat.helper}
-                    </span>
-                  )}
-                </span>
-                <span className="kpi-card__description">{stat.description}</span>
-              </div>
-            ))}
+          <div className="qa-mini">
+            <table>
+              <thead>
+                <tr>
+                  <th>Queue</th>
+                  <th>Waiting</th>
+                  <th>Longest</th>
+                  <th>Members</th>
+                  <th>SLA</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', color: 'var(--ink-4)' }}>
+                      No queues configured
+                    </td>
+                  </tr>
+                )}
+                {rows.map((row) => (
+                  <tr key={row.uuid}>
+                    <td>
+                      <button
+                        type="button"
+                        className={`qa-mini-name tone-${queueTone(row.sla)}`}
+                        onClick={() => setSelectedQueueUuid(row.uuid)}
+                      >
+                        <i aria-hidden="true" />
+                        {row.name}
+                      </button>
+                    </td>
+                    <td>{row.waiting}</td>
+                    <td>
+                      {row.longestWaitTimestamp ? (
+                        <Timer startTime={row.longestWaitTimestamp} />
+                      ) : (
+                        '00:00'
+                      )}
+                    </td>
+                    {/* Free now out of the whole roster — the same two figures
+                        the detail view opens on. */}
+                    <td>
+                      {row.available}/{row.membersCount}
+                    </td>
+                    <td className={`qa-mini-sla tone-${queueTone(row.sla)}`}>
+                      {row.sla === null ? '—' : `${Math.round(row.sla)}%`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
 
         <section className="panel-card qa-panel">
           <div className="pc-head">
             <span className="qa-head-icon" aria-hidden="true">
-              <CalendarDays />
+              <BarChart3 />
             </span>
-            <h3>Today at a Glance</h3>
+            <h3>Performance trend</h3>
+            <span className="qa-head-note">Calls answered, building through the range</span>
           </div>
-          <div className="qa-glance">
+          <div className="qa-trend">
+            {trendSeries.length > 1 ? (
+              <div className="qa-trend-art">
+                <Sparkline points={trendSeries} tone="var(--accent)" />
+              </div>
+            ) : (
+              <div className="qa-trend-empty">
+                Not enough history in this range to draw a trend yet
+              </div>
+            )}
+            <div className="qa-trend-foot">
+              <div>
+                <b className={`tone-${avgSlaTone}`}>
+                  {avgSla === null ? '—' : `${Math.round(avgSla)}%`}
+                </b>
+                <span>Service level</span>
+              </div>
+              <div>
+                <b>{avgHandleSec === null ? '—' : formatSecsToClock(avgHandleSec)}</b>
+                <span>Avg handle time</span>
+              </div>
+              <div>
+                <b>{abandonPct === null ? '—' : `${abandonPct}%`}</b>
+                <span>Abandon rate</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="panel-card qa-panel">
+          <div className="pc-head">
+            <span className="qa-head-icon" aria-hidden="true">
+              <Users />
+            </span>
+            <h3>Agent summary</h3>
+          </div>
+          <div className="qa-agents">
             <div className="qa-donut">
-              <svg width="132" height="132" viewBox="0 0 132 132" aria-hidden="true">
+              <svg width="148" height="148" viewBox="0 0 148 148" aria-hidden="true">
                 <circle
-                  cx="66"
-                  cy="66"
+                  cx="74"
+                  cy="74"
                   r={DONUT_R}
                   fill="none"
                   stroke="var(--surface-3)"
-                  strokeWidth="12"
+                  strokeWidth="14"
                 />
                 {/* Offsets accumulate so the slices sit end to end; an empty
-                    day draws nothing over the track, which is the honest
-                    picture of nothing having happened yet. */}
-                {glance.offered > 0 &&
-                  glanceSlices.reduce<{ nodes: ReactNode[]; used: number }>(
+                    roster draws nothing over the track, which is the honest
+                    picture of nobody being signed in. */}
+                {totalAgents > 0 &&
+                  agentSlices.reduce<{ nodes: ReactNode[]; used: number }>(
                     (acc, slice) => {
                       if (slice.value > 0) {
-                        const length = (slice.value / glance.offered) * DONUT_C;
+                        const length = (slice.value / totalAgents) * DONUT_C;
                         acc.nodes.push(
                           <circle
                             key={slice.key}
-                            cx="66"
-                            cy="66"
+                            cx="74"
+                            cy="74"
                             r={DONUT_R}
                             fill="none"
                             stroke={slice.color}
-                            strokeWidth="12"
+                            strokeWidth="14"
                             strokeLinecap="butt"
                             strokeDasharray={`${length} ${DONUT_C - length}`}
                             strokeDashoffset={-acc.used}
@@ -831,36 +770,36 @@ const QueuesActivityTab = ({
                   ).nodes}
               </svg>
               <div className="qa-donut-mid">
-                <div className="qa-donut-v">{glance.handled}</div>
-                <div className="qa-donut-k">Total Handled</div>
+                <div className="qa-donut-v">{totalAgents}</div>
+                <div className="qa-donut-k">Total agents</div>
               </div>
             </div>
 
-            <div className="qa-glance-keys">
-              {glanceSlices.map((slice) => (
+            <div className="qa-agent-keys">
+              {agentSlices.map((slice) => (
                 <div key={slice.key}>
                   <i style={{ background: slice.color }} aria-hidden="true" />
-                  <span style={{ color: 'var(--ink-2)' }}>{slice.key}</span>
+                  <span>{slice.key}</span>
                   <b>
-                    {slice.value} ({share(slice.value, glance.offered)}%)
+                    {slice.value} ({share(slice.value, totalAgents)}%)
                   </b>
                 </div>
               ))}
             </div>
-
-            <div className="qa-glance-sl">
-              <span className="qa-head-icon" aria-hidden="true">
-                <Activity />
-              </span>
-              <div className="qa-glance-sl-k">Service Level</div>
-              <div className={`qa-glance-sl-v tone-${avgSlaTone}`}>
-                {avgSla === null ? '—' : `${Math.round(avgSla)}%`}
-              </div>
-              <div className="qa-glance-sl-t">Target: 80%</div>
-            </div>
           </div>
         </section>
       </div>
+
+      {/* The account has no call history of its own yet, so the volume figures
+          above and below are the demo dataset. Said out loud rather than left
+          for the reader to work out. */}
+      {isSampleActivity && (
+        <p className="qa-banner">
+          <Info aria-hidden="true" />
+          Showing sample activity — real figures appear once calls start moving through these
+          queues.
+        </p>
+      )}
 
       {isCdrSampled && (
         <p className="page-note">
@@ -869,7 +808,7 @@ const QueuesActivityTab = ({
         </p>
       )}
 
-      <section className="panel-card qa-panel">
+      <section className="panel-card qa-panel" ref={tableRef}>
         <div className="pc-head">
           <span className="qa-head-icon" aria-hidden="true">
             <BarChart3 />

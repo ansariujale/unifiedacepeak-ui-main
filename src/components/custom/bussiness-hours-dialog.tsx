@@ -8,6 +8,7 @@ import { FC, useEffect, useState } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import ErrorTooltip from './error-tooltip';
 import { CustomDatePicker } from './custom-datepicker';
+import { TimePicker } from './time-picker';
 import moment from 'moment';
 import ForwardingActions from './forwarding-actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -35,6 +36,24 @@ const TABS = {
   GENERAL_SETTINGS: 'General Settings',
   CUSTOM_SETTINGS: 'Custom Settings',
 };
+
+/* Weekdays share one control (one toggle, one time range) rather than each
+   getting its own row — the common case is "same hours Mon-Fri, different
+   (or closed) on the weekend", and five identical rows made that harder to
+   see and slower to set than it needed to be. Saturday and Sunday stay
+   independent since they are the days that usually do differ. Each group's
+   `days` are always written together, so the underlying per-day storage
+   (`settings.operational_hours.value.<day>`) stays in sync across the group;
+   the first day is read as that group's representative value for display. */
+const DAY_GROUPS = [
+  {
+    key: 'weekdays',
+    label: 'Mon - Fri',
+    days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+  },
+  { key: 'saturday', label: 'Saturday', days: ['saturday'] },
+  { key: 'sunday', label: 'Sunday', days: ['sunday'] },
+];
 
 const BussinessHoursModal: FC<IBussinessModalProps> = ({
   modalState,
@@ -67,17 +86,17 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
 
   const watchBusinessHour = watch('settings.operational_hours');
   const [activeTab, setActiveTab] = useState(TABS.GENERAL_SETTINGS);
-  const handleChangeScheduleOption = (checked: boolean, day: string) => {
+  const handleChangeScheduleOptionForDays = (checked: boolean, days: string[]) => {
     const currentScheduleOptions = watchBusinessHour?.value || {};
-    const updatedScheduleOptions = {
-      ...currentScheduleOptions,
-      [day]: {
+    const updatedScheduleOptions = { ...currentScheduleOptions };
+    days.forEach((day) => {
+      updatedScheduleOptions[day] = {
         ...currentScheduleOptions[day],
         open: checked,
         start: checked ? '10:00' : '',
         end: checked ? '23:00' : '',
-      },
-    };
+      };
+    });
     setValue('settings.operational_hours.value', updatedScheduleOptions);
     const isOpen = Object.values(updatedScheduleOptions || {}).some((day: any) => day?.open);
 
@@ -289,7 +308,7 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
           <div className="flex items-center justify-between gap-3 truncate text-md font-semibold">
             <DialogTitle className="flex items-center gap-2.5 text-base font-bold text-neutral-950">
               {!aiMode && (
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-50 text-red-600">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-red-600">
                   <Clock3 className="h-4 w-4" />
                 </span>
               )}
@@ -310,7 +329,10 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
           onValueChange={setActiveTab}
           className="flex max-h-[calc(100vh-250px)] w-full flex-col overflow-auto px-5 pb-5"
         >
-          <TabsList className="relative mb-4 mt-1 grid h-auto w-fit grid-cols-2 self-start rounded-full bg-neutral-100 p-1 text-sm">
+          <TabsList
+            className="relative mb-4 mt-1 grid h-auto w-fit grid-cols-2 self-start rounded-full p-1 text-sm"
+            style={{ backgroundColor: '#ebeded' }}
+          >
             {/* One pill that slides between the two tabs, rather than two that
                 pop on and off - the movement shows which way the selection went. */}
             <span
@@ -360,33 +382,20 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
                     className={cn(
                       'flex items-start gap-3 rounded-xl border p-3.5 text-left transition-all duration-150',
                       isSelected
-                        ? aiMode
-                          ? 'border-red-200 bg-red-50/40'
-                          : 'border-red-300 bg-red-50/60 shadow-[0_2px_8px_rgba(220,38,38,.12)]'
+                        ? 'border-neutral-300 bg-white shadow-[0_2px_8px_rgba(23,23,23,.08)]'
                         : 'border-neutral-200 bg-white hover:-translate-y-0.5 hover:border-red-200 hover:bg-red-50/30',
                     )}
                   >
                     <span
                       className={cn(
                         'grid h-9 w-9 shrink-0 place-items-center rounded-lg',
-                        isSelected
-                          ? aiMode
-                            ? 'bg-red-50 text-red-600'
-                            : 'bg-red-600 text-white'
-                          : 'bg-neutral-100 text-neutral-500',
+                        isSelected ? 'text-red-600' : 'bg-neutral-100 text-neutral-500',
                       )}
                     >
                       {option.icon}
                     </span>
                     <div className="min-w-0">
-                      <p
-                        className={cn(
-                          'text-sm font-bold',
-                          isSelected ? 'text-red-700' : 'text-neutral-950',
-                        )}
-                      >
-                        {option.label}
-                      </p>
+                      <p className="text-sm font-bold text-neutral-950">{option.label}</p>
                       <p className="mt-0.5 text-xs leading-5 text-neutral-500">{option.copy}</p>
                     </div>
                   </button>
@@ -396,15 +405,8 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
             {watchBusinessHour?.type === 'weekly' && (
               <div className="min-h-[350px]">
                 <div className="flex flex-col gap-2">
-                  {[
-                    'monday',
-                    'tuesday',
-                    'wednesday',
-                    'thursday',
-                    'friday',
-                    'saturday',
-                    'sunday',
-                  ].map((day, index) => {
+                  {DAY_GROUPS.map((group) => {
+                    const day = group.days[0];
                     const currentDayData = watchBusinessHour?.value?.[day];
                     if (!currentDayData) return null;
 
@@ -412,25 +414,25 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
 
                     return (
                       <div
-                        key={`${day}-${index}`}
+                        key={group.key}
                         className={cn(
                           'flex flex-nowrap items-center justify-between gap-4 rounded-2xl px-5 py-4 transition-colors',
                           aiMode ? 'bg-neutral-50' : open ? 'bg-red-50/50' : 'bg-neutral-50',
                         )}
                       >
                         <div className="flex w-[152px] shrink-0 items-center justify-between gap-3">
-                          <Label className="text-base font-bold capitalize text-neutral-950">
-                            {day}
+                          <Label className="cursor-pointer whitespace-nowrap text-sm font-semibold text-neutral-600">
+                            {group.label}
                           </Label>
                           <button
                             type="button"
                             role="switch"
                             aria-checked={open}
-                            aria-label={`Toggle ${day}`}
-                            onClick={() => handleChangeScheduleOption(!open, day)}
+                            aria-label={`Toggle ${group.label}`}
+                            onClick={() => handleChangeScheduleOptionForDays(!open, group.days)}
                             className={cn(
                               'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full outline-none! transition-colors',
-                              open ? 'bg-neutral-900!' : 'bg-neutral-200!',
+                              open ? 'bg-red-600!' : 'bg-neutral-200!',
                             )}
                           >
                             <span
@@ -444,20 +446,26 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
                         {open && (
                           <>
                             <div className="flex shrink-0 flex-nowrap items-center gap-3">
-                              <Input
+                              <TimePicker
                                 placeholder="Enter start"
-                                type="time"
-                                className="h-9 w-[118px] shrink-0 grow-0 rounded-full border-neutral-200 bg-white px-3 text-center text-xs hover:border-neutral-300! focus:ring-0! focus-visible:border-neutral-400! focus-visible:ring-0!"
-                                {...register(`settings.operational_hours.value.${day}.start`)}
+                                value={watch(`settings.operational_hours.value.${day}.start`)}
+                                onChange={(val) =>
+                                  group.days.forEach((d) =>
+                                    setValue(`settings.operational_hours.value.${d}.start`, val),
+                                  )
+                                }
                               />
                               <span className="shrink-0 text-xs font-medium text-neutral-400">
                                 to
                               </span>
-                              <Input
+                              <TimePicker
                                 placeholder="Enter end"
-                                type="time"
-                                className="h-9 w-[118px] shrink-0 grow-0 rounded-full border-neutral-200 bg-white px-3 text-center text-xs hover:border-neutral-300! focus:ring-0! focus-visible:border-neutral-400! focus-visible:ring-0!"
-                                {...register(`settings.operational_hours.value.${day}.end`)}
+                                value={watch(`settings.operational_hours.value.${day}.end`)}
+                                onChange={(val) =>
+                                  group.days.forEach((d) =>
+                                    setValue(`settings.operational_hours.value.${d}.end`, val),
+                                  )
+                                }
                               />
                               {(errors?.settings as any)?.operational_hours?.value?.[day]?.end
                                 ?.message && (
@@ -476,35 +484,26 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
                                   `settings.operational_hours.value.${day}.is_checked`,
                                 )}
                                 onCheckedChange={(checked: boolean) => {
-                                  setValue(
-                                    `settings.operational_hours.value.${day}.is_checked`,
-                                    checked,
-                                  );
-                                  if (checked) {
+                                  group.days.forEach((d) => {
                                     setValue(
-                                      `settings.operational_hours.value.${day}.start`,
-                                      '00:00',
+                                      `settings.operational_hours.value.${d}.is_checked`,
+                                      checked,
                                     );
                                     setValue(
-                                      `settings.operational_hours.value.${day}.end`,
-                                      '23:59',
-                                    );
-                                  } else {
-                                    setValue(
-                                      `settings.operational_hours.value.${day}.start`,
-                                      '10:00',
+                                      `settings.operational_hours.value.${d}.start`,
+                                      checked ? '00:00' : '10:00',
                                     );
                                     setValue(
-                                      `settings.operational_hours.value.${day}.end`,
-                                      '23:00',
+                                      `settings.operational_hours.value.${d}.end`,
+                                      checked ? '23:59' : '23:00',
                                     );
-                                  }
+                                  });
                                 }}
-                                id={`check-${index}`}
+                                id={`check-${group.key}`}
                                 className="data-[state=checked]:border-neutral-900! data-[state=checked]:bg-neutral-900! data-[state=checked]:ring-neutral-900/25!"
                               />
                               <Label
-                                htmlFor={`check-${index}`}
+                                htmlFor={`check-${group.key}`}
                                 className="cursor-pointer whitespace-nowrap text-sm font-semibold text-neutral-600"
                               >
                                 24 Hours
@@ -565,7 +564,7 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
                           ? `This line already holds ${MAX_HOLIDAYS} holidays`
                           : 'Copy the holidays set up for your company onto this line'
                       }
-                      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border! border-neutral-300! bg-white! px-3 text-xs font-semibold text-neutral-700 outline-none! transition-all duration-150 hover:-translate-y-0.5 hover:border-red-300! disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border! border-neutral-300! bg-white! px-3 text-xs font-semibold text-neutral-700 outline-none! disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Add company holidays ({companyHolidays.length})
                     </button>
@@ -578,7 +577,7 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
                       'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-60',
                       aiMode
                         ? 'border! border-red-200! bg-red-50! text-red-600!'
-                        : 'bg-red-600! text-white! shadow-[0_2px_6px_rgba(220,38,38,.25)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-red-700! disabled:hover:translate-y-0',
+                        : 'bg-neutral-900! text-white!',
                     )}
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -685,28 +684,19 @@ const BussinessHoursModal: FC<IBussinessModalProps> = ({
           </TabsContent>
         </Tabs>
 
-        <DialogFooter className="border-t border-neutral-100 px-5 py-4">
+        <DialogFooter className="border-t border-neutral-100 px-5 py-2.5">
           <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={handleCancel}
-              className={cn(
-                'inline-flex h-10 items-center justify-center rounded-full border! border-neutral-200! bg-white! px-4 text-sm font-bold text-neutral-700 outline-none!',
-                !aiMode &&
-                  'transition-all duration-150 hover:-translate-y-0.5 hover:border-red-300! hover:bg-red-50! hover:text-red-700',
-              )}
+              className="inline-flex h-8 items-center justify-center rounded-full border! border-neutral-200! bg-white! px-4 text-sm font-bold text-neutral-700 outline-none!"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={() => handleSubmit()}
-              className={cn(
-                'inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-bold text-white!',
-                aiMode
-                  ? 'bg-neutral-900!'
-                  : 'bg-red-600! shadow-[0_2px_6px_rgba(220,38,38,.25)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-red-700!',
-              )}
+              className="inline-flex h-8 items-center justify-center rounded-full bg-neutral-900! px-4 text-sm font-bold text-white! shadow-[0_2px_6px_rgba(23,23,23,.25)]"
             >
               Submit
             </button>

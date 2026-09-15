@@ -2,7 +2,7 @@ import { Icon } from '@/assets/icons/icon';
 import TableManager from '@/components/custom/table-manager';
 import { Button } from '@/components/ui/button';
 import { convertDateFormateApis, handleAlert } from '@/lib/utils';
-import { deleteReposition, getDispositions } from '@/services/api';
+import { deleteReposition } from '@/services/api';
 import { useRef, useState } from 'react';
 import DispositionModal from './add-edit-dispositions';
 import AlertConfirm from '@/components/custom/alert-confirm';

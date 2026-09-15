@@ -1,0 +1,131 @@
+/* Default permissions — visual polish only, scoped to `.dp-theme` so the
+   shared SettingCard/SettingRow/Button primitives (used across every other
+   Admin settings screen) are untouched everywhere else. Content/copy is
+   unchanged; this only restyles the existing structure. */
+
+.dp-theme .mcm-adminpage-eyebrow {
+  color: #dc2626;
+}
+
+.dp-theme .mcm-setcard {
+  border: none;
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(17, 17, 17, 0.04),
+    0 8px 20px rgba(17, 17, 17, 0.06);
+  margin-bottom: 16px;
+}
+
+.dp-theme .mcm-setcard-h {
+  padding: 16px 18px 14px;
+  gap: 12px;
+  background: #f2f2f3;
+  border-bottom: 1px solid #e5e5e5;
+  border-radius: 14px 14px 0 0;
+}
+/* Card titles are the headline of each section — set apart from the
+   plain-bold row labels below with a heavier weight, a touch more size,
+   wider letter-spacing and a red accent bar, rather than the page title's
+   own italic serif (kept unique to the page itself). */
+.dp-theme .mcm-setcard-h h3 {
+  position: relative;
+  padding-left: 13px;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  color: #171717;
+}
+.dp-theme .mcm-setcard-h h3::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 1px;
+  bottom: 1px;
+  width: 3px;
+  border-radius: 2px;
+  background: #dc2626;
+}
+
+.dp-theme .mcm-setcard-icon {
+  display: none;
+}
+
+.dp-theme .mcm-setcard-body {
+  padding: 4px 18px 6px;
+}
+
+.dp-theme .mcm-setrow {
+  padding: 14px 2px;
+  border-radius: 10px;
+  transition: background-color 0.12s ease;
+}
+.dp-theme .mcm-setrow-desc {
+  font-size: 11px;
+}
+
+/* This whole block has to sit in `@layer base` to match the layer the base
+   react-select rules in index.css live in — a plain (unlayered) rule loses
+   to a layered one when both carry `!important`, no matter how specific it
+   is, which is why an unlayered version of these overrides had no visible
+   effect at all. Inside the same layer, this selector's extra `.dp-theme`
+   class wins on ordinary specificity instead. */
+@layer base {
+  /* "Not chosen — the form falls back to the narrowest role" — the same
+     compact height used on the other small inputs across the app, instead
+     of react-select's roomier default. `height` (not just `min-height`)
+     because the control otherwise grows to fit its 14px placeholder/value
+     text regardless of any floor set here. */
+  .dp-theme .custom-react-select__control {
+    height: 36px !important;
+    min-height: 36px !important;
+  }
+  .dp-theme .custom-react-select__control,
+  .dp-theme .custom-react-select__value-container,
+  .dp-theme .custom-react-select__placeholder,
+  .dp-theme .custom-react-select__single-value,
+  .dp-theme .custom-react-select__input,
+  .dp-theme .custom-react-select__input-container {
+    font-size: 12.5px !important;
+  }
+  .dp-theme .custom-react-select__value-container {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  .dp-theme .custom-react-select__option {
+    padding-top: 0.4rem !important;
+    padding-bottom: 0.4rem !important;
+    font-size: 12.5px !important;
+  }
+  .dp-theme .custom-react-select__menu-list {
+    max-height: 220px !important;
+    padding: 0.25rem !important;
+  }
+  /* The menu defaults to the full width of the control (which spans the
+     whole row) — narrow it down to fit its own text instead. */
+  .dp-theme .custom-react-select__menu {
+    width: max-content !important;
+    min-width: 220px !important;
+    max-width: 320px !important;
+    left: 0 !important;
+  }
+}
+.dp-theme .mcm-setrow:hover {
+  background: #fafafa;
+}
+
+/* Every button on this page reads as one solid black pill, matching the rest
+   of the People area — the shared shadcn Button ships its own colour
+   utilities per `variant`, so colour is pinned with `!important` rather than
+   left to depend on cascade order. */
+.dp-theme [data-slot='button'] {
+  border-radius: 9999px !important;
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
+}
+.dp-theme [data-slot='button']:hover {
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
+}

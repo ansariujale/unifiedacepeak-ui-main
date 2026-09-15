@@ -158,13 +158,12 @@ const Addresses = ({
 
   const columns = [
     {
-      header: 'Country/Region',
+      header: 'Country',
       accessorKey: 'address.country',
-      cell: ({ row }: any) => {
-        const { country = '', state = '' } = row?.original?.address || {};
-        const name = `${country}/${state}`;
-        return name;
-      },
+    },
+    {
+      header: 'Region',
+      accessorKey: 'address.state',
     },
     {
       header: 'City',
@@ -384,7 +383,7 @@ const Addresses = ({
             confirmBtnClassName: 'rounded-full bg-red-600 hover:bg-red-700 text-white border-red-600',
             closeBtnClassName:
               'rounded-full border border-gray-200 text-gray-700! hover:bg-gray-50! hover:text-gray-700! focus-visible:ring-0! shadow-none!',
-            className: 'sm:w-1/2 md:w-1/2 lg:w-2/5 bg-white!',
+            className: 'sm:w-2/5 md:w-1/3 lg:w-[30%] bg-white!',
           }}
         />
       )}

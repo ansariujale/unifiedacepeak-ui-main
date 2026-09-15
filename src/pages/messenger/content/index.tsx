@@ -9,6 +9,8 @@ import AllChannelsContent from './all-channels-content';
 import NotFound from '@/assets/images/not-found-img.svg';
 import { useCompanyFeatures } from '@/hooks/rbac';
 import { canUseOmniChannel } from '../omni-permissions';
+import AllChannelsEmptyState from '../shared/all-channels-empty-state';
+import WebsiteEmptyState from '../shared/website-empty-state';
 
 const Content = forwardRef<
   any,
@@ -66,7 +68,9 @@ const Content = forwardRef<
       {chatType === 'all_channels' && selectedChat && (
         <AllChannelsContent selectedChat={selectedChat} onBackToList={onBackToList} />
       )}
-      {!selectedChat && (
+      {!selectedChat && chatType === 'all_channels' && <AllChannelsEmptyState />}
+      {!selectedChat && chatType === 'captain' && <WebsiteEmptyState />}
+      {!selectedChat && chatType !== 'all_channels' && chatType !== 'captain' && (
         <div className="w-full bg-white p-3 flex items-center justify-center h-full">
           <div className="flex flex-col justify-center items-center gap-1 py-5 h-full w-full mx-auto">
             <img src={NotFound} alt="BusyImage" className="min-w-36 w-36" />

@@ -20,6 +20,7 @@ import { toast } from 'react-toastify';
 import { v4 as uuidV4 } from 'uuid';
 import useDebounce from '@/hooks/use-debounce';
 import { useMessengerUsers } from '../../hooks/use-messenger-users';
+import { Pencil, X } from 'lucide-react';
 
 // ─── PERMISSION FIELDS (mirrored from connect-web) ────────────────────────────
 const PERMISSION_FIELDS = [
@@ -378,102 +379,86 @@ const CreateTeamChat = ({
         </div>
       </div>
 
-      <div className="w-full flex flex-col gap-2 justify-between h-full">
-        <form className="flex flex-col gap-3 w-full h-full" onSubmit={handleSubmit(onSubmit)}>
-          <div className="w-full flex flex-col gap-1 overflow-auto max-h-[calc(100vh-140px)] min-h-[calc(100vh-140px)] ">
-            {/* ── Avatar ─────────────────────────────────────── */}
-            <Controller
-              name="channelImg"
-              control={control}
-              render={({ field }) => (
-                <>
-                  <div className="flex items-center justify-center w-full bg-gray-100 p-2 relative min-h-[72px] rounded-t-xl">
-                    <div
-                      className="flex items-center justify-center w-28 h-28 rounded-full overflow-hidden cursor-pointer absolute -bottom-15 bg-white shadow-md border-2 border-white"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      {field?.value ? (
-                        <img
-                          src={field.value}
-                          alt="channel"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <CustomAvatar name={nameToShow || 'Team'} size="130" />
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex justify-center pt-12 gap-2 mt-3">
-                    {field.value ? (
-                      <>
-                        <Button
-                          type="button"
-                          variant={'link'}
-                          className="flex items-center gap-1 p-0 text-xs"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          Update Photo
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={'link'}
-                          className="flex items-center gap-1 text-red-500 p-0 text-xs"
-                          onClick={() => {
-                            setValue('channelImg', '');
-                          }}
-                        >
-                          Remove
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant={'link'}
-                        className="flex items-center gap-1 p-0 text-xs"
+      <div className="w-full flex flex-col gap-2 justify-between h-full min-h-0">
+        <form className="flex flex-col gap-3 w-full h-full min-h-0" onSubmit={handleSubmit(onSubmit)}>
+          <div className="w-full flex flex-col gap-4 min-h-0">
+            {/* ── Avatar + Team name ─────────────────────────────── */}
+            <div className="flex items-center gap-4">
+              <Controller
+                name="channelImg"
+                control={control}
+                render={({ field }) => (
+                  <>
+                    <div className="relative shrink-0">
+                      <div
+                        className="flex items-center justify-center w-24 h-24 rounded-full overflow-hidden cursor-pointer bg-gray-100 border border-gray-200"
                         onClick={() => fileInputRef.current?.click()}
                       >
-                        Upload Photo
-                      </Button>
-                    )}
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*,.jpeg"
-                    ref={fileInputRef}
-                    className="hidden"
-                    onChange={onFileChange}
-                  />
-                </>
-              )}
-            />
-
-            <div className="flex flex-col px-2 gap-4 pt-2">
-              {/* ── Team Name ───────────────────────────────────── */}
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Team name</label>
-                  <div className="flex items-center gap-2">
-                    {teamNameErrorMessage && <ErrorTooltip text={teamNameErrorMessage} />}
-                    <span className="text-xs text-[#7a8aa1]">{teamNameValue.length}/50</span>
-                  </div>
-                </div>
-                <Controller
-                  name="channelName"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      maxLength={50}
-                      className={`text-sm ${teamNameErrorMessage ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                      placeholder="Team name"
+                        {field?.value ? (
+                          <img
+                            src={field.value}
+                            alt="channel"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <CustomAvatar name={nameToShow || 'Team'} size="96" />
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={field.value ? 'Change team photo' : 'Upload team photo'}
+                        title={field.value ? 'Change photo' : 'Upload photo'}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-primary text-white shadow-sm transition-colors hover:bg-primary/90"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      {field.value && (
+                        <button
+                          type="button"
+                          aria-label="Remove team photo"
+                          title="Remove photo"
+                          onClick={() => setValue('channelImg', '')}
+                          className="absolute -top-0.5 -right-0.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-500 text-white shadow-sm transition-colors hover:bg-gray-600"
+                        >
+                          <X className="h-2.5 w-2.5" />
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*,.jpeg"
+                      ref={fileInputRef}
+                      className="hidden"
+                      onChange={onFileChange}
                     />
-                  )}
-                />
-              </div>
+                  </>
+                )}
+              />
 
-              {/* ── Members ─────────────────────────────────────── */}
-              {/* {!currentChat && ( */}
-              <div className="flex flex-col gap-2">
+              <div className="grid flex-1 grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">Team name</label>
+                    <div className="flex items-center gap-2">
+                      {teamNameErrorMessage && <ErrorTooltip text={teamNameErrorMessage} />}
+                      <span className="text-xs text-[#7a8aa1]">{teamNameValue.length}/50</span>
+                    </div>
+                  </div>
+                  <Controller
+                    name="channelName"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        maxLength={50}
+                        className={`text-sm ${teamNameErrorMessage ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                        placeholder="Team name"
+                      />
+                    )}
+                  />
+                </div>
+
                 <CustomSelect
                   label={'Members'}
                   isMulti
@@ -491,48 +476,46 @@ const CreateTeamChat = ({
                   }}
                 />
               </div>
-              {/* )} */}
+            </div>
 
-              {/* ── Description ─────────────────────────────────── */}
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Description (optional)</label>
-                  <div className="flex items-center gap-2">
-                    {errors?.description?.message && (
-                      <ErrorTooltip text={errors.description.message as string} />
-                    )}
-                    <span className="text-xs text-[#7a8aa1]">{descriptionValue.length}/255</span>
-                  </div>
+            {/* ── Description ─────────────────────────────────── */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Description (optional)</label>
+                <div className="flex items-center gap-2">
+                  {errors?.description?.message && (
+                    <ErrorTooltip text={errors.description.message as string} />
+                  )}
+                  <span className="text-xs text-[#7a8aa1]">{descriptionValue.length}/255</span>
                 </div>
-                <div
-                  className={`flex items-center w-full rounded-xl ${
-                    errors?.description?.message
-                      ? 'border border-red-500'
-                      : 'border border-gray-300'
-                  }`}
-                >
-                  <div className="flex min-h-[126px] justify-between w-full p-3 flex-col gap-2">
-                    <Controller
-                      name="description"
-                      control={control}
-                      render={({ field }) => (
-                        <textarea
-                          rows={4}
-                          className="border-none outline-0 text-sm resize-none"
-                          placeholder="Description"
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && e.shiftKey) {
-                              e.preventDefault();
-                              field.onChange(`${field.value}\n`);
-                            }
-                          }}
-                          maxLength={255}
-                        />
-                      )}
-                    />
-                  </div>
+              </div>
+              <div
+                className={`flex items-center w-full rounded-xl ${
+                  errors?.description?.message ? 'border border-red-500' : 'border border-gray-300'
+                }`}
+              >
+                <div className="flex min-h-[64px] justify-between w-full p-3 flex-col gap-2">
+                  <Controller
+                    name="description"
+                    control={control}
+                    render={({ field }) => (
+                      <textarea
+                        rows={2}
+                        className="border-none outline-0 text-sm resize-none"
+                        style={{ outline: 'none' }}
+                        placeholder="Description"
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.shiftKey) {
+                            e.preventDefault();
+                            field.onChange(`${field.value}\n`);
+                          }
+                        }}
+                        maxLength={255}
+                      />
+                    )}
+                  />
                 </div>
               </div>
             </div>
@@ -666,7 +649,7 @@ const CreateTeamChat = ({
 
             {/* ── Message ─────────────────────────────────────────── */}
             {!currentChat && (
-              <div className="flex flex-col gap-1.5 w-full px-2 mt-2">
+              <div className="flex flex-col gap-2 w-full">
                 <div className="flex items-center justify-between">
                   <Label>{'Message'}</Label>
                   <div className="flex items-start">
@@ -681,14 +664,15 @@ const CreateTeamChat = ({
                     errors?.message?.message ? 'border border-red-500' : 'border border-gray-300'
                   }`}
                 >
-                  <div className="flex min-h-[126px] justify-between w-full p-3 flex-col gap-2">
+                  <div className="flex min-h-[64px] justify-between w-full p-3 flex-col gap-2">
                     <Controller
                       name="message"
                       control={control}
                       render={({ field }) => (
                         <textarea
-                          rows={4}
+                          rows={2}
                           className="border-none outline-0 text-sm resize-none"
+                          style={{ outline: 'none' }}
                           placeholder="Type a message to send with the team invite..."
                           value={field.value}
                           onChange={(e) => field.onChange(e.target.value)}
@@ -708,7 +692,7 @@ const CreateTeamChat = ({
           </div>
 
           {/* ── Footer Buttons ──────────────────────────────────── */}
-          <div className="mt-3 px-2">
+          <div className="mt-1">
             <Button
               type="submit"
               variant={'primary'}

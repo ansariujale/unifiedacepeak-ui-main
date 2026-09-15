@@ -216,7 +216,7 @@ type Props = {
   liveNumber?: string;
 };
 
-const CallListColumn = ({ selectedId, onSelect, source, onSourceChange, liveNumber }: Props) => {
+const CallListColumn = ({ selectedId, onSelect, source, onSourceChange }: Props) => {
   const { dial } = useConsoleDialer();
   const navigate = useNavigate();
   const [direction, setDirection] = useState<'all' | 'in' | 'out' | 'miss'>('all');
@@ -227,7 +227,7 @@ const CallListColumn = ({ selectedId, onSelect, source, onSourceChange, liveNumb
     date_type: 'Today',
     value: handleDate('Today'),
   }));
-  const DATE_PRESETS = ['Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days', 'This Month'];
+  const DATE_PRESETS = ['All', 'Today', 'Yesterday', 'Last 7 Days', 'This Month'];
   const { data: contactsByNumber } = useFetchContact();
   const { features } = useCompanyFeatures();
   const callAccess = features?.plan_features?.advance_call_management?.access;
@@ -340,26 +340,6 @@ const CallListColumn = ({ selectedId, onSelect, source, onSourceChange, liveNumb
       })) as ConsoleCallRow[];
   }, [isDemo, rows, source, direction, search]);
 
-  /* Counted off the rows on screen, so the tiles always agree with the list
-     beneath them — change the date range or the tab and they move with it.
-     Nothing here is estimated: the rate is answered over total, and when the
-     list is empty the tiles read zero rather than inventing a trend. */
-  const kpis = useMemo(() => {
-    const total = listRows.length;
-    const missed = listRows.filter((r) => r.direction === 'miss').length;
-    const answered = total - missed;
-    const pct = total ? Math.round((answered / total) * 1000) / 10 : 0;
-    return [
-      { key: 'total', label: 'Total calls', value: total, sub: 'in this range' },
-      { key: 'answered', label: 'Answered', value: answered, sub: total ? `${pct}% rate` : 'no calls yet' },
-      {
-        key: 'missed',
-        label: 'Missed',
-        value: missed,
-        sub: total ? `${Math.round((missed / total) * 100)}% of calls` : 'none missed',
-      },
-    ];
-  }, [listRows]);
 
   const sources: { key: ConsoleLogSource; label: string; show: boolean }[] = [
     { key: 'call', label: 'Calls', show: true },
@@ -432,20 +412,6 @@ const CallListColumn = ({ selectedId, onSelect, source, onSourceChange, liveNumb
             />
           </div>
         </div>
-
-        {/* Answer rate is a Calls figure — a recording or voicemail list has
-            no notion of "missed", so the tiles would be meaningless there. */}
-        {source === 'call' ? (
-        <div className="cr-kpis">
-          {kpis.map((k) => (
-            <div className="cr-kpi" key={k.key}>
-              <div className="cr-kpi-l">{k.label}</div>
-              <div className="cr-kpi-v num">{k.value}</div>
-              <div className="cr-kpi-s">{k.sub}</div>
-            </div>
-          ))}
-        </div>
-        ) : null}
 
         {/* source tabs — same tabType values the old phone page sent */}
         <div className="panel-tabs" style={{ padding: 0, margin: '0 0 2px' }}>

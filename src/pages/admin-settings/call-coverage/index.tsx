@@ -509,8 +509,10 @@ const CallCoverage = () => {
                 <th className="assigned-col" style={{ width: '20%' }}>
                   Assigned to
                 </th>
-                <th style={{ width: '20%' }}>Coverage</th>
-                <th className="caller-gets-col" style={{ width: '20%' }}>
+                <th className="coverage-col" style={{ width: '14%' }}>
+                  Coverage
+                </th>
+                <th className="caller-gets-col" style={{ width: '26%' }}>
                   What a caller gets
                 </th>
                 <th className="fix-col" style={{ width: '20%' }}>
@@ -651,7 +653,7 @@ const CallCoverage = () => {
             </tbody>
           </table>
         ) : (
-          <table>
+          <table className="greetings-table">
             <thead>
               <tr>
                 <th className="person-col" style={{ width: '13%' }}>

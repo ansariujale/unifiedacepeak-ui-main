@@ -602,7 +602,7 @@ const ChatAgentConfigureModal = ({
           </div>
 
           <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden md:grid-cols-[210px_minmax(0,1fr)] md:grid-rows-1 lg:grid-cols-[228px_minmax(0,1fr)]">
-            <aside className="flex gap-2 overflow-x-auto border-b border-gray-200 bg-slate-50 px-3 py-2 md:block md:overflow-y-auto md:border-b-0 md:border-r md:px-4 md:py-5">
+            <aside className="flex gap-2 overflow-x-auto border-b border-gray-200 bg-[#fafafa] px-3 py-2 md:block md:overflow-y-auto md:border-b-0 md:border-r md:px-4 md:py-5">
               {[
                 {
                   key: 'design' as const,
@@ -621,10 +621,12 @@ const ChatAgentConfigureModal = ({
                     key={step.key}
                     type="button"
                     onClick={() => setActiveStep(step.key)}
-                    className={`flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-lg border px-2 py-2 text-left transition-colors md:mb-3 md:min-h-[78px] md:w-full md:gap-3 md:px-3.5 md:py-3 ${
+                    className={`flex min-h-12 min-w-0 flex-1 items-center gap-2 rounded-xl border px-2 py-2 text-left transition-colors md:mb-2.5 md:min-h-[74px] md:w-full md:gap-3 md:px-3.5 md:py-3 ${
                       active
-                        ? 'border-primary/20 bg-white text-primary shadow-sm'
-                        : 'border-transparent text-slate-600 hover:bg-white'
+                        ? 'border-red-200 bg-white text-red-600 shadow-[0_1px_2px_rgba(0,0,0,.03)]'
+                        : complete
+                          ? 'border-transparent text-slate-600 hover:bg-white'
+                          : 'border-transparent text-slate-400 hover:bg-white'
                     }`}
                   >
                     <span
@@ -632,7 +634,7 @@ const ChatAgentConfigureModal = ({
                         complete
                           ? 'border-emerald-500 bg-emerald-500 text-white'
                           : active
-                            ? 'border-primary text-primary'
+                            ? 'border-red-600 text-red-600'
                             : 'border-slate-300 text-slate-400'
                       }`}
                     >
@@ -646,7 +648,9 @@ const ChatAgentConfigureModal = ({
                         {step.copy}
                       </span>
                     </span>
-                    <Icon className="hidden h-4 w-4 shrink-0 opacity-60 sm:block" />
+                    <Icon
+                      className={`hidden h-4 w-4 shrink-0 sm:block ${active ? 'opacity-100' : 'opacity-40'}`}
+                    />
                   </button>
                 );
               })}
@@ -656,18 +660,23 @@ const ChatAgentConfigureModal = ({
               {activeStep === 'design' ? (
                 <div className="grid gap-5 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
                   <section className="min-w-0">
-                    <div>
-                      <h3 className="text-base font-bold text-gray-950">Web widget designer</h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        Customize the launcher, chat panel, and message colors.
-                      </p>
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                        <Palette className="h-4.5 w-4.5" />
+                      </span>
+                      <div>
+                        <h3 className="text-base font-bold text-gray-950">Web widget designer</h3>
+                        <p className="mt-0.5 text-sm text-slate-500">
+                          Customize the launcher, chat panel, and message colors.
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="mt-5">
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                    <div className="mt-6 rounded-2xl border-[1.5px] border-neutral-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.03)]">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-neutral-400">
                         Accent presets
                       </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 flex flex-wrap items-center gap-2.5">
                         {ACCENT_SWATCHES.map((color) => (
                           <button
                             key={color}
@@ -675,10 +684,10 @@ const ChatAgentConfigureModal = ({
                             onClick={() => applyAccentColor(color)}
                             aria-label={`Use ${color} accent`}
                             aria-pressed={currentAccentColor.toLowerCase() === color.toLowerCase()}
-                            className={`relative grid h-8 w-8 place-items-center rounded-lg border-2 border-white shadow transition ${
+                            className={`relative grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-white shadow-[0_1px_3px_rgba(0,0,0,.15)] transition ${
                               currentAccentColor.toLowerCase() === color.toLowerCase()
-                                ? 'ring-2 ring-primary ring-offset-1'
-                                : 'ring-1 ring-slate-200 hover:ring-slate-400'
+                                ? 'ring-2 ring-red-600 ring-offset-2'
+                                : 'ring-1 ring-neutral-200 hover:ring-neutral-400'
                             }`}
                             style={{ backgroundColor: color }}
                             title={color}
@@ -689,15 +698,15 @@ const ChatAgentConfigureModal = ({
                           </button>
                         ))}
                         <label
-                          className={`relative inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-2.5 text-xs font-bold transition ${
+                          className={`relative inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border px-3 text-xs font-bold transition ${
                             isCustomAccentSelected
-                              ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary/20'
-                              : 'border-slate-300 bg-white text-slate-600 hover:border-primary hover:text-primary'
+                              ? 'border-red-600 bg-red-50 text-red-600'
+                              : 'border-neutral-200 bg-white text-slate-600 hover:border-red-300 hover:text-red-600'
                           }`}
                           title="Choose a custom accent color"
                         >
                           <span
-                            className="h-4 w-4 rounded border border-black/10"
+                            className="h-4 w-4 shrink-0 rounded-full border border-black/10"
                             style={{ backgroundColor: customAccentPickerValue }}
                           />
                           Custom
@@ -712,29 +721,33 @@ const ChatAgentConfigureModal = ({
                         <button
                           type="button"
                           onClick={() => setColors(DEFAULT_CHAT_WIDGET_COLORS)}
-                          className="h-8 rounded-lg border border-dashed border-slate-300 px-3 text-xs font-bold text-slate-600 hover:border-primary hover:text-primary"
+                          className="h-9 rounded-full border border-dashed border-neutral-300 px-3 text-xs font-bold text-slate-600 hover:border-red-600 hover:text-red-600"
                         >
                           Reset
                         </button>
                       </div>
                     </div>
 
-                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       {COLOR_FIELDS.map((field) => {
                         const value = colors[field.key];
                         return (
                           <label
                             key={field.key}
-                            className="rounded-lg border border-gray-200 bg-white p-3"
+                            className="rounded-2xl border-[1.5px] border-neutral-200 bg-white p-3.5 transition-colors hover:border-red-200"
                           >
-                            <span className="text-xs font-bold text-slate-600">{field.label}</span>
-                            <span className="mt-2 flex items-center gap-2 rounded-md border border-gray-200 px-2 py-1.5">
-                              <input
-                                type="color"
-                                value={isValidHex(value) ? value : '#000000'}
-                                onChange={(event) => updateColor(field.key, event.target.value)}
-                                className="h-7 w-7 shrink-0 cursor-pointer appearance-none rounded border-0 bg-transparent p-0 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded [&::-webkit-color-swatch]:border-none"
-                              />
+                            <span className="text-[11px] font-bold uppercase tracking-[0.04em] text-neutral-400">
+                              {field.label}
+                            </span>
+                            <span className="mt-2 flex items-center gap-2 rounded-xl border border-neutral-200 bg-[#fafafa] px-2.5 py-2">
+                              <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-lg border border-black/10 shadow-[inset_0_0_0_1px_rgba(255,255,255,.4)]">
+                                <input
+                                  type="color"
+                                  value={isValidHex(value) ? value : '#000000'}
+                                  onChange={(event) => updateColor(field.key, event.target.value)}
+                                  className="absolute inset-0 h-full w-full cursor-pointer appearance-none border-0 bg-transparent p-0 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
+                                />
+                              </span>
                               <input
                                 value={value}
                                 onChange={(event) => {
@@ -747,7 +760,7 @@ const ChatAgentConfigureModal = ({
                                   );
                                 }}
                                 maxLength={7}
-                                className="min-w-0 flex-1 bg-transparent text-sm font-semibold uppercase text-slate-800 outline-none"
+                                className="min-w-0 flex-1 bg-transparent font-mono text-sm font-semibold uppercase text-slate-800 outline-none"
                               />
                             </span>
                           </label>
@@ -758,7 +771,7 @@ const ChatAgentConfigureModal = ({
 
                   <section className="min-w-0 xl:sticky xl:top-0 xl:self-start">
                     <div className="mb-3 flex justify-center">
-                      <div className="inline-flex w-full max-w-[320px] rounded-full bg-slate-100 p-1">
+                      <div className="inline-flex w-full max-w-[320px] rounded-full border border-neutral-200 bg-[#fafafa] p-1">
                         {(['closed', 'open', 'chat'] as const).map((mode) => (
                           <button
                             key={mode}
@@ -766,7 +779,7 @@ const ChatAgentConfigureModal = ({
                             onClick={() => setPreviewMode(mode)}
                             className={`h-8 min-w-0 flex-1 rounded-full px-2 text-xs font-bold capitalize transition sm:px-4 sm:text-sm ${
                               previewMode === mode
-                                ? 'bg-primary text-white shadow-sm'
+                                ? 'bg-red-600 text-white shadow-sm'
                                 : 'text-slate-600 hover:text-slate-950'
                             }`}
                           >
@@ -777,7 +790,7 @@ const ChatAgentConfigureModal = ({
                     </div>
                     <div className="mx-auto w-full max-w-[420px] xl:max-w-none">
                       <div
-                        className={`flex overflow-hidden rounded-2xl border border-slate-200 bg-white ${
+                        className={`flex overflow-hidden rounded-2xl border-[1.5px] border-neutral-200 bg-[#f5f5f5] shadow-[0_1px_2px_rgba(0,0,0,.03)] ${
                           previewMode === 'closed'
                             ? 'min-h-[280px] items-end justify-end p-3 sm:min-h-[360px] sm:p-4 xl:min-h-[420px]'
                             : 'h-[420px] items-stretch justify-stretch sm:h-[500px] xl:h-[530px]'

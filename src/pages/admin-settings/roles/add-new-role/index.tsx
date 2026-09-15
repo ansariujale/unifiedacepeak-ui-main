@@ -12,6 +12,7 @@ import { extractPlanFeatures, useCompanyFeatures } from '@/hooks/rbac';
 import Loader from '@/components/custom/loader';
 import { handleAlert, sanitizePlainTextInput } from '@/lib/utils';
 import '@/components/mcm/mcm-page.css';
+import './add-new-role-theme.css';
 
 interface AddEditRoleProps {
   drawerState: boolean;

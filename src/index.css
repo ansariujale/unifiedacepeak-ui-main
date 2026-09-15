@@ -143,11 +143,11 @@
   /* Width of the right-hand detail panel — the phone console's call panel
      and the chat page's contact-info panel. One value so the two pages cannot
      drift apart. */
-  --mcm-side-panel-w: 460px;
+  --mcm-side-panel-w: 560px;
 
   /* Width of the left listing column — the phone console's call list and the
      chat page's conversation list. Shared so the two pages stay level. */
-  --mcm-list-panel-w: 440px;
+  --mcm-list-panel-w: 360px;
 
   /* The visitor profile sits as a third column beside the queue and the
      conversation, so it is narrower than the two-column detail panels. */
@@ -395,6 +395,16 @@
   html {
     height: 100%;
     background-color: #e3e3e3;
+  }
+
+  button,
+  input,
+  textarea,
+  select,
+  radio,
+  checkbox,
+  label {
+    font-family: var(--mcm-sans);
   }
 
   input,
@@ -698,6 +708,11 @@
     gap: 3px !important;
     display: flex;
     flex-direction: column;
+    /* Menu-list padding is zeroed above, so the scrollbar otherwise sits
+       flush against the menu's own rounded corner and clips into the curve.
+       A little right padding gives it room to sit inside the border-radius
+       instead of overlapping it. */
+    padding-right: 4px !important;
   }
 
   .custom-react-select__indicator-separator {
@@ -722,6 +737,16 @@
   .select-type-plain.custom-react-select__control--is-focused,
   .select-type-plain.custom-react-select__control--menu-is-open {
     border-color: #111111 !important;
+  }
+
+  /* Contact page's Group/Tag filters: a plain grey border on open/focus
+     instead of the app-wide red — there's no error or accent meaning here,
+     just a filter dropdown. Scoped via `inputClass` so it doesn't touch any
+     other CustomSelect. */
+  .contact-filter-select.custom-react-select__control--is-focused,
+  .contact-filter-select.custom-react-select__control--menu-is-open {
+    border-color: var(--color-gray-300) !important;
+    box-shadow: none !important;
   }
 
   .custom-react-select__menu {
@@ -771,8 +796,28 @@
     color: var(--select-option-hover-fg, var(--color-black)) !important;
   }
 
-  /* Selected: a light-pink band, so it reads as "this is the current value"
-     rather than being confused with the grey hover colour above.
+  /* Location filter dropdown ("All locations" / "Needs attention" / "Details
+     complete"): grey hover instead of the app-wide pink/red, since this is a
+     neutral status filter rather than an action. Scoped via `inputClass` so
+     it doesn't touch any other CustomSelect. */
+  .loc-filter-select.custom-react-select__option:hover,
+  .loc-filter-select.custom-react-select__option--is-focused {
+    background-color: var(--color-gray-100) !important;
+    color: var(--color-black) !important;
+  }
+
+  /* Every other dropdown across Company & Locations and Company Rules (Phone
+     rules / Greetings / Ringing & voicemail): same grey hover as above,
+     shared under one marker class since none of them needed a distinct
+     accent colour. */
+  .co-grey-select.custom-react-select__option:hover,
+  .co-grey-select.custom-react-select__option--is-focused {
+    background-color: var(--color-gray-100) !important;
+    color: var(--color-black) !important;
+  }
+
+  /* Selected: a neutral grey band, so it reads as "this is the current value"
+     rather than being confused with the light-red hover colour above.
 
      Listed AFTER hover and naming the hover/focused combinations explicitly,
      because react-select puts BOTH classes on the row when you mouse over the
@@ -887,7 +932,9 @@
   }
 
   .epr-search-container input:focus {
-    border-color: var(--primary) !important;
+    border-color: var(--color-gray-400) !important;
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   .epr-btn {
@@ -2316,4 +2363,26 @@
     box-shadow: 0 0 0 2px #fee2e2 !important;
     border-color: #dc2626 !important;
   }
+}
+
+/* Waving-hand animation for the Agent Chat welcome pill. */
+@keyframes mcm-wave {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  10%, 30% { transform: rotate(14deg); }
+  20% { transform: rotate(-8deg); }
+  40% { transform: rotate(-4deg); }
+  50% { transform: rotate(10deg); }
+}
+.mcm-wave-hand {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: mcm-wave 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mcm-wave-hand { animation: none; }
+}
+
+/* Hide the emoji picker's category-navigation bar for a more compact picker. */
+.EmojiPickerReact .epr-category-nav {
+  display: none !important;
 }

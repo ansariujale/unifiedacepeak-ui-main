@@ -52,6 +52,10 @@ interface AlertConfirmationProps {
       little extra breathing room around it — off by default so existing
       callers render exactly as before. */
   showDivider?: boolean;
+  /** Which side the Cancel/Confirm row sits on. 'end' (the app-wide
+      default) matches every other dialog's button row; 'start' is for
+      callers that want them left-aligned under the description instead. */
+  buttonsAlign?: 'start' | 'end';
 }
 
 const AlertConfirm = ({
@@ -78,6 +82,7 @@ const AlertConfirm = ({
   confirmBtnClassName,
   closeBtnClassName,
   showDivider = false,
+  buttonsAlign = 'end',
 }: AlertConfirmationProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -159,7 +164,7 @@ const AlertConfirm = ({
           </div>
         )}
         {showButton && !singleButton && (
-          <div className="flex justify-end gap-2 w-full">
+          <div className={cn('flex gap-2 w-full', buttonsAlign === 'start' ? 'justify-start' : 'justify-end')}>
             <Button
               variant={'transparent'}
               className={cn('min-w-[120px]', closeBtnClassName)}

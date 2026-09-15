@@ -572,15 +572,13 @@ export const router = createBrowserRouter([
           },
           {
             /* The company area. `company`, not `company-info`: the word a
-              {
-                /* The company area. `company`, not `company-info`: the word a
-                   customer uses. Old paths redirect below.
+               customer uses. Old paths redirect below.
 
-                   The settings sections are children of a pathless layout route,
-                   so each one is /admin-settings/company/<section> — the address
-                   the sub-nav links to and the one people will bookmark. The
-                   overview and the locations screens are siblings, outside that
-                   layout, because they are not settings sections. */
+               The settings sections are children of a pathless layout route,
+               so each one is /admin-settings/company/<section> — the address
+               the sub-nav links to and the one people will bookmark. The
+               overview and the locations screens are siblings, outside that
+               layout, because they are not settings sections. */
             path: 'company',
             children: [
               {

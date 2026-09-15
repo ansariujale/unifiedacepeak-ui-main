@@ -98,19 +98,51 @@
   color: #020617;
 }
 
+/* Plain <button class="btn ..."> (not the shadcn Button), so mcm-page.css's
+   generic reset for plain buttons — unlayered, higher specificity than a
+   3-class page override — wins background/color regardless of source order.
+   !important on every state avoids depending on winning that fight. */
+.rol-theme .btn.primary,
+.rol-theme .btn.primary:focus,
+.rol-theme .btn.primary:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
+}
+.rol-theme .btn.primary:hover {
+  background: #000 !important;
+  border-color: #000 !important;
+}
+
 /* Secondary buttons (Export, Close, etc.) filled black to match .btn.primary. */
-.rol-theme .btn.ghost {
-  background: #171717;
-  border-color: #171717;
-  color: #fff;
+.rol-theme .btn.ghost,
+.rol-theme .btn.ghost:focus,
+.rol-theme .btn.ghost:active {
+  background: #171717 !important;
+  border-color: #171717 !important;
+  color: #fff !important;
 }
 .rol-theme .btn.ghost .ic {
-  color: #fff;
+  color: #fff !important;
 }
 .rol-theme .btn.ghost:hover {
-  background: #000;
-  border-color: #000;
-  color: #fff;
+  background: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
+}
+
+/* The "New role"/"Update role" dialog's Save/Cancel footer (AddNewRole) uses
+   the shadcn Button component, not the .btn class above, and its variant
+   ="primary" reads the tenant's --primary colour (red) rather than black.
+   DialogContent portals to <body>, outside .rol-theme's `display: contents`
+   DOM subtree, so it needs its own scope class rather than inheriting one. */
+.rol-modal-theme [data-slot='button'][class*='bg-primary'] {
+  background: #171717 !important;
+  border-color: #171717 !important;
+}
+.rol-modal-theme [data-slot='button'][class*='bg-primary']:hover {
+  background: #000 !important;
+  border-color: #000 !important;
 }
 
 /* Page head (title + actions) filled white like the stats band and the

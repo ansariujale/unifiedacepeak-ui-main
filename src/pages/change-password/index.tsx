@@ -85,10 +85,15 @@ const ChangePassword = ({ modalState, setModalState }: any) => {
             error={errors?.confirm_password?.message}
           />
           <div className="flex justify-end gap-2 mt-2">
-            <Button type="button" variant={'outline'} onClick={() => setModalState(false)}>
+            <Button
+              type="button"
+              variant={'outline'}
+              className="rounded-full border-gray-400 text-gray-700 hover:bg-gray-100 hover:text-gray-700"
+              onClick={() => setModalState(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" variant="dark" className="rounded-full" disabled={isPending}>
               {isPending ? (
                 <div className="flex items-center justify-center p-5">
                   <Loader variant="blue" size="sm" />

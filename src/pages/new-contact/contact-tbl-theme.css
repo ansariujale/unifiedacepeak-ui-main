@@ -1,3 +1,35 @@
+/* "Contact view" / "Contact Group" tab strip: mcm-page.css's generic reset
+   for plain buttons (".mcm-page button:not([data-slot='switch']):not(...)")
+   matches Radix's TabsTrigger too (it renders as a real <button>, and
+   [data-slot='tabs-trigger'] isn't in that reset's exclusion list the way
+   Switch/Button/Checkbox are) and is more specific than mcm-page.css's own
+   ".mcm-page .ptabstrip button[data-state='active']" rule, so it always won
+   and zeroed the active tab's border-bottom/colour — the two tabs read as
+   plain, indistinguishable text with no way to tell which one is open.
+   Scoped to .contact-page (this page's own wrapper) rather than fixing the
+   shared reset, since ~10 other pages reuse .ptabstrip and each would need
+   its own visual check first. */
+.contact-page .ptabstrip button[data-state='active'] {
+  color: var(--accent-ink, #0d1526) !important;
+  border-bottom: 2px solid var(--accent, #dc2626) !important;
+  background: transparent !important;
+  font-weight: 700 !important;
+}
+.contact-page .ptabstrip button[data-state='inactive']:hover {
+  color: var(--ink, #0d1526) !important;
+}
+
+/* Group/Tag filters: index.css's shared `.custom-react-select__control:hover`
+   rule reads `--select-control-border`, falling back to `--primary` (red)
+   when unset — which is what painted the red hover outline here too, not
+   just the open/focused state already fixed above. Setting the variable on
+   this page's own wrapper is the same opt-out other pages already use for
+   this exact control (see settings/phone's `--select-control-border`), so
+   the Group/Tag controls hover to a plain neutral border instead. */
+.contact-page {
+  --select-control-border: #d1d5db;
+}
+
 /* Contact view / Contact Group tables — both render through the shared
    TableManager / LeadsGroupList components (used across many other pages),
    so this only re-skins them here via the data-slot hooks those shadcn

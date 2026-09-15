@@ -386,7 +386,7 @@ const CompanyEmergencyAddress = () => {
       {/* The whole point of this panel: say plainly that nothing routes on it. */}
       <div
         role="alert"
-        className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-800"
+        className="flex w-fit items-start gap-2 self-start rounded-lg border border-red-200 bg-red-50/50 px-3 py-2 text-red-800"
       >
         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" />
         <p className="text-xs font-medium">
@@ -447,6 +447,7 @@ const CompanyEmergencyAddress = () => {
                 name="country"
                 render={({ field }) => (
                   <CustomSelect
+                    inputClass="co-grey-select"
                     label="Country"
                     placeholder="Select country"
                     options={countryOptions}
@@ -469,6 +470,7 @@ const CompanyEmergencyAddress = () => {
                   name="state"
                   render={({ field }) => (
                     <CustomSelect
+                      inputClass="co-grey-select"
                       label="State / province"
                       placeholder="Select state"
                       options={stateOptions}
@@ -494,6 +496,7 @@ const CompanyEmergencyAddress = () => {
                   name="city"
                   render={({ field }) => (
                     <CustomSelect
+                      inputClass="co-grey-select"
                       label="City"
                       placeholder="Select city"
                       options={cityOptions}
@@ -576,7 +579,7 @@ const CompanyEmergencyAddress = () => {
             </div>
           </div>
 
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+          <div className="inline-block self-start rounded-lg border border-amber-200 bg-amber-50/10 px-3 py-2">
             <p className="text-xs font-medium text-amber-900">
               No PO boxes — responders need a street address they can drive to.
             </p>
@@ -588,7 +591,7 @@ const CompanyEmergencyAddress = () => {
               checked={acknowledged}
               disabled={!canEdit}
               onCheckedChange={(checked) => setAcknowledged(checked === true)}
-              className="mt-0.5 h-4 w-4 shrink-0 border-2! border-gray-600! bg-white!"
+              className="mt-0.5 h-4 w-4 shrink-0 border-2! border-gray-600!"
             />
             <Label
               htmlFor="emergency-address-acknowledgement"
