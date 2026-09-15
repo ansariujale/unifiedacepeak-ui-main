@@ -119,35 +119,42 @@
   white-space: nowrap;
 }
 
-/* Secondary buttons (Export, Close, etc.) filled black to match .btn.primary. */
+/* Secondary buttons (Export, Close, etc.) — light grey at rest, red wash on
+   hover, matching the People page treatment. */
 .fav-theme .btn.ghost {
-  background: #171717;
-  border-color: #171717;
-  color: #fff;
+  background: #f5f5f5;
+  border-color: #f5f5f5;
+  color: #171717;
 }
 .fav-theme .btn.ghost .ic {
-  color: #fff;
+  color: #171717;
 }
 .fav-theme .btn.ghost:hover {
-  background: #000;
-  border-color: #000;
-  color: #fff;
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+.fav-theme .btn.ghost:hover .ic {
+  color: #dc2626;
 }
 
-/* Filters dropdown trigger filled black to match the other buttons. */
+/* Filters dropdown trigger — same light grey / red-wash treatment. */
 .mcm-page .fav-theme .fchip-select {
-  background: #171717;
-  border-color: #171717;
-  color: #fff;
+  background: #f5f5f5;
+  border-color: #f5f5f5;
+  color: #171717;
   border-radius: 9999px;
 }
 .fav-theme .fchip-select svg {
-  color: #fff;
+  color: #171717;
 }
 .mcm-page .fav-theme .fchip-select:hover {
-  background: #000;
-  border-color: #000;
-  color: #fff;
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+.fav-theme .fchip-select:hover svg {
+  color: #dc2626;
 }
 
 /* Page head (title + actions) filled white like the stats band and the

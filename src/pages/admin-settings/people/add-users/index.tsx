@@ -295,7 +295,7 @@ const AddUsers: FC<AddUsersProps> = ({ setDrawerState, onReset }) => {
     <>
       <FormProvider {...formInstance}>
         <div className="mcm-page mcm-invite w-full h-full min-h-0 overflow-hidden flex flex-col justify-between">
-          <nav className="flex flex-wrap items-center justify-center gap-1 border-b border-gray-200 bg-white py-1 px-3">
+          <nav className="flex flex-wrap items-center justify-start gap-1 border-b border-gray-200 bg-white py-1 px-3">
             {StepContent.map((step, index) => (
               <span key={step.number} className="flex shrink-0 items-center gap-1">
                 {index > 0 && <Ic n="chev" size={14} className="text-gray-300" />}

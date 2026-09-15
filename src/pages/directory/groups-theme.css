@@ -208,21 +208,25 @@
 }
 
 
-/* Secondary buttons (Export, Close, etc.) filled black to match .btn.primary. */
+/* Secondary buttons (Export, Close, etc.) — light grey at rest, red wash on
+   hover, matching the People page treatment. */
 .grp-theme .btn.ghost,
 .grp-theme .btn.ghost:focus,
 .grp-theme .btn.ghost:active {
-  background: #171717 !important;
-  border-color: #171717 !important;
-  color: #fff !important;
+  background: #f5f5f5 !important;
+  border-color: #f5f5f5 !important;
+  color: #171717 !important;
 }
 .grp-theme .btn.ghost .ic {
-  color: #fff !important;
+  color: #171717 !important;
 }
 .grp-theme .btn.ghost:hover {
-  background: #000 !important;
-  border-color: #000 !important;
-  color: #fff !important;
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+.grp-theme .btn.ghost:hover .ic {
+  color: #dc2626 !important;
 }
 
 /* Page head (title + actions) filled white like the stats band and the

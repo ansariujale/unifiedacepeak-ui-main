@@ -507,7 +507,7 @@ const AddUserInfo = forwardRef(function AddUserInfo(
 
   return (
     <div className="flex min-h-0 flex-col gap-2 overflow-y-auto">
-      <div className="flex flex-col gap-1 mt-1">
+      <div className="flex flex-col gap-1 mt-1 pr-0 md:pr-3">
         <div className="ppl-invite-actions flex flex-wrap items-center justify-end gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -590,7 +590,7 @@ const AddUserInfo = forwardRef(function AddUserInfo(
             answer for all of them, and it is a company-wide setting somebody
             can go and change. */}
         {roleDecision.reason ? (
-          <p className="mx-auto mt-1 flex max-w-3xl items-center justify-center gap-1 text-center text-xs text-gray-600">
+          <p className="mx-auto mt-3 flex max-w-3xl items-center justify-center gap-1 text-center text-xs text-gray-600">
             {roleDecision.role ? (
               <>
                 Starting role: <strong>&ldquo;{roleDecision.role.name}&rdquo;</strong>
@@ -753,7 +753,7 @@ const AddUserInfo = forwardRef(function AddUserInfo(
             <Button
               type="button"
               variant={'outline'}
-              className="h-10 w-10 shrink-0 rounded-full border-0 bg-[#171717] text-white hover:bg-black hover:text-white"
+              className="h-10 w-10 shrink-0 rounded-full border-0 bg-[#f5f5f5] text-[#171717] hover:bg-[#fef2f2] hover:text-[#dc2626]"
               onClick={() => generateNewExtension(activeIndex)}
             >
               <Icon name="Refresh" className="w-5 h-5" />

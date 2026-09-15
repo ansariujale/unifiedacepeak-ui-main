@@ -59,18 +59,21 @@
 }
 
 .mcm-page .ppl-red-theme .fchip-select {
-  background: #000 !important;
-  border: 1px solid #000 !important;
-  color: #fff !important;
+  background: #f5f5f5 !important;
+  border: 1px solid #f5f5f5 !important;
+  color: #171717 !important;
   border-radius: 9999px;
 }
 .ppl-red-theme .fchip-select svg {
-  color: #fff !important;
+  color: #171717 !important;
 }
 .mcm-page .ppl-red-theme .fchip-select:hover {
-  background: #000 !important;
-  border-color: #000 !important;
-  color: #fff !important;
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+.ppl-red-theme .fchip-select:hover svg {
+  color: #dc2626 !important;
 }
 
 /* KPI band: one bordered card sharing dividers between cells, per the
@@ -168,14 +171,17 @@
 .ppl-red-theme .btn.ghost.soft-accent:focus,
 .ppl-red-theme .btn.ghost.soft-accent:active,
 .ppl-red-theme .btn.ghost.soft-accent .ic {
-  background: #171717 !important;
-  border-color: #171717 !important;
-  color: #fff !important;
+  background: #f5f5f5 !important;
+  border-color: #f5f5f5 !important;
+  color: #171717 !important;
 }
 .ppl-red-theme .btn.ghost.soft-accent:hover {
-  background: #000 !important;
-  border-color: #000 !important;
-  color: #fff !important;
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+.ppl-red-theme .btn.ghost.soft-accent:hover .ic {
+  color: #dc2626 !important;
 }
 /* "Invite person" — explicit black in every state instead of routing
    through --accent or relying on cascade order against the reset above. */
@@ -392,21 +398,24 @@
    and the buttons drifted out of alignment. Left in normal flow instead: a
    compact row of their own, right-aligned, right above the KPI cards. */
 .ppl-invite-theme .mcm-invite .ppl-invite-actions {
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 .ppl-invite-theme .ppl-invite-btn {
-  background: #171717 !important;
-  border: 1px solid #171717 !important;
-  color: #fff !important;
+  background: #f5f5f5 !important;
+  border: 1px solid #f5f5f5 !important;
+  color: #171717 !important;
   border-radius: 9999px !important;
 }
 .ppl-invite-theme .ppl-invite-btn:hover {
-  background: #000 !important;
-  border-color: #000 !important;
-  color: #fff !important;
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
 }
 .ppl-invite-theme .ppl-invite-btn svg {
-  color: #fff !important;
+  color: #171717 !important;
+}
+.ppl-invite-theme .ppl-invite-btn:hover svg {
+  color: #dc2626 !important;
 }
 
 /* Save & Continue / Submit — same reasoning: the shadcn Button underneath
@@ -429,21 +438,21 @@
   margin-bottom: 1px;
 }
 .ppl-invite-theme .mcm-invite .gap-1.mt-3 {
-  gap: 3px;
-  margin-top: 3px;
+  gap: 6px;
+  margin-top: 6px;
 }
 .ppl-invite-theme .mcm-invite .my-2.gap-3 {
-  margin-top: 4px;
-  margin-bottom: 4px;
-  gap: 6px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  gap: 10px;
 }
 
 /* License stat cards (Available to purchase / Unused / New purchased):
    smaller, tighter version of the same .kpi/.kpis pattern the People list
    page uses up top. */
 .ppl-invite-theme .mcm-invite .kpis {
-  margin-bottom: 6px;
-  gap: 10px;
+  margin-bottom: 10px;
+  gap: 14px;
   background: transparent;
   border: 0;
 }
@@ -451,7 +460,7 @@
   background: #f3f4f6;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 10px 12px;
 }
 .ppl-invite-theme .mcm-invite .kpi .k {
   font-size: 10.5px;
@@ -468,8 +477,10 @@
    once this drawer is narrower than the full-width flow it also renders in. */
 .ppl-invite-theme .mcm-invite .mcm-invitee {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px;
+  gap: 14px;
+  /* Even padding on every side — "First Name" sits flush left, aligned with
+     the KPI cards and everything else above it. */
+  padding: 12px;
 }
 /* Smaller labels/inputs to match — the fields were sized for a much wider
    full-page layout than this modal now uses. */
@@ -478,14 +489,14 @@
 }
 .ppl-invite-theme .mcm-invite .mcm-invitee input:not(.form-control) {
   font-size: 12.5px;
-  min-height: 34px !important;
-  height: 34px !important;
+  min-height: 38px !important;
+  height: 38px !important;
 }
 /* Phone field kept at its natural height and font-size — shrinking it
    distorted the flag icon's proportions (the sprite's crop math assumes the
    library's own height), which is what made it look off. */
 .ppl-invite-theme .mcm-invite .mcm-invitee .custom-react-select__control {
-  min-height: 34px !important;
+  min-height: 38px !important;
 }
 
 /* No colour change on hover — the base Input component turns the border the
@@ -551,6 +562,21 @@
   .ppl-invite-theme .mcm-invite .mcm-invitee {
     grid-template-columns: 1fr;
   }
+}
+
+/* Country picker popup (react-phone-input-2): the library's default 300px+
+   width spills past the Phone field and over the Role column next to it —
+   narrower so it stays inside the field's own column. */
+.ppl-invite-theme .react-tel-input .country-list {
+  width: 220px;
+}
+.ppl-invite-theme .react-tel-input .country-list .search {
+  padding: 6px;
+}
+.ppl-invite-theme .react-tel-input .country-list .search-box {
+  width: 100%;
+  margin-left: 0;
+  border-radius: 9999px;
 }
 
 /* Inputs / selects: one consistent radius. Colour already comes from

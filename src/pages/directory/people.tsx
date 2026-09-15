@@ -780,7 +780,7 @@ const People = () => {
           bouncing to Admin — the console keeps you in Directory. */}
       {inviting && (
         <Dialog open={inviting} onOpenChange={(val) => !val && setInviting(false)}>
-          <DialogContent className="ppl-invite-dialog flex w-[92vw] max-w-[720px] max-h-[85vh] flex-col gap-0 overflow-hidden p-0">
+          <DialogContent className="ppl-invite-dialog flex w-[92vw] max-w-[720px] max-h-[90vh] flex-col gap-0 overflow-hidden p-0">
             <DialogTitle className="ppl-serif-heading flex items-center gap-2 px-5 py-3 text-xl text-gray-900">
               Invite people
             </DialogTitle>
