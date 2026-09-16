@@ -1,0 +1,980 @@
+/* ==========================================================================
+   Performance ▸ Speech & Text — what customers talk about, how they sound,
+   and what was said.
+
+   The overview card, toolbar and list frame come from `perf-surface.css`;
+   this file adds the mood meter, the insight cards, the agent rows and the
+   transcript cards. Buttons here are bare <button>s, which the console's
+   reset strips of border, background, font and colour; every button rule
+   below carries the extra `.st-wrap` and [type] steps it needs to sit above
+   that reset.
+   ========================================================================== */
+
+.mcm-page .st-wrap {
+  gap: 16px;
+}
+
+.mcm-page .st-wrap button[type='button']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Mood runs one way across the page: red is where customers are unhappy,
+   grey is neutral, charcoal is where they are happy. */
+.mcm-page .st-wrap [data-mood='critical'] {
+  --st-mood: var(--accent);
+}
+.mcm-page .st-wrap [data-mood='negative'] {
+  --st-mood: var(--accent);
+}
+.mcm-page .st-wrap [data-mood='poor'] {
+  --st-mood: color-mix(in oklab, var(--accent) 45%, var(--surface));
+}
+.mcm-page .st-wrap [data-mood='neutral'] {
+  --st-mood: color-mix(in oklab, var(--ink) 20%, var(--surface));
+}
+.mcm-page .st-wrap [data-mood='good'] {
+  --st-mood: color-mix(in oklab, var(--ink) 55%, var(--surface));
+}
+.mcm-page .st-wrap [data-mood='positive'],
+.mcm-page .st-wrap [data-mood='excellent'] {
+  --st-mood: var(--ink-2);
+}
+.mcm-page .st-wrap [data-mood='unknown'] {
+  --st-mood: color-mix(in oklab, var(--ink) 12%, var(--surface));
+}
+
+/* ---- overview: the mood meter ---- */
+.mcm-page .st-overview {
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.5fr);
+  column-gap: 32px;
+}
+.mcm-page .st-eyebrow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.mcm-page .st-wrap .st-eyebrow-row button.st-refresh[type='button'] {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 99px;
+  background: var(--surface);
+  color: var(--ink-3);
+  transition:
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.mcm-page .st-wrap .st-eyebrow-row button.st-refresh[type='button']:hover:not([aria-disabled='true']) {
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+.mcm-page .st-wrap .st-eyebrow-row button.st-refresh[type='button'][aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.mcm-page .st-refresh svg {
+  width: 14px;
+  height: 14px;
+}
+.mcm-page .st-refresh.is-spinning svg {
+  animation: st-spin 0.9s linear infinite;
+}
+@keyframes st-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mcm-page .st-mood {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 20px 18px 0;
+}
+.mcm-page .st-mood-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.mcm-page .st-mood-head b {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.mcm-page .st-mood-head b em {
+  margin-left: 6px;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+}
+/* The balance needle sits over the split: left of centre when customers
+   lean unhappy, right of it when they lean happy. */
+.mcm-page .st-meter {
+  position: relative;
+  padding-top: 11px;
+}
+.mcm-page .st-meter-bar {
+  display: flex;
+  gap: 3px;
+  height: 12px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+.mcm-page .st-meter-bar i {
+  display: block;
+  min-width: 6px;
+  background: var(--st-mood);
+  transition: flex-grow 0.4s ease;
+}
+.mcm-page .st-meter-needle {
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 8px solid var(--ink);
+  border-right: 6px solid transparent;
+  border-left: 6px solid transparent;
+  transform: translateX(-50%);
+  transition: left 0.4s ease;
+}
+.mcm-page .st-meter-needle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: -1px;
+  width: 2px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.mcm-page .st-meter-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-4);
+}
+.mcm-page .st-mood-keys {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mcm-page .st-mood-keys.is-wide {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.mcm-page .st-mood-keys li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.mcm-page .st-mood-keys li span {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.mcm-page .st-mood-keys li span i {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 3px;
+  background: var(--st-mood);
+}
+.mcm-page .st-mood-keys li b {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .st-mood-keys li em {
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 500;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .st-mood-empty {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-4);
+}
+@media (max-width: 1100px) {
+  .mcm-page .st-mood {
+    padding: 20px 20px 16px;
+  }
+}
+@media (max-width: 720px) {
+  .mcm-page .st-mood {
+    padding: 18px 16px 14px;
+  }
+  .mcm-page .st-mood-keys.is-wide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---- insight cards ---- */
+.mcm-page .st-insights {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+@media (max-width: 1100px) {
+  .mcm-page .st-insights {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.mcm-page .st-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 18px 20px 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--pf-e1);
+}
+.mcm-page .st-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mcm-page .st-card-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.mcm-page .st-card-head p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--ink-4);
+}
+.mcm-page .st-card-meta {
+  flex: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.mcm-page .st-card-empty {
+  margin: 18px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-4);
+}
+.mcm-page .st-wrap .st-card button.st-card-more[type='button'] {
+  align-self: flex-start;
+  margin-top: 14px;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent-ink);
+}
+.mcm-page .st-wrap .st-card button.st-card-more[type='button']:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Topics: a ranked list, the biggest first. */
+.mcm-page .st-topics {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.mcm-page .st-topic {
+  display: grid;
+  grid-template-columns: 20px minmax(84px, 0.8fr) minmax(0, 2fr) 40px 42px;
+  align-items: center;
+  gap: 12px;
+}
+.mcm-page .st-topic-rank {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .st-topic-name {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .st-topic-bar {
+  height: 8px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+.mcm-page .st-topic-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: color-mix(in oklab, var(--ink) 38%, var(--surface));
+}
+.mcm-page .st-topic:first-child .st-topic-bar i {
+  background: var(--ink-2);
+}
+.mcm-page .st-topic-count,
+.mcm-page .st-topic-share {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .st-topic-share {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-4);
+}
+
+/* Flow: every AI call, forked into the ones AI finished and the ones it
+   handed to a person. */
+.mcm-page .st-fork {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0 16px;
+  margin-top: 18px;
+}
+.mcm-page .st-fork-total {
+  display: flex;
+  flex-direction: column;
+  min-width: 64px;
+}
+.mcm-page .st-fork-total b {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .st-fork-total span {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--ink-4);
+}
+.mcm-page .st-fork-branches {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding-left: 22px;
+}
+.mcm-page .st-fork-branches::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: 0;
+  width: 14px;
+  border: 1.5px solid var(--line);
+  border-right: 0;
+  border-radius: 12px 0 0 12px;
+}
+.mcm-page .st-branch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 5px 10px;
+  min-width: 0;
+}
+.mcm-page .st-branch span {
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .st-branch b {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .st-branch b em {
+  margin-left: 4px;
+  font-style: normal;
+  font-weight: 500;
+  color: var(--ink-4);
+}
+.mcm-page .st-branch > i {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+.mcm-page .st-branch > i u {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  text-decoration: none;
+  background: var(--accent);
+}
+.mcm-page .st-branch.is-handed > i u {
+  background: color-mix(in oklab, var(--ink) 30%, var(--surface));
+}
+.mcm-page .st-lead-chip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: color-mix(in oklab, var(--accent) 8%, var(--surface));
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-ink);
+}
+.mcm-page .st-lead-chip svg {
+  width: 13px;
+  height: 13px;
+}
+
+.mcm-page .st-subsection {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-2);
+}
+.mcm-page .st-subhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.mcm-page .st-subhead em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--ink-4);
+}
+.mcm-page .st-channel {
+  display: flex;
+  gap: 3px;
+  height: 10px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+.mcm-page .st-channel i {
+  display: block;
+  min-width: 6px;
+}
+.mcm-page .st-channel i.is-voice {
+  background: var(--ink-2);
+}
+.mcm-page .st-channel i.is-text {
+  background: color-mix(in oklab, var(--ink) 24%, var(--surface));
+}
+.mcm-page .st-channel-keys {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.mcm-page .st-channel-keys span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mcm-page .st-channel-keys svg {
+  width: 13px;
+  height: 13px;
+  color: var(--ink-4);
+}
+.mcm-page .st-channel-keys b {
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.mcm-page .st-lengths {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: end;
+  gap: 10px;
+  height: 92px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mcm-page .st-length {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  height: 100%;
+  min-width: 0;
+}
+.mcm-page .st-length b {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .st-length i {
+  display: block;
+  width: 100%;
+  max-width: 40px;
+  min-height: 3px;
+  border-radius: 7px 7px 3px 3px;
+  background: color-mix(in oklab, var(--ink) 18%, var(--surface));
+}
+.mcm-page .st-length.is-peak i {
+  background: var(--ink-2);
+}
+.mcm-page .st-length span {
+  font-size: 11px;
+  color: var(--ink-4);
+  white-space: nowrap;
+}
+
+/* ---- AI agents ---- */
+.mcm-page .st-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 16px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--line-2);
+}
+.mcm-page .st-list-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.mcm-page .st-list-head p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-4);
+}
+.mcm-page .st-list-head p b {
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.mcm-page .st-agent-cols,
+.mcm-page .st-agent-row {
+  grid-template-columns:
+    minmax(0, 1.5fr) minmax(0, 0.55fr) minmax(0, 1.5fr) minmax(0, 0.65fr)
+    minmax(0, 0.45fr);
+}
+.mcm-page .st-agent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.mcm-page .st-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--ink) 7%, var(--surface));
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.mcm-page .st-agent-text,
+.mcm-page .st-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.mcm-page .st-agent-text b,
+.mcm-page .st-cell b {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .st-agent-text small,
+.mcm-page .st-cell small {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .st-mix {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.mcm-page .st-mix-bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+.mcm-page .st-mix-bar i {
+  display: block;
+  background: var(--st-mood);
+}
+.mcm-page .st-mix small {
+  font-size: 12px;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .st-mix small b {
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.mcm-page .st-mood-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  border-radius: 99px;
+  background: color-mix(in oklab, var(--ink) 6%, var(--surface));
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.mcm-page .st-mood-chip i {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 99px;
+  background: var(--st-mood);
+}
+.mcm-page .st-mood-chip[data-mood='negative'],
+.mcm-page .st-mood-chip[data-mood='critical'],
+.mcm-page .st-mood-chip[data-mood='poor'] {
+  background: color-mix(in oklab, var(--accent) 9%, var(--surface));
+  color: var(--accent-ink);
+}
+.mcm-page .st-mood-chip[data-mood='unknown'] {
+  color: var(--ink-4);
+}
+.mcm-page .st-score {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .st-score.is-negative {
+  color: var(--accent-ink);
+}
+@media (max-width: 1100px) {
+  .mcm-page .st-agent-cols,
+  .mcm-page .st-agent-row {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.5fr) minmax(0, 1.4fr) minmax(0, 0.7fr);
+  }
+  .mcm-page .st-agent-cols .st-col-score,
+  .mcm-page .st-agent-row .st-score-cell {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .mcm-page .st-agent-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 10px;
+    padding: 12px 16px;
+  }
+  .mcm-page .st-agent-row .st-agent {
+    grid-column: 1;
+  }
+  .mcm-page .st-agent-row .st-mood-cell {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .mcm-page .st-agent-row .st-mix {
+    grid-column: 1 / -1;
+  }
+  .mcm-page .st-agent-row .st-today {
+    display: none;
+  }
+}
+
+/* ---- what was said ---- */
+.mcm-page .st-said {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.mcm-page .st-said-title {
+  margin-right: 6px;
+}
+.mcm-page .st-said-title h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.mcm-page .st-said-title p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--ink-4);
+}
+/* The words that keep coming up — pick one to read those calls. */
+.mcm-page .st-themes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.mcm-page .st-themes-label {
+  margin-right: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.mcm-page .st-wrap .st-themes button.st-theme[type='button'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 99px;
+  background: var(--surface);
+  box-shadow: var(--pf-e1);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.mcm-page .st-wrap .st-themes button.st-theme[type='button']:hover {
+  color: var(--ink);
+}
+.mcm-page .st-wrap .st-themes button.st-theme[type='button'].is-on {
+  background: #171717;
+  color: #fff;
+}
+.dark .mcm-page .st-wrap .st-themes button.st-theme[type='button'].is-on {
+  background: var(--ink);
+  color: var(--surface);
+}
+.mcm-page .st-theme b {
+  font-weight: 600;
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
+
+.mcm-page .st-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 12px;
+}
+.mcm-page .st-quote {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px 18px 0;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--pf-e1);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+.mcm-page .st-quote:hover {
+  box-shadow: var(--pf-e2);
+}
+/* A single quotation mark, set in type rather than drawn. */
+.mcm-page .st-quote::before {
+  content: '\201C';
+  position: absolute;
+  top: 4px;
+  right: 16px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 64px;
+  line-height: 1;
+  color: color-mix(in oklab, var(--accent) 14%, var(--surface));
+  pointer-events: none;
+}
+.mcm-page .st-quote-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-right: 34px;
+  font-size: 11.5px;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.mcm-page .st-quote-who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.mcm-page .st-quote-who b {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .st-quote-who small {
+  font-size: 12px;
+  color: var(--ink-4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .st-quote-text {
+  display: -webkit-box;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.mcm-page .st-quote-text.is-muted {
+  color: var(--ink-4);
+}
+.mcm-page .st-quote-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.mcm-page .st-quote-keys span {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.mcm-page .st-quote-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: auto -18px 0;
+  padding: 10px 14px 10px 18px;
+  border-top: 1px solid var(--line-2);
+  font-size: 12px;
+  color: var(--ink-4);
+}
+.mcm-page .st-wrap .st-quote-foot button.st-read[type='button'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px 0 10px;
+  border-radius: 99px;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  transition:
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+.mcm-page .st-wrap .st-quote-foot button.st-read[type='button']:hover {
+  background: #171717;
+  box-shadow: inset 0 0 0 1px #171717;
+  color: #fff;
+}
+.mcm-page .st-read svg {
+  width: 13px;
+  height: 13px;
+}
+.mcm-page .st-quote.is-loading .st-quote-line {
+  display: block;
+  height: 10px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--surface-3) 0%, var(--surface-2) 50%, var(--surface-3) 100%);
+  background-size: 200% 100%;
+  animation: pf-shimmer 1.4s ease-in-out infinite;
+}
+.mcm-page .st-quote.is-loading .st-quote-line + .st-quote-line {
+  width: 80%;
+}
+.mcm-page .st-wrap .st-said button.st-more[type='button'] {
+  align-self: center;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 99px;
+  background: var(--surface);
+  box-shadow: var(--pf-e1);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.mcm-page .st-wrap .st-said button.st-more[type='button']:hover {
+  box-shadow: var(--pf-e2);
+}
+.mcm-page .st-said-empty {
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--pf-e1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcm-page .st-refresh.is-spinning svg,
+  .mcm-page .st-quote.is-loading .st-quote-line {
+    animation: none;
+  }
+}

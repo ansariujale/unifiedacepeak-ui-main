@@ -592,3 +592,492 @@
 .mcm-page .pf-wrap--dense .pf-table td:last-child {
   padding-right: 18px;
 }
+
+/* ==========================================================================
+   The work-list frame — an overview card, a toolbar row and a grouped list.
+   Callbacks and Campaigns are built in it, so the two read as one product;
+   each page adds only its own figure and its own row cells.
+   ========================================================================== */
+
+/* ---- overview card: a tonal lead panel beside the page's own figure ---- */
+.mcm-page .pf-overview {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 2fr);
+  column-gap: 20px;
+  padding: 8px 8px 0;
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--pf-e1);
+  overflow: hidden;
+}
+/* The headline number sits on a tonal panel, the card's one wash of colour. */
+.mcm-page .pf-overview-lead {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 18px 20px 20px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--accent) 7%, var(--surface));
+}
+.mcm-page .pf-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+.mcm-page .pf-eyebrow i {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 99px;
+  background: var(--accent);
+}
+/* Something is happening right now: the dot pulses. */
+.mcm-page .pf-eyebrow i.is-live::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  animation: pf-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes pf-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  75%,
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+.mcm-page .pf-overview-lead.is-calm .pf-eyebrow {
+  color: var(--ink-3);
+}
+.mcm-page .pf-overview-lead.is-calm .pf-eyebrow i {
+  background: var(--ink-4);
+}
+.mcm-page .pf-sample-chip {
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--surface);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+.mcm-page .pf-total {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  min-width: 0;
+}
+.mcm-page .pf-total > b {
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 0.8;
+  letter-spacing: -0.055em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .pf-total > div {
+  min-width: 0;
+  padding-bottom: 1px;
+}
+.mcm-page .pf-total strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.mcm-page .pf-total span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.mcm-page .pf-readouts {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 8px -8px 0;
+  border-top: 1px solid var(--line-2);
+}
+.mcm-page .pf-readouts > div {
+  min-width: 0;
+  padding: 14px 28px 16px;
+}
+.mcm-page .pf-readouts > div + div {
+  border-left: 1px solid var(--line-2);
+}
+.mcm-page .pf-readouts dt {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .pf-readouts dd {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.mcm-page .pf-readouts dd span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .pf-readouts dd em {
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-3);
+}
+.mcm-page .pf-readouts small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--ink-4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1100px) {
+  .mcm-page .pf-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 720px) {
+  .mcm-page .pf-overview-lead {
+    padding: 16px;
+  }
+  .mcm-page .pf-total > b {
+    font-size: 54px;
+  }
+  .mcm-page .pf-readouts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mcm-page .pf-readouts > div {
+    padding: 12px 24px 14px;
+  }
+  .mcm-page .pf-readouts > div:nth-child(3) {
+    border-left: 0;
+  }
+  .mcm-page .pf-readouts > div:nth-child(n + 3) {
+    border-top: 1px solid var(--line-2);
+  }
+}
+
+/* ---- toolbar: pill switchers, then search, on one row ---- */
+.mcm-page .pf-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: -4px;
+}
+/* The console's pill switcher — the one on Social Media Channels. Its own
+   rules are scoped to `.mcm-admin`, so the same values are carried here for
+   the same markup rather than a look-alike of our own. The one difference is
+   the track: there it sits a shade darker than a white page, so here it sits
+   a shade below Performance's grey one, keeping the raised tab's contrast. */
+.mcm-page .pf-toolbar .mcm-segmented {
+  display: inline-flex;
+  /* A pill that wraps turns into a lozenge; on a phone too narrow for every
+     tab, it swipes instead. */
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid color-mix(in oklab, var(--ink) 7%, var(--ground, #efefef));
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--ink) 4%, var(--ground, #efefef));
+}
+.mcm-page .pf-toolbar .mcm-segmented::-webkit-scrollbar {
+  display: none;
+}
+.mcm-page .pf-wrap .pf-toolbar .mcm-segmented button[type='button'] {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
+}
+.mcm-page .pf-wrap .pf-toolbar .mcm-segmented button[type='button']:hover {
+  color: #171717;
+}
+.mcm-page .pf-wrap .pf-toolbar .mcm-segmented button[type='button'].is-active {
+  background: var(--surface);
+  color: #171717;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+.dark .mcm-page .pf-wrap .pf-toolbar .mcm-segmented button[type='button']:hover,
+.dark .mcm-page .pf-wrap .pf-toolbar .mcm-segmented button[type='button'].is-active {
+  color: var(--ink);
+}
+.mcm-page .pf-toolbar .mcm-segmented em {
+  margin-left: 6px;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .pf-toolbar .mcm-segmented .is-active em {
+  color: var(--accent-ink);
+}
+/* Search closes the row and narrows before it drops to a line of its own. */
+.mcm-page .pf-toolbar .pf-toolbar-search {
+  flex: 1 1 160px;
+  width: auto;
+  min-width: 140px;
+  max-width: 280px;
+  height: 36px;
+  margin-left: auto;
+  background: var(--surface);
+  box-shadow: var(--pf-e1);
+}
+@media (max-width: 640px) {
+  .mcm-page .pf-toolbar .pf-toolbar-search {
+    flex-basis: 100%;
+    max-width: none;
+    margin-left: 0;
+  }
+}
+
+/* ---- the grouped list ---- */
+.mcm-page .pf-list {
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--pf-e1);
+  overflow: hidden;
+}
+/* Each page sets `grid-template-columns` on its own header and rows. */
+.mcm-page .pf-list-cols,
+.mcm-page .pf-list-row {
+  display: grid;
+  align-items: center;
+  column-gap: 16px;
+  padding: 0 20px;
+}
+.mcm-page .pf-list-cols {
+  height: 42px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-4);
+}
+.mcm-page .pf-list-cols span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .pf-group + .pf-group {
+  border-top: 1px solid var(--line-2);
+}
+.mcm-page .pf-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 16px 20px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.mcm-page .pf-group-head b {
+  font-weight: 600;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .pf-rows {
+  margin: 0;
+  padding: 0 0 4px;
+  list-style: none;
+}
+.mcm-page .pf-list-row {
+  min-height: 62px;
+  transition: background-color 0.14s ease;
+}
+.mcm-page .pf-list-row + .pf-list-row {
+  border-top: 1px solid var(--line-2);
+}
+.mcm-page .pf-list-row:hover {
+  background: color-mix(in oklab, var(--ink) 2.5%, var(--surface));
+}
+
+/* A word on hover for icon-only controls, drawn in CSS so a long list isn't
+   carrying a tooltip portal per row. */
+.mcm-page .pf-list-row [data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 5;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: #171717;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #fff;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+.mcm-page .pf-list-row [data-tip]:hover::after,
+.mcm-page .pf-list-row [data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.mcm-page .pf-rows > .pf-list-row:first-child [data-tip]::after {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+
+.mcm-page .pf-skel i {
+  display: block;
+  height: 10px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--surface-3) 0%, var(--surface-2) 50%, var(--surface-3) 100%);
+  background-size: 200% 100%;
+  animation: pf-shimmer 1.4s ease-in-out infinite;
+}
+.mcm-page .pf-skel i:first-child {
+  width: 22px;
+  height: 22px;
+}
+.mcm-page .pf-skel i:nth-child(2) {
+  width: 70%;
+}
+.mcm-page .pf-skel i:last-child {
+  justify-self: end;
+  width: 80px;
+  height: 32px;
+}
+@keyframes pf-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.mcm-page .pf-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 48px 24px 52px;
+  text-align: center;
+}
+.mcm-page .pf-list-empty h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.mcm-page .pf-list-empty p {
+  max-width: 50ch;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+.mcm-page .pf-wrap .pf-list-empty button.pf-list-empty-btn[type='button'] {
+  height: 36px;
+  margin-top: 12px;
+  padding: 0 18px;
+  border-radius: 99px;
+  background: #171717;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+}
+.dark .mcm-page .pf-wrap .pf-list-empty button.pf-list-empty-btn[type='button'] {
+  background: var(--ink);
+  color: var(--surface);
+}
+.mcm-page .pf-list-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line-2);
+  font-size: 12px;
+  color: var(--ink-4);
+}
+.mcm-page .pf-list-foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+.mcm-page .pf-wrap .pf-list-foot button.pf-text-btn[type='button'] {
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent-ink);
+}
+.mcm-page .pf-wrap .pf-list-foot button.pf-text-btn[type='button']:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+  .mcm-page .pf-list-cols {
+    display: none;
+  }
+  .mcm-page .pf-group-head {
+    padding: 14px 16px 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcm-page .pf-skel i,
+  .mcm-page .pf-eyebrow i.is-live::after {
+    animation: none;
+  }
+}

@@ -1,0 +1,565 @@
+/* ==========================================================================
+   Performance ▸ Campaigns — every outbound campaign, how far it has dialled,
+   and what came of it.
+
+   The overview card, toolbar and grouped list are the shared frame in
+   `perf-surface.css`; this file adds the outcome ribbon and the campaign row.
+   Buttons here are bare <button>s, which the console's reset strips of
+   border, background, font and colour; every button rule below carries the
+   extra `.cg-wrap` and [type] steps it needs to sit above that reset.
+   ========================================================================== */
+
+.mcm-page .cg-wrap {
+  gap: 16px;
+}
+
+.mcm-page .cg-wrap button[type='button']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Outcomes in the brand family: a conversation is the red, a miss its pale
+   tint, a blocked number charcoal, and what is still to dial the track. */
+.mcm-page .cg-wrap [data-outcome='answered'] {
+  --cg-tone: var(--accent);
+}
+.mcm-page .cg-wrap [data-outcome='noAnswer'] {
+  --cg-tone: color-mix(in oklab, var(--accent) 36%, var(--surface));
+}
+.mcm-page .cg-wrap [data-outcome='dnc'] {
+  --cg-tone: var(--ink-2);
+}
+.mcm-page .cg-wrap [data-outcome='pending'] {
+  --cg-tone: color-mix(in oklab, var(--ink) 11%, var(--surface));
+}
+
+/* ---- overview figure: every lead across every campaign ---- */
+.mcm-page .cg-overview {
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.5fr);
+  column-gap: 32px;
+}
+.mcm-page .cg-mix {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px 20px 18px 0;
+}
+.mcm-page .cg-mix-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.mcm-page .cg-mix-head b {
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .cg-ribbon {
+  display: flex;
+  gap: 3px;
+  height: 12px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 7%, transparent);
+}
+.mcm-page .cg-ribbon i {
+  display: block;
+  min-width: 8px;
+  background: var(--cg-tone);
+  transition: flex-grow 0.4s ease;
+}
+.mcm-page .cg-keys {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mcm-page .cg-keys li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.mcm-page .cg-keys li span {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.mcm-page .cg-keys li span i {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 3px;
+  background: var(--cg-tone);
+}
+.mcm-page .cg-keys li b {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .cg-keys li em {
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 500;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 1100px) {
+  .mcm-page .cg-mix {
+    padding: 20px 20px 16px;
+  }
+}
+@media (max-width: 720px) {
+  .mcm-page .cg-mix {
+    padding: 18px 16px 14px;
+  }
+  .mcm-page .cg-keys {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---- toolbar: the one primary action on the page ---- */
+.mcm-page .cg-wrap .pf-toolbar button.cg-new[type='button'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 16px 0 13px;
+  border-radius: 99px;
+  background: #171717;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+.mcm-page .cg-wrap .pf-toolbar button.cg-new[type='button']:hover {
+  background: #000;
+}
+.dark .mcm-page .cg-wrap .pf-toolbar button.cg-new[type='button'] {
+  background: var(--ink);
+  color: var(--surface);
+}
+.mcm-page .cg-new svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ---- rows ---- */
+.mcm-page .cg-cols,
+.mcm-page .cg-row {
+  grid-template-columns:
+    minmax(0, 1.7fr) minmax(0, 0.85fr) minmax(0, 1.45fr) minmax(0, 0.6fr) minmax(0, 0.62fr)
+    minmax(0, 0.75fr) minmax(150px, auto);
+}
+.mcm-page .cg-row {
+  min-height: 70px;
+}
+.mcm-page .cg-wrap .pf-group[data-group='running'] .pf-group-head {
+  color: var(--accent-ink);
+}
+
+/* The name, led by a mark for where the campaign is: a live red dot while it
+   dials, a ring while it waits, a solid grey dot once it is done. */
+.mcm-page .cg-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.mcm-page .cg-mark {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 99px;
+  background: var(--ink-4);
+}
+.mcm-page .cg-row[data-phase='running'] .cg-mark {
+  background: var(--accent);
+}
+.mcm-page .cg-row[data-phase='running'] .cg-mark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  animation: pf-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+.mcm-page .cg-row[data-phase='paused'] .cg-mark {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--ink-2);
+}
+.mcm-page .cg-row[data-phase='scheduled'] .cg-mark {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--ink-4);
+}
+.mcm-page .cg-name-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.mcm-page .cg-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.mcm-page .cg-title b,
+.mcm-page .cg-wrap .cg-title button.cg-title-link[type='button'] {
+  min-width: 0;
+  padding: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .cg-wrap .cg-title button.cg-title-link[type='button']:hover {
+  color: var(--accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.mcm-page .cg-tag {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.mcm-page .cg-name-text small,
+.mcm-page .cg-dates small,
+.mcm-page .cg-figure small {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mcm-page .cg-dates,
+.mcm-page .cg-figure {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.mcm-page .cg-dates b {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcm-page .cg-dates small.is-late {
+  font-weight: 600;
+  color: var(--accent-ink);
+}
+.mcm-page .cg-dates small.is-soon {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Progress: the four outcomes laid over every lead the campaign was given. */
+.mcm-page .cg-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.mcm-page .cg-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ink) 8%, transparent);
+}
+.mcm-page .cg-bar i {
+  display: block;
+  height: 100%;
+  background: var(--cg-tone);
+}
+.mcm-page .cg-bar i + i {
+  border-left: 2px solid var(--surface);
+}
+.mcm-page .cg-progress-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-4);
+  white-space: nowrap;
+}
+.mcm-page .cg-progress-foot b {
+  font-weight: 700;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.mcm-page .cg-wrap .cg-progress-foot button.cg-refresh[type='button'] {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  border-radius: 99px;
+  color: var(--ink-4);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.mcm-page .cg-wrap .cg-progress-foot button.cg-refresh[type='button']:hover:not([aria-disabled='true']) {
+  background: color-mix(in oklab, var(--ink) 6%, var(--surface));
+  color: var(--ink);
+}
+.mcm-page .cg-wrap .cg-progress-foot button.cg-refresh[type='button'][aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.mcm-page .cg-refresh svg {
+  width: 13px;
+  height: 13px;
+}
+.mcm-page .cg-refresh.is-spinning svg {
+  animation: cg-spin 0.9s linear infinite;
+}
+@keyframes cg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Leads and answered: the figure opens the calls behind it. */
+.mcm-page .cg-figure b,
+.mcm-page .cg-wrap .cg-figure button.cg-figure-link[type='button'] {
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+.mcm-page .cg-wrap .cg-figure button.cg-figure-link[type='button']:hover {
+  color: var(--accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mcm-page .cg-agents,
+.mcm-page .cg-wrap .cg-row button.cg-agents[type='button'] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.mcm-page .cg-wrap .cg-row button.cg-agents[type='button']:hover .cg-agents-count {
+  color: var(--accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.mcm-page .cg-stack {
+  display: flex;
+  flex: none;
+}
+.mcm-page .cg-stack i {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: -7px;
+  border-radius: 99px;
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+  box-shadow: 0 0 0 2px var(--surface);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--accent-ink);
+}
+.mcm-page .cg-stack i:first-child {
+  margin-left: 0;
+}
+.mcm-page .cg-agents-count {
+  white-space: nowrap;
+}
+.mcm-page .cg-muted {
+  font-size: 12.5px;
+  color: var(--ink-4);
+}
+
+.mcm-page .cg-act {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+.mcm-page .cg-wrap .cg-act button.cg-run[type='button'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px 0 11px;
+  border-radius: 99px;
+  background: #171717;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.mcm-page .cg-wrap .cg-act button.cg-run[type='button']:hover:not(:disabled) {
+  background: #000;
+}
+/* Pausing stops a live dialler, so it is the quieter of the two. */
+.mcm-page .cg-wrap .cg-act button.cg-run[type='button'].is-pause {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.mcm-page .cg-wrap .cg-act button.cg-run[type='button'].is-pause:hover:not(:disabled) {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ink-3);
+}
+.dark .mcm-page .cg-wrap .cg-act button.cg-run[type='button']:not(.is-pause) {
+  background: var(--ink);
+  color: var(--surface);
+}
+.mcm-page .cg-run svg {
+  width: 13px;
+  height: 13px;
+}
+.mcm-page .cg-wrap .cg-act button.cg-more[type='button'] {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 99px;
+  color: var(--ink-3);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.mcm-page .cg-wrap .cg-act button.cg-more[type='button']:hover,
+.mcm-page .cg-wrap .cg-act button.cg-more[type='button'][data-state='open'] {
+  background: color-mix(in oklab, var(--ink) 6%, var(--surface));
+  color: var(--ink);
+}
+.mcm-page .cg-more svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The row menu renders through a portal, outside `.mcm-page`. */
+.cg-menu {
+  min-width: 212px;
+  padding: 6px;
+  border-radius: 12px;
+}
+.cg-menu [data-slot='dropdown-menu-item'] {
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.cg-menu [data-slot='dropdown-menu-item'] svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ---- narrower: the dates and team go first, then the figures ---- */
+@media (max-width: 1180px) {
+  .mcm-page .cg-cols,
+  .mcm-page .cg-row {
+    grid-template-columns:
+      minmax(0, 1.6fr) minmax(0, 1.45fr) minmax(0, 0.6fr) minmax(0, 0.62fr)
+      minmax(140px, auto);
+  }
+  .mcm-page .cg-cols .cg-col-dates,
+  .mcm-page .cg-cols .cg-col-agents,
+  .mcm-page .cg-wrap .cg-row .cg-dates,
+  .mcm-page .cg-wrap .cg-row .cg-agents,
+  .mcm-page .cg-wrap .cg-row button.cg-agents[type='button'] {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  .mcm-page .cg-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 10px;
+    padding: 12px 16px;
+  }
+  .mcm-page .cg-row .cg-name {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .mcm-page .cg-row .cg-act {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .mcm-page .cg-row .cg-progress {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .mcm-page .cg-row .cg-figure {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .mcm-page .cg-run-label {
+    display: none;
+  }
+  .mcm-page .cg-wrap .cg-act button.cg-run[type='button'] {
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcm-page .cg-row[data-phase='running'] .cg-mark::after,
+  .mcm-page .cg-refresh.is-spinning svg {
+    animation: none;
+  }
+}

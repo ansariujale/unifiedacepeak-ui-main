@@ -73,20 +73,21 @@ const TABS = [
 ];
 
 /* Boards carries its own summary of the same figures, so the band would only
-   repeat it above. */
-const SHOW_KPI_HEADER_TABS = new Set(['queues-activity', 'campaign-activity']);
+   repeat it above. Campaigns has its own overview of outbound figures, which
+   the band's inbound queue numbers don't describe. */
+const SHOW_KPI_HEADER_TABS = new Set(['queues-activity']);
 
 /** One line under each heading saying what the view is actually showing. */
 const TAB_SUBTITLES: Record<string, string> = {
   'queues-activity': "Live queue load and today's service levels, queue by queue.",
-  'campaign-activity': 'Outbound campaign progress and contact outcomes.',
+  'campaign-activity': 'How far each campaign has dialled, and what came of it.',
   agents: 'Who is signed in, what they are on, and how their day is going.',
   interactions: 'Every call in the selected range, with wait, duration and charge.',
   flows: 'IVR call flows on this account, and what routed through each one.',
   dashboards: 'Your saved views of this account.',
   'live-interactions': 'Every call in progress, and who is free to take the next.',
-  callbacks: 'Customers waiting for a call back.',
-  'speech-text': 'What was said on the calls in this range.',
+  callbacks: 'Callbacks to make and voicemail to return, most urgent first.',
+  'speech-text': 'What customers talk about, and how they sound.',
   reports: 'Scheduled and ad-hoc reporting across the contact centre.',
 };
 
@@ -960,8 +961,12 @@ const Performance = () => {
             rangePhrase={rangePhrase}
           />
         )}
-        {activeTab === 'callbacks' && <CallbacksTab />}
-        {activeTab === 'speech-text' && <SpeechTextTab />}
+        {activeTab === 'callbacks' && (
+          <CallbacksTab selectedRange={selectedRange} rangePhrase={rangePhrase} />
+        )}
+        {activeTab === 'speech-text' && (
+          <SpeechTextTab selectedRange={selectedRange} rangePhrase={rangePhrase} />
+        )}
         {activeTab === 'reports' && <ReportsTab selectedRange={selectedRange} />}
 
         {/* The wallboards predate the console language and bring their own

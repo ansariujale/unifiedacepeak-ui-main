@@ -3621,9 +3621,9 @@
     box-shadow 0.12s;
 }
 .mcm-adminscreens-list a:hover {
-  background: #e3e3e3;
-  color: var(--accent-ink);
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+  background: #fff6f6;
+  color: var(--accent);
+  border-radius:8px;
 }
 .mcm-adminscreens-iconwrap {
   flex: none;
